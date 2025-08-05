@@ -13,6 +13,9 @@ A comprehensive Python-based system for generating news articles and creating a 
 - **Content Enhancement**: Automatic metadata optimization and SEO improvements
 - **Quality Validation**: Comprehensive integrity checks for all articles
 - **Batch Processing**: Handle large volumes of articles efficiently
+- **🎯 Keyword-Based Generation**: Generate articles from specific keywords with full control
+- **📦 Batch Keyword Processing**: Process predefined keyword categories efficiently
+- **🔍 Smart SEO Optimization**: Automatic keyword expansion and integration
 
 ### 🌐 **Website Generation**
 - **Static Site Generator**: Creates fast, SEO-optimized HTML pages
@@ -53,7 +56,16 @@ articleGen/
 │   ├── deduplicate_articles.py      # Smart deduplication tool
 │   ├── enhance_articles.py          # Content enhancement system
 │   ├── fix_articles.py              # Comprehensive article fixer
-│   └── final_summary.py             # Process summary generator
+│   ├── final_summary.py             # Process summary generator
+│   └── workflow_deduplication.py    # Complete workflow automation
+│
+├── 🎯 Keyword-Based Generation
+│   ├── keywordBasedArticleGen.py    # Core keyword article engine
+│   ├── quickKeywordGen.py           # Simple command-line interface
+│   ├── batchKeywordGen.py           # Batch keyword processing
+│   ├── keywordArticleHub.py         # Interactive main interface
+│   ├── keyword_config.json          # Keyword batches and settings
+│   └── KEYWORD_GENERATION_GUIDE.md  # Complete keyword system guide
 │
 ├── 📊 Generated Website (dist/)
 │   ├── index.html                   # Homepage with Load More
@@ -179,6 +191,61 @@ python generateSite.py
 #### View Generation Summary
 ```bash
 python final_summary.py
+```
+
+### 🎯 **Keyword-Based Article Generation**
+
+Generate articles from specific keywords instead of just trending topics.
+
+#### Interactive Mode (Recommended)
+```bash
+python keywordArticleHub.py
+```
+**Features**:
+- 🎬 Full interactive interface with all options
+- 📊 Article statistics and analytics
+- ⚙️ Configuration management
+- 🔄 Integration tools
+
+#### Quick Keyword Generation
+```bash
+# Interactive keyword input
+python quickKeywordGen.py --interactive
+
+# Direct command line
+python quickKeywordGen.py "artificial intelligence" "machine learning"
+
+# Custom region targeting
+python quickKeywordGen.py --region "USA" "stock market" "cryptocurrency"
+```
+
+#### Batch Processing
+```bash
+# Interactive batch mode
+python batchKeywordGen.py
+
+# Process specific categories
+python batchKeywordGen.py technology business health
+```
+
+**Available Categories**:
+- 🔬 **Technology**: AI, blockchain, cybersecurity, 5G
+- 💼 **Business**: startups, e-commerce, digital marketing
+- 🏥 **Health**: wellness, fitness, nutrition, medical breakthroughs
+- ⚽ **Sports**: cricket, football, olympics, tennis
+- 🎬 **Entertainment**: Bollywood, streaming, music, celebrities
+- 🌱 **Science**: climate change, renewable energy, space exploration
+
+#### Complete Workflow
+```bash
+# 1. Generate keyword-based articles
+python quickKeywordGen.py "your keywords"
+
+# 2. Run deduplication workflow
+python workflow_deduplication.py
+
+# 3. Generate website
+python generateSite.py
 ```
 
 ### 📊 **Quality Metrics**

@@ -1,0 +1,67 @@
+{
+    "default_settings": {
+        "region": "India",
+        "language": "en-IN",
+        "skip_existing": true,
+        "max_articles_per_batch": 10
+    },
+    "keyword_batches": {
+        "technology": [
+            "artificial intelligence",
+            "machine learning", 
+            "blockchain technology",
+            "cybersecurity trends",
+            "5G technology"
+        ],
+        "business": [
+            "startup funding",
+            "stock market analysis", 
+            "cryptocurrency market",
+            "e-commerce trends",
+            "digital marketing"
+        ],
+        "health": [
+            "mental health awareness",
+            "fitness trends 2025",
+            "nutrition guidelines",
+            "medical breakthroughs",
+            "wellness lifestyle"
+        ],
+        "sports": [
+            "cricket world cup",
+            "football premier league",
+            "olympics 2025",
+            "tennis grand slam",
+            "basketball highlights"
+        ],
+        "entertainment": [
+            "bollywood movies",
+            "streaming platforms",
+            "music industry trends",
+            "celebrity news",
+            "web series reviews"
+        ],
+        "science": [
+            "space exploration",
+            "climate change research",
+            "renewable energy",
+            "scientific discoveries",
+            "environmental conservation"
+        ]
+    },
+    "custom_prompts": {
+        "news_focus": "Focus on recent news and current events. Include latest developments and breaking news angle.",
+        "analysis_focus": "Provide deep analysis and expert insights. Include data, statistics, and expert quotes.",
+        "guide_focus": "Create comprehensive guides and how-to content. Include step-by-step instructions and practical tips.",
+        "opinion_focus": "Include editorial perspective and opinion analysis. Discuss multiple viewpoints and implications.",
+        "local_focus": "Emphasize local relevance and regional impact. Include local examples and regional statistics."
+    },
+    "seo_enhancements": {
+        "keyword_density_target": "1-2%",
+        "meta_description_length": "150-160 characters",
+        "title_length": "50-60 characters",
+        "content_length_min": 1200,
+        "internal_links_target": 3,
+        "external_links_target": 2
+    }
+}

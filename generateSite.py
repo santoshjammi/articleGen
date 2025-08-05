@@ -1181,16 +1181,24 @@ def generate_article_card(article, current_page_type="home"):
     elif current_page_type == "article": # Article pages are in 'articles/' so links to other articles need '../'
         link_prefix = "../"
 
-    # Create thumbnail URL from ogImage
-    og_image = article.get('ogImage', '')
-    if og_image and 'main.jpg' in og_image:
-        # Replace main.jpg with thumb.jpg
-        thumbnail_url = og_image.replace('main.jpg', 'thumb.jpg')
-    elif og_image:
-        # If ogImage exists but doesn't have main.jpg, use it as is
-        thumbnail_url = og_image
+    # Create thumbnail URL - priority order: thumbnailImageUrl, ogImage with thumb.jpg, ogImage, placeholder
+    thumbnail_url = ''
+    
+    # First, check if article has a dedicated thumbnailImageUrl
+    if article.get('thumbnailImageUrl') and article['thumbnailImageUrl'] != article.get('ogImage', ''):
+        thumbnail_url = article['thumbnailImageUrl']
     else:
-        # Fallback to placeholder
+        # Fall back to ogImage logic
+        og_image = article.get('ogImage', '')
+        if og_image and 'main.jpg' in og_image:
+            # Replace main.jpg with thumb.jpg
+            thumbnail_url = og_image.replace('main.jpg', 'thumb.jpg')
+        elif og_image:
+            # If ogImage exists but doesn't have main.jpg, use it as is
+            thumbnail_url = og_image
+    
+    # Final fallback to placeholder if no valid thumbnail found
+    if not thumbnail_url:
         thumbnail_url = 'https://placehold.co/400x200/cccccc/333333?text=No+Image'
     
     thumbnail_url = adjust_image_url_for_path(thumbnail_url, current_page_type)
@@ -1392,17 +1400,28 @@ def generate_index_page(articles_data, unique_categories):
         }}
         
         function createArticleCard(article) {{
-            // Fix the thumbnail URL path for home page context
-            let thumbnailUrl = article.ogImage || 'https://placehold.co/400x200/cccccc/333333?text=No+Image';
+            // Create thumbnail URL - priority order: thumbnailImageUrl, ogImage with thumb.jpg, ogImage, placeholder
+            let thumbnailUrl = '';
+            
+            // First, check if article has a dedicated thumbnailImageUrl
+            if (article.thumbnailImageUrl && article.thumbnailImageUrl !== article.ogImage) {{
+                thumbnailUrl = article.thumbnailImageUrl;
+            }} else {{
+                // Fall back to ogImage logic
+                thumbnailUrl = article.ogImage || '';
+                if (thumbnailUrl && thumbnailUrl.includes('main.jpg')) {{
+                    thumbnailUrl = thumbnailUrl.replace('main.jpg', 'thumb.jpg');
+                }}
+            }}
+            
+            // Final fallback to placeholder if no valid thumbnail found
+            if (!thumbnailUrl) {{
+                thumbnailUrl = 'https://placehold.co/400x200/cccccc/333333?text=No+Image';
+            }}
             
             // Remove 'dist/' prefix if present since we're on the home page
             if (thumbnailUrl.startsWith('dist/')) {{
                 thumbnailUrl = thumbnailUrl.substring(5); // Remove 'dist/' prefix
-            }}
-            
-            // Replace main.jpg with thumb.jpg if it exists
-            if (thumbnailUrl && thumbnailUrl.includes('main.jpg')) {{
-                thumbnailUrl = thumbnailUrl.replace('main.jpg', 'thumb.jpg');
             }}
                 
             return `
