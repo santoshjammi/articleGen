@@ -6,7 +6,7 @@ import markdown # Import the markdown library
 
 # --- Configuration ---
 OUTPUT_DIR = "dist"
-ARTICLES_DATA_FILE = "perplexityArticles.json"
+ARTICLES_DATA_FILE = "perplexityArticles_eeat_enhanced.json"
 DEFAULT_CATEGORY = "News" # Default category for articles without one
 
 # --- HTML Templates ---
