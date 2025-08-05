@@ -1,0 +1,8 @@
+pandas
+trendspy-lite
+PyYAML
+requests
+python-dotenv
+markdown
+Pillow
+google-generativeai
