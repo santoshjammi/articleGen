@@ -238,20 +238,20 @@ def backup_all_article_images(articles: List[Dict]) -> None:
         
         # Main image
         if article.get('ogImage'):
-            main_img_path = os.path.join(IMAGES_BASE_DIR, slug, "main.jpg")
+            main_img_path = os.path.join(IMAGES_BASE_DIR, slug, "main.webp")
             if os.path.exists(main_img_path):
                 image_files.append(main_img_path)
         
         # Thumbnail image
         if article.get('thumbnailImageUrl'):
-            thumb_img_path = os.path.join(IMAGES_BASE_DIR, slug, "thumb.jpg")
+            thumb_img_path = os.path.join(IMAGES_BASE_DIR, slug, "thumb.webp")
             if os.path.exists(thumb_img_path):
                 image_files.append(thumb_img_path)
         
         # Inline images
         inline_images = article.get('inlineImages', [])
         for i, _ in enumerate(inline_images):
-            inline_img_path = os.path.join(IMAGES_BASE_DIR, slug, f"inline_{i+1}.jpg")
+            inline_img_path = os.path.join(IMAGES_BASE_DIR, slug, f"inline_{i+1}.webp")
             if os.path.exists(inline_img_path):
                 image_files.append(inline_img_path)
         
@@ -762,12 +762,12 @@ class ArticleGenerator:
                 
                 # Generate main image
                 og_image_prompt = f"Professional news article image for: {data['ogTitle']}. Visual style: {data['imageAltText']}. High quality, news-appropriate."
-                og_img_fp = os.path.join(IMAGES_BASE_DIR, slug, "main.jpg")
+                og_img_fp = os.path.join(IMAGES_BASE_DIR, slug, "main.webp")
                 og_image_url = generateImage(og_image_prompt, og_img_fp) or generate_placeholder_image_url(data['ogTitle'])
                 
                 # Generate thumbnail image
                 thumb_image_prompt = f"Thumbnail for news article: {data['ogTitle']}. Compact, visually appealing, news-style thumbnail."
-                thumb_img_fp = os.path.join(IMAGES_BASE_DIR, slug, "thumb.jpg")
+                thumb_img_fp = os.path.join(IMAGES_BASE_DIR, slug, "thumb.webp")
                 thumbnail_url = generateImage(thumb_image_prompt, thumb_img_fp) or generate_placeholder_image_url(data['ogTitle'], 400, 200)
                 
                 # Generate inline images
@@ -776,7 +776,7 @@ class ArticleGenerator:
                 
                 for i, img_desc in enumerate(inline_image_descs):
                     inline_prompt = f"Supporting image for article section: {img_desc['description']}. Caption context: {img_desc['caption']}. Professional, high-quality."
-                    inline_fp = os.path.join(IMAGES_BASE_DIR, slug, f"inline_{i+1}.jpg")
+                    inline_fp = os.path.join(IMAGES_BASE_DIR, slug, f"inline_{i+1}.webp")
                     inline_url = generateImage(inline_prompt, inline_fp) or generate_placeholder_image_url(
                         img_desc.get("description", f"Article Image {i+1}")
                     )
@@ -859,7 +859,7 @@ class ArticleGenerator:
                 if os.path.exists(thumb_img_fp):
                     image_files.append(thumb_img_fp)
                 for i in range(len(inline_image_descs)):
-                    inline_fp = os.path.join(IMAGES_BASE_DIR, slug, f"inline_{i+1}.jpg")
+                    inline_fp = os.path.join(IMAGES_BASE_DIR, slug, f"inline_{i+1}.webp")
                     if os.path.exists(inline_fp):
                         image_files.append(inline_fp)
                 

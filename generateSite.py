@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import shutil  # Add shutil for file copying
 import markdown # Import the markdown library
 
 # --- Configuration ---
@@ -17,6 +18,9 @@ BASE_HTML_HEAD = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Favicon and Logo -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="apple-touch-icon" href="/favicon.svg">
     <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -71,6 +75,9 @@ BASE_HTML_HEAD = """
             display: block; /* Ensures it takes up full width and allows margin auto */
             margin-left: auto;
             margin-right: auto;
+            /* WebP optimization with fallback */
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
         }}
         .article-content figure {{
             margin-top: 1.5rem;
@@ -81,6 +88,19 @@ BASE_HTML_HEAD = """
             color: #6b7280; /* text-gray-600 */
             font-size: 0.875rem; /* text-sm */
             margin-top: 0.5rem; /* mt-2 */
+        }}
+        
+        /* Logo and Brand Styles */
+        .logo-container {{
+            transition: opacity 0.3s ease-in-out;
+        }}
+        .logo-container:hover {{
+            opacity: 0.8;
+        }}
+        
+        /* Header gradient enhancement */
+        .header-gradient {{
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
         }}
         
         /* Ad Optimization Styles */
@@ -236,15 +256,19 @@ BASE_HTML_HEAD = """
 """
 
 HEADER_HTML = """
-    <header class="bg-blue-800 text-white p-4 shadow-md">
+    <header class="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-800 text-white p-4 shadow-lg">
         <div class="container mx-auto flex flex-wrap justify-between items-center px-4 sm:px-6 lg:px-8">
-            <h1 class="text-3xl font-bold"><a href="{home_link}" class="hover:underline">Country's News</a></h1>
-            <nav>
+            <div class="flex items-center space-x-4">
+                <a href="{home_link}" class="hover:opacity-80 transition-opacity">
+                    <img src="{logo_path}" alt="Country's News Logo" class="h-12 sm:h-16 w-auto">
+                </a>
+            </div>
+            <nav class="mt-2 sm:mt-0">
                 <ul class="flex flex-wrap justify-center sm:justify-start space-x-2 sm:space-x-4">
-                    <li><a href="{home_link}" class="hover:underline">Home</a></li>
+                    <li><a href="{home_link}" class="hover:text-blue-200 transition-colors px-2 py-1 rounded">Home</a></li>
                     {category_links}
-                    <li><a href="#" class="hover:underline">About Us</a></li>
-                    <li><a href="{contact_link}" class="hover:underline">Contact</a></li>
+                    <li><a href="{about_link}" class="hover:text-blue-200 transition-colors px-2 py-1 rounded">About Us</a></li>
+                    <li><a href="{contact_link}" class="hover:text-blue-200 transition-colors px-2 py-1 rounded">Contact</a></li>
                 </ul>
             </nav>
         </div>
@@ -252,14 +276,46 @@ HEADER_HTML = """
 """
 
 FOOTER_HTML = """
-    <footer class="bg-gray-800 text-white p-6 mt-12 shadow-inner">
-        <div class="container mx-auto text-center">
-            <p>&copy; 2025 Country's News. All rights reserved.</p>
-            <div class="flex justify-center space-x-4 mt-3">
-                <a href="about-us.html" class="hover:underline text-gray-400">About Us</a>
-                <a href="contact.html" class="hover:underline text-gray-400">Contact</a>
-                <a href="privacy-policy.html" class="hover:underline text-gray-400">Privacy Policy</a>
-                <a href="disclaimer.html" class="hover:underline text-gray-400">Disclaimer</a>
+    <footer class="bg-gray-900 text-white p-8 mt-12 shadow-inner">
+        <div class="container mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Logo and Description -->
+                <div class="text-center md:text-left">
+                    <img src="{logo_path}" alt="Country's News Logo" class="h-16 w-auto mx-auto md:mx-0 mb-4">
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Your trusted source for global news and local insights. 
+                        Delivering quality journalism that matters.
+                    </p>
+                </div>
+                
+                <!-- Quick Links -->
+                <div class="text-center">
+                    <h3 class="text-lg font-semibold mb-4 text-blue-400">Quick Links</h3>
+                    <div class="space-y-2">
+                        <a href="{about_link}" class="block hover:text-blue-400 transition-colors text-gray-400">About Us</a>
+                        <a href="{contact_link}" class="block hover:text-blue-400 transition-colors text-gray-400">Contact</a>
+                        <a href="{privacy_link}" class="block hover:text-blue-400 transition-colors text-gray-400">Privacy Policy</a>
+                        <a href="{disclaimer_link}" class="block hover:text-blue-400 transition-colors text-gray-400">Disclaimer</a>
+                    </div>
+                </div>
+                
+                <!-- Connect -->
+                <div class="text-center md:text-right">
+                    <h3 class="text-lg font-semibold mb-4 text-blue-400">Stay Connected</h3>
+                    <p class="text-gray-400 text-sm mb-2">Follow us for the latest updates</p>
+                    <div class="flex justify-center md:justify-end space-x-4 mt-4">
+                        <a href="{rss_link}" class="text-gray-400 hover:text-blue-400 transition-colors" title="RSS Feed">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M3.429 2.571c8.571 0 15.714 7.143 15.714 15.714h-3.143c0-6.857-5.714-12.571-12.571-12.571v-3.143zM3.429 9.714c4.571 0 8.571 4 8.571 8.571h-3.143c0-3.143-2.286-5.429-5.429-5.429v-3.142zM6.571 16c0 1.571-1.286 2.857-2.857 2.857s-2.857-1.286-2.857-2.857 1.286-2.857 2.857-2.857 2.857 1.286 2.857 2.857z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Copyright -->
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center">
+                <p class="text-gray-400 text-sm">&copy; 2025 Country's News. All rights reserved. | Powered by Quality Journalism</p>
             </div>
         </div>
     </footer>
@@ -275,7 +331,7 @@ INDEX_TEMPLATE = f"""<!DOCTYPE html>
     <meta name="keywords" content="country news, global news, latest headlines, world news, news analysis">
     <meta property="og:title" content="Country's News - Latest Headlines">
     <meta property="og:description" content="Get the latest news and in-depth analysis from around the world on Country's News. Your source for global headlines.">
-    <meta property="og:image" content="https://placehold.co/1200x630/1f2937/ffffff?text=Country's+News">
+    <meta property="og:image" content="https://countrysnews.com/logo-header.svg">
     <meta property="og:url" content="https://countrysnews.com/index.html">
     <meta name="twitter:card" content="summary_large_image">
 </head>
@@ -370,7 +426,7 @@ INDEX_TEMPLATE = f"""<!DOCTYPE html>
     
     {{javascript_content}}
     
-    {FOOTER_HTML}
+    {{footer_html}}
 </body>
 </html>"""
 
@@ -469,7 +525,7 @@ ARTICLE_TEMPLATE = f"""<!DOCTYPE html>
     
     {{javascript_content}}
     
-    {FOOTER_HTML}
+    {{footer_html}}
 </body>
 </html>"""
 
@@ -524,7 +580,7 @@ CATEGORY_TEMPLATE = f"""<!DOCTYPE html>
         </div>                         
     </div>
     
-    {FOOTER_HTML}
+    {{footer_html}}
 </body>
 </html>"""
 
@@ -769,7 +825,7 @@ CONTACT_TEMPLATE = """<!DOCTYPE html>
         }});
     </script>
     
-    {FOOTER_HTML}
+    {{footer_html}}
 </body>
 </html>"""
 
@@ -891,7 +947,7 @@ PRIVACY_POLICY_TEMPLATE = """<!DOCTYPE html>
         </div>
     </div>
     
-    {FOOTER_HTML}
+    {{footer_html}}
 </body>
 </html>"""
 
@@ -984,7 +1040,7 @@ DISCLAIMER_TEMPLATE = """<!DOCTYPE html>
         </div>
     </div>
     
-    {FOOTER_HTML}
+    {{footer_html}}
 </body>
 </html>"""
 
@@ -1120,7 +1176,7 @@ ABOUT_US_TEMPLATE = """<!DOCTYPE html>
         </div>
     </div>
     
-    {FOOTER_HTML}
+    {{footer_html}}
 </body>
 </html>"""
 
@@ -1139,7 +1195,7 @@ def create_directory(path):
     os.makedirs(path, exist_ok=True)
 
 def generate_header_html(unique_categories, current_page_type="home"):
-    """Generates the header HTML with dynamic category links."""
+    """Generates the header HTML with dynamic category links and proper path handling."""
     category_links = ""
     for category in unique_categories:
         category_slug = generate_slug(category)
@@ -1150,12 +1206,41 @@ def generate_header_html(unique_categories, current_page_type="home"):
             link_prefix = "" # Already in categories directory
         else: # home page or contact page (both at root level)
             link_prefix = "categories/"
-        category_links += f'<li><a href="{link_prefix}{category_slug}.html" class="hover:underline">{category}</a></li>'
+        category_links += f'<li><a href="{link_prefix}{category_slug}.html" class="hover:text-blue-200 transition-colors px-2 py-1 rounded">{category}</a></li>'
     
-    home_link = "../index.html" if current_page_type in ["article", "category"] else "index.html"
-    contact_link = "../contact.html" if current_page_type in ["article", "category"] else "contact.html"
+    # Adjust all paths based on current page type
+    if current_page_type in ["article", "category"]:
+        home_link = "../index.html"
+        contact_link = "../contact.html"
+        about_link = "../about-us.html"
+        logo_path = "../logo.svg"
+    else: # home page and other root-level pages
+        home_link = "index.html"
+        contact_link = "contact.html"
+        about_link = "about-us.html"
+        logo_path = "logo.svg"
 
-    return HEADER_HTML.format(home_link=home_link, category_links=category_links, contact_link=contact_link)
+    return HEADER_HTML.format(home_link=home_link, category_links=category_links, contact_link=contact_link, about_link=about_link, logo_path=logo_path)
+
+def generate_footer_html(current_page_type="home"):
+    """Generates the footer HTML with dynamic links."""
+    # Adjust all paths based on current page type
+    if current_page_type in ["article", "category"]:
+        about_link = "../about-us.html"
+        contact_link = "../contact.html"
+        privacy_link = "../privacy-policy.html"
+        disclaimer_link = "../disclaimer.html"
+        rss_link = "../rss.xml"
+        logo_path = "../logo.svg"
+    else: # home page and other root-level pages
+        about_link = "about-us.html"
+        contact_link = "contact.html"
+        privacy_link = "privacy-policy.html"
+        disclaimer_link = "disclaimer.html"
+        rss_link = "rss.xml"
+        logo_path = "logo.svg"
+    
+    return FOOTER_HTML.format(about_link=about_link, contact_link=contact_link, privacy_link=privacy_link, disclaimer_link=disclaimer_link, rss_link=rss_link, logo_path=logo_path)
 
 def adjust_image_url_for_path(image_url, current_page_type):
     """
@@ -1181,7 +1266,7 @@ def generate_article_card(article, current_page_type="home"):
     elif current_page_type == "article": # Article pages are in 'articles/' so links to other articles need '../'
         link_prefix = "../"
 
-    # Create thumbnail URL - priority order: thumbnailImageUrl, ogImage with thumb.jpg, ogImage, placeholder
+    # Create thumbnail URL - priority order: thumbnailImageUrl, ogImage with thumb.webp, ogImage, placeholder
     thumbnail_url = ''
     
     # First, check if article has a dedicated thumbnailImageUrl
@@ -1190,11 +1275,11 @@ def generate_article_card(article, current_page_type="home"):
     else:
         # Fall back to ogImage logic
         og_image = article.get('ogImage', '')
-        if og_image and 'main.jpg' in og_image:
-            # Replace main.jpg with thumb.jpg
-            thumbnail_url = og_image.replace('main.jpg', 'thumb.jpg')
+        if og_image and 'main.webp' in og_image:
+            # Replace main.webp with thumb.webp
+            thumbnail_url = og_image.replace('main.webp', 'thumb.webp')
         elif og_image:
-            # If ogImage exists but doesn't have main.jpg, use it as is
+            # If ogImage exists but doesn't have main.webp, use it as is
             thumbnail_url = og_image
     
     # Final fallback to placeholder if no valid thumbnail found
@@ -1400,7 +1485,7 @@ def generate_index_page(articles_data, unique_categories):
         }}
         
         function createArticleCard(article) {{
-            // Create thumbnail URL - priority order: thumbnailImageUrl, ogImage with thumb.jpg, ogImage, placeholder
+            // Create thumbnail URL - priority order: thumbnailImageUrl, ogImage with thumb.webp, ogImage, placeholder
             let thumbnailUrl = '';
             
             // First, check if article has a dedicated thumbnailImageUrl
@@ -1409,8 +1494,8 @@ def generate_index_page(articles_data, unique_categories):
             }} else {{
                 // Fall back to ogImage logic
                 thumbnailUrl = article.ogImage || '';
-                if (thumbnailUrl && thumbnailUrl.includes('main.jpg')) {{
-                    thumbnailUrl = thumbnailUrl.replace('main.jpg', 'thumb.jpg');
+                if (thumbnailUrl && thumbnailUrl.includes('main.webp')) {{
+                    thumbnailUrl = thumbnailUrl.replace('main.webp', 'thumb.webp');
                 }}
             }}
             
@@ -1499,10 +1584,12 @@ def generate_index_page(articles_data, unique_categories):
     """
 
     with open(index_path, 'w', encoding='utf-8') as f:
+        footer_html = generate_footer_html("home")
         f.write(INDEX_TEMPLATE.format(
             header_html=header_html, 
             initial_articles_cards=initial_articles_cards,
-            javascript_content=javascript_content
+            javascript_content=javascript_content,
+            footer_html=footer_html
         ))
     print(f"Generated {index_path} with Load More functionality")
     print(f"Initial load: {len(initial_articles)} articles, Total available: {len(sorted_articles)} articles")
@@ -1604,6 +1691,7 @@ def generate_article_pages(articles_data, unique_categories):
         category_slug = generate_slug(article['category'])
 
         with open(article_path, 'w', encoding='utf-8') as f:
+            footer_html = generate_footer_html("article")
             f.write(ARTICLE_TEMPLATE.format(
                 title=article['title'],
                 author=article['author'],
@@ -1630,7 +1718,8 @@ def generate_article_pages(articles_data, unique_categories):
                 call_to_action_html=call_to_action_html,
                 social_hashtags_html=social_hashtags_html,
                 javascript_content=javascript_content,
-                header_html=header_html
+                header_html=header_html,
+                footer_html=footer_html
             ))
         print(f"Generated {article_path}")
 
@@ -1671,11 +1760,13 @@ def generate_category_pages(articles_data, unique_categories):
         header_html = generate_header_html(unique_categories, current_page_type="category")
 
         with open(category_path, 'w', encoding='utf-8') as f:
+            footer_html = generate_footer_html("category")
             f.write(CATEGORY_TEMPLATE.format(
                 category_name=category,
                 category_slug=category_slug,
                 header_html=header_html,
-                articles_cards=articles_cards
+                articles_cards=articles_cards,
+                footer_html=footer_html
             ))
         print(f"Generated {category_path} with {len(sorted_articles_in_category)} articles and integrated ads")
 
@@ -1786,13 +1877,14 @@ def generate_contact_page(unique_categories):
     
     try:
         with open(contact_path, 'w', encoding='utf-8') as f:
-            # Replace {{header_html}} first, then format with BASE_HTML_HEAD and FOOTER_HTML
+            # Replace {{header_html}} first, then format with BASE_HTML_HEAD and footer_html
             # We need to temporarily replace double braces in CSS to avoid format conflicts
             temp_base_html = BASE_HTML_HEAD.replace('{{', '<<<DOUBLE_BRACE_OPEN>>>').replace('}}', '<<<DOUBLE_BRACE_CLOSE>>>')
-            temp_footer_html = FOOTER_HTML.replace('{{', '<<<DOUBLE_BRACE_OPEN>>>').replace('}}', '<<<DOUBLE_BRACE_CLOSE>>>')
+            footer_html = generate_footer_html("contact")
+            temp_footer_html = footer_html.replace('{{', '<<<DOUBLE_BRACE_OPEN>>>').replace('}}', '<<<DOUBLE_BRACE_CLOSE>>>')
             
             template_with_header = CONTACT_TEMPLATE.replace('{{header_html}}', header_html)
-            formatted_html = template_with_header.format(BASE_HTML_HEAD=temp_base_html, FOOTER_HTML=temp_footer_html)
+            formatted_html = template_with_header.format(BASE_HTML_HEAD=temp_base_html, footer_html=temp_footer_html)
             
             # Restore the CSS braces
             final_html = formatted_html.replace('<<<DOUBLE_BRACE_OPEN>>>', '{').replace('<<<DOUBLE_BRACE_CLOSE>>>', '}')
@@ -1810,13 +1902,14 @@ def generate_privacy_policy_page(unique_categories):
     
     try:
         with open(privacy_path, 'w', encoding='utf-8') as f:
-            # Replace {{header_html}} first, then format with BASE_HTML_HEAD and FOOTER_HTML
+            # Replace {{header_html}} first, then format with BASE_HTML_HEAD and footer_html
             # We need to temporarily replace double braces in CSS to avoid format conflicts
             temp_base_html = BASE_HTML_HEAD.replace('{{', '<<<DOUBLE_BRACE_OPEN>>>').replace('}}', '<<<DOUBLE_BRACE_CLOSE>>>')
-            temp_footer_html = FOOTER_HTML.replace('{{', '<<<DOUBLE_BRACE_OPEN>>>').replace('}}', '<<<DOUBLE_BRACE_CLOSE>>>')
+            footer_html = generate_footer_html("privacy-policy")
+            temp_footer_html = footer_html.replace('{{', '<<<DOUBLE_BRACE_OPEN>>>').replace('}}', '<<<DOUBLE_BRACE_CLOSE>>>')
             
             template_with_header = PRIVACY_POLICY_TEMPLATE.replace('{{header_html}}', header_html)
-            formatted_html = template_with_header.format(BASE_HTML_HEAD=temp_base_html, FOOTER_HTML=temp_footer_html)
+            formatted_html = template_with_header.format(BASE_HTML_HEAD=temp_base_html, footer_html=temp_footer_html)
             
             # Restore the CSS braces
             final_html = formatted_html.replace('<<<DOUBLE_BRACE_OPEN>>>', '{').replace('<<<DOUBLE_BRACE_CLOSE>>>', '}')
@@ -1834,13 +1927,14 @@ def generate_disclaimer_page(unique_categories):
     
     try:
         with open(disclaimer_path, 'w', encoding='utf-8') as f:
-            # Replace {{header_html}} first, then format with BASE_HTML_HEAD and FOOTER_HTML
+            # Replace {{header_html}} first, then format with BASE_HTML_HEAD and footer_html
             # We need to temporarily replace double braces in CSS to avoid format conflicts
             temp_base_html = BASE_HTML_HEAD.replace('{{', '<<<DOUBLE_BRACE_OPEN>>>').replace('}}', '<<<DOUBLE_BRACE_CLOSE>>>')
-            temp_footer_html = FOOTER_HTML.replace('{{', '<<<DOUBLE_BRACE_OPEN>>>').replace('}}', '<<<DOUBLE_BRACE_CLOSE>>>')
+            footer_html = generate_footer_html("disclaimer")
+            temp_footer_html = footer_html.replace('{{', '<<<DOUBLE_BRACE_OPEN>>>').replace('}}', '<<<DOUBLE_BRACE_CLOSE>>>')
             
             template_with_header = DISCLAIMER_TEMPLATE.replace('{{header_html}}', header_html)
-            formatted_html = template_with_header.format(BASE_HTML_HEAD=temp_base_html, FOOTER_HTML=temp_footer_html)
+            formatted_html = template_with_header.format(BASE_HTML_HEAD=temp_base_html, footer_html=temp_footer_html)
             
             # Restore the CSS braces
             final_html = formatted_html.replace('<<<DOUBLE_BRACE_OPEN>>>', '{').replace('<<<DOUBLE_BRACE_CLOSE>>>', '}')
@@ -1858,13 +1952,14 @@ def generate_about_us_page(unique_categories):
     
     try:
         with open(about_path, 'w', encoding='utf-8') as f:
-            # Replace {{header_html}} first, then format with BASE_HTML_HEAD and FOOTER_HTML
+            # Replace {{header_html}} first, then format with BASE_HTML_HEAD and footer_html
             # We need to temporarily replace double braces in CSS to avoid format conflicts
             temp_base_html = BASE_HTML_HEAD.replace('{{', '<<<DOUBLE_BRACE_OPEN>>>').replace('}}', '<<<DOUBLE_BRACE_CLOSE>>>')
-            temp_footer_html = FOOTER_HTML.replace('{{', '<<<DOUBLE_BRACE_OPEN>>>').replace('}}', '<<<DOUBLE_BRACE_CLOSE>>>')
+            footer_html = generate_footer_html("about-us")
+            temp_footer_html = footer_html.replace('{{', '<<<DOUBLE_BRACE_OPEN>>>').replace('}}', '<<<DOUBLE_BRACE_CLOSE>>>')
             
             template_with_header = ABOUT_US_TEMPLATE.replace('{{header_html}}', header_html)
-            formatted_html = template_with_header.format(BASE_HTML_HEAD=temp_base_html, FOOTER_HTML=temp_footer_html)
+            formatted_html = template_with_header.format(BASE_HTML_HEAD=temp_base_html, footer_html=temp_footer_html)
             
             # Restore the CSS braces
             final_html = formatted_html.replace('<<<DOUBLE_BRACE_OPEN>>>', '{').replace('<<<DOUBLE_BRACE_CLOSE>>>', '}')
@@ -1873,10 +1968,30 @@ def generate_about_us_page(unique_categories):
     except Exception as e:
         print(f"Error generating about us page: {e}")
 
+def copy_logo_files():
+    """Copy logo files to the dist directory"""
+    logo_files = ['logo.svg', 'favicon.svg', 'logo-header.svg']
+    
+    for logo_file in logo_files:
+        source_path = logo_file
+        dest_path = os.path.join(OUTPUT_DIR, logo_file)
+        
+        if os.path.exists(source_path):
+            try:
+                shutil.copy2(source_path, dest_path)
+                print(f"Copied {logo_file} to dist directory")
+            except Exception as e:
+                print(f"Error copying {logo_file}: {e}")
+        else:
+            print(f"Warning: {logo_file} not found, skipping")
+
 def main():
     create_directory(OUTPUT_DIR)
     create_directory(os.path.join(OUTPUT_DIR, "articles"))
     create_directory(os.path.join(OUTPUT_DIR, "categories"))
+    
+    # Copy logo files to dist directory
+    copy_logo_files()
 
     articles_data = []
     if os.path.exists(ARTICLES_DATA_FILE):
