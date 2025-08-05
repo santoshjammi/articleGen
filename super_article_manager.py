@@ -167,7 +167,7 @@ def generate_structured_data(article: Dict) -> str:
             "name": "JAMSA - Country's News",
             "logo": {
                 "@type": "ImageObject",
-                "url": "https://countrysnews.com/logo.png"
+                "url": "https://countrysnews.com/logo.webp"
             }
         },
         "description": article.get("metaDescription", article.get("excerpt", ""))

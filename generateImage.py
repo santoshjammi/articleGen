@@ -132,7 +132,7 @@ def batch_convert_to_webp(images_dir="./images/", quality=85):
     # Walk through all subdirectories
     for root, dirs, files in os.walk(images_dir):
         for file in files:
-            if file.lower().endswith(('.jpg', '.jpeg', '.png')):
+            if file.lower().endswith(('.webp', '.webp', '.webp')):
                 input_path = os.path.join(root, file)
                 base_name = os.path.splitext(input_path)[0]
                 output_path = f"{base_name}.webp"
@@ -165,10 +165,10 @@ def batch_convert_to_webp(images_dir="./images/", quality=85):
     return summary
         
 # for file in os.listdir('./images/'):
-#     if '.jpg' in file:
+#     if '.webp' in file:
 #         print("./images/"+file)
 #         im = Image.open("./images/"+file)
-#         newName="./images/"+os.path.splitext(file)[0]+'.png'
+#         newName="./images/"+os.path.splitext(file)[0]+'.webp'
 #         print(newName)
 #         im.save(newName)
     
