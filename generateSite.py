@@ -1988,9 +1988,22 @@ def generate_sitemap(articles_data):
 """
     
     for article in articles_data:
+        # Fix date format - remove 'Z' if it exists and ensure proper format
+        date_modified = article['dateModified']
+        if date_modified.endswith('Z'):
+            date_modified = date_modified[:-1]  # Remove the 'Z'
+        
+        # Ensure the date is in YYYY-MM-DD format
+        if len(date_modified) == 10 and date_modified.count('-') == 2:
+            formatted_date = date_modified
+        else:
+            # Fallback to current date if format is invalid
+            from datetime import datetime
+            formatted_date = datetime.now().strftime('%Y-%m-%d')
+        
         sitemap_content += f"""    <url>
         <loc>https://countrysnews.com/articles/{article['slug']}.html</loc>
-        <lastmod>{article['dateModified']}</lastmod>
+        <lastmod>{formatted_date}</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>

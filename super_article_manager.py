@@ -60,6 +60,27 @@ GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini
 
 # === UTILITY FUNCTIONS ===
 
+def sanitize_date_format(date_str):
+    """Ensure date is in proper YYYY-MM-DD format for sitemaps"""
+    if not date_str:
+        return datetime.now().strftime('%Y-%m-%d')
+    
+    # Remove 'Z' suffix if present
+    if date_str.endswith('Z'):
+        date_str = date_str[:-1]
+    
+    # Check if it's already in correct format
+    if len(date_str) == 10 and date_str.count('-') == 2:
+        try:
+            # Validate it's a real date
+            datetime.strptime(date_str, '%Y-%m-%d')
+            return date_str
+        except ValueError:
+            pass
+    
+    # Fallback to current date if invalid
+    return datetime.now().strftime('%Y-%m-%d')
+
 def generate_slug(title: str) -> str:
     """Generate URL-friendly slug from title"""
     if not title:
@@ -468,7 +489,13 @@ class SuperArticleManager:
                 article['publishDate'] = pub_date.strftime('%Y-%m-%d')
             
             if not article.get('dateModified'):
-                article['dateModified'] = article.get('publishDate', datetime.now().strftime('%Y-%m-%d'))
+                article['dateModified'] = sanitize_date_format(article.get('publishDate', datetime.now().strftime('%Y-%m-%d')))
+            else:
+                article['dateModified'] = sanitize_date_format(article['dateModified'])
+            
+            # Ensure publishDate is also properly formatted
+            if article.get('publishDate'):
+                article['publishDate'] = sanitize_date_format(article['publishDate'])
             
             # Add missing author
             if not article.get('author'):
@@ -753,7 +780,7 @@ class ArticleGenerator:
                 data = json.loads(gen_str)
                 
                 # Generate article metadata
-                now = datetime.now().strftime("%Y-%m-%d")
+                now = sanitize_date_format(datetime.now().strftime("%Y-%m-%d"))
                 slug = generate_slug(data['title'])
                 reading_time, word_count = estimate_reading_time(data['content'])
                 

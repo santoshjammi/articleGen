@@ -9,7 +9,14 @@ A comprehensive Python-based system for generating news articles and creating a 
 ## 🌟 Features
 
 ### 📰 **Article Management**
-- **Duplicate Detection & Removal**: Advanced deduplication with smart quality scoring
+- **Dupl### 🔐 Security Features
+
+- **Contact Form Validation**: Server-side PHP validation
+- **XSS Protection**: Input sanitization
+- **CSRF Protection**: Form token validation
+- **Content Security**: No inline scripts
+- **Privacy Compliance**: GDPR-ready privacy policy
+- **Date Format Protection**: Automatic sanitization prevents sitemap XML errorsetection & Removal**: Advanced deduplication with smart quality scoring
 - **Content Enhancement**: Automatic metadata optimization and SEO improvements
 - **Quality Validation**: Comprehensive integrity checks for all articles
 - **Batch Processing**: Handle large volumes of articles efficiently
