@@ -50,13 +50,13 @@ def generate_eeat_enhanced_site():
     print(f"✅ Loaded {len(articles_data)} E-E-A-T enhanced articles")
     
     # Generate all pages
-    generate_eeat_homepage(articles_data)
-    generate_eeat_article_pages(articles_data)
-    generate_eeat_category_pages(articles_data)
+    generate_homepage(articles_data)
+    generate_article_pages(articles_data)
+    generate_category_pages(articles_data)
     generate_static_pages()
-    generate_eeat_sitemap(articles_data)
+    generate_sitemap(articles_data)
     generate_robots_txt()
-    generate_eeat_rss_feed(articles_data)
+    generate_rss_feed(articles_data)
     
     print("\n🎉 E-E-A-T Enhanced Site Generation Complete!")
     print(f"📁 Website files generated in: {OUTPUT_DIR}/")
@@ -82,69 +82,55 @@ def load_enhanced_articles():
         print(f"❌ Error parsing enhanced articles: {e}")
         return []
 
-def generate_eeat_homepage(articles_data):
-    """Generate homepage with E-E-A-T enhanced features"""
+def generate_homepage(articles_data):
+    """Generate clean homepage with properly displayed articles"""
     
     # Get recent articles for homepage
     recent_articles = sorted(articles_data, 
                            key=lambda x: x.get('publishDate', ''), 
                            reverse=True)[:9]
     
-    # Generate article cards with E-E-A-T indicators
+    # Generate clean article cards
     articles_html = ""
     for article in recent_articles:
+        # Get proper thumbnail URL
+        thumbnail_url = article.get('thumbnailImageUrl', '')
+        if not thumbnail_url:
+            thumbnail_url = article.get('ogImage', '')
+        if not thumbnail_url:
+            thumbnail_url = 'images/default-thumbnail.jpg'  # fallback
         
-        # E-E-A-T trust badges
-        trust_badges = []
-        if article.get('factCheckedBy'):
-            trust_badges.append('<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded mr-1">Fact-Checked</span>')
-        if article.get('authorProfile', {}).get('credentials'):
-            trust_badges.append('<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-1">Expert Author</span>')
-        
-        trust_badges_html = ''.join(trust_badges)
-        
-        # E-E-A-T score indicator
-        eeat_score = article.get('eeatScore', {})
-        overall_score = eeat_score.get('overall', 85)
-        score_color = "green" if overall_score >= 85 else "yellow" if overall_score >= 70 else "red"
+        # Clean the URL path for proper display
+        if thumbnail_url.startswith('dist/'):
+            thumbnail_url = thumbnail_url.replace('dist/', '')
         
         article_card = f'''
-        <article class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-100">
+        <article class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
             <a href="articles/{article['slug']}.html" class="block">
-                <img src="{article.get('thumbnailImageUrl', article.get('ogImage', ''))}" 
+                <img src="{thumbnail_url}" 
                      alt="{article.get('imageAltText', article['title'])}" 
-                     class="w-full h-48 object-cover">
+                     class="w-full h-48 object-cover"
+                     onerror="this.src='images/placeholder.jpg'">
                 <div class="p-6">
-                    <!-- E-E-A-T Trust Indicators -->
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex flex-wrap">
-                            {trust_badges_html}
-                        </div>
-                        <div class="bg-{score_color}-100 text-{score_color}-800 text-xs px-2 py-1 rounded">
-                            E-E-A-T: {overall_score}%
-                        </div>
+                    <div class="mb-3">
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                            {article.get('category', 'News')}
+                        </span>
                     </div>
                     
                     <h2 class="text-xl font-bold text-blue-800 mb-2 hover:text-blue-600 transition-colors">
                         {article['title'][:80]}{"..." if len(article['title']) > 80 else ""}
                     </h2>
-                    <p class="text-gray-600 text-sm mb-3">
+                    <p class="text-gray-600 text-sm mb-4">
                         {article.get('excerpt', '')[:120]}{"..." if len(article.get('excerpt', '')) > 120 else ""}
                     </p>
                     
-                    <!-- Enhanced Author Information -->
-                    <div class="flex items-center text-sm text-gray-500 mb-2">
-                        <div class="flex items-center">
-                            <div class="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold mr-2">
-                                {article.get('authorProfile', {}).get('name', article.get('author', 'Author'))[0]}
-                            </div>
-                            <span class="font-medium">{article.get('authorProfile', {}).get('name', article.get('author', 'Editorial Team'))}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center justify-between text-xs text-gray-400">
+                    <div class="flex items-center justify-between text-sm text-gray-500">
+                        <span>By {article.get('author', 'Editor')}</span>
                         <span>{article.get('publishDate', '')}</span>
-                        <span>{article.get('readingTimeMinutes', 5)} min read</span>
+                    </div>
+                    <div class="text-xs text-gray-400 mt-1">
+                        {article.get('readingTimeMinutes', 5)} min read
                     </div>
                 </div>
             </a>
