@@ -34,7 +34,7 @@ from getTrendInput import get_top_region_keywords
 from generateImage import generateImage
 
 # === CONFIGURATION ===
-DEFAULT_ARTICLES_FILE = "perplexityArticles.json"
+DEFAULT_ARTICLES_FILE = "perplexityArticles_eeat_enhanced.json"
 LEGACY_ARTICLES_FILE = "articles.json"
 DEFAULT_AUTHOR = "JAMSA - Country's News"
 DEFAULT_LANGUAGE = "en-IN"
@@ -963,6 +963,165 @@ async def generate_articles_from_trends(manager: SuperArticleManager, top_n: int
     manager.stats['articles_generated'] = successful_articles
     print(f"🎉 Success! Generated {successful_articles} articles from trends.")
 
+async def generate_articles_from_trends_per_region(manager: SuperArticleManager, top_n: int = 3, target_regions: List[str] = None) -> None:
+    """Generate articles from top trending keywords of each region separately"""
+    print("🌍 Starting per-region trend-based article generation...")
+    
+    generator = ArticleGenerator(manager)
+    article_id_counter = manager.get_next_article_id()
+    
+    # Get ALL trending keywords
+    all_keywords = get_top_region_keywords(top_n=1000)  # Get many to separate by region
+    if not all_keywords:
+        print("❌ No trending keywords found!")
+        return
+    
+    # Group keywords by region
+    keywords_by_region = {}
+    for region, keyword, searches in all_keywords:
+        if region not in keywords_by_region:
+            keywords_by_region[region] = []
+        keywords_by_region[region].append((keyword, searches))
+    
+    print(f"📊 Found keywords from {len(keywords_by_region)} regions")
+    
+    # Get top N keywords from each region
+    keywords_to_process = []
+    for region, region_keywords in keywords_by_region.items():
+        # Sort by searches and take top N for this region
+        region_keywords.sort(key=lambda x: x[1], reverse=True)
+        top_keywords = region_keywords[:top_n]
+        
+        print(f"🎯 {region} Region - Top {len(top_keywords)} keywords:")
+        for keyword, searches in top_keywords:
+            if keyword in manager.processed_keywords:
+                print(f"   ⏭️  SKIP: '{keyword}' already processed")
+                continue
+            print(f"   • {keyword} ({searches:,} searches)")
+            
+            # Use target regions if specified, otherwise use original region
+            if target_regions:
+                for target_region in target_regions:
+                    keywords_to_process.append((target_region, keyword, searches))
+            else:
+                keywords_to_process.append((region, keyword, searches))
+    
+    if not keywords_to_process:
+        print("ℹ️  No new trending keywords to process!")
+        return
+    
+    total_regions = len(target_regions) if target_regions else len(keywords_by_region)
+    unique_keywords = len(set(k[1] for k in keywords_to_process))
+    print(f"📝 Will generate {len(keywords_to_process)} articles ({total_regions} regions × {unique_keywords} unique keywords)")
+    
+    # Generate articles
+    tasks = []
+    async with aiohttp.ClientSession() as session:
+        for region, keyword, searches in keywords_to_process:
+            task = generator.generate_article_from_keyword(
+                session, keyword, region, article_id_counter, "", searches
+            )
+            tasks.append(task)
+            article_id_counter += 1
+        
+        print("⏳ Generating articles... This may take a few minutes.")
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    # Process results
+    successful_articles = 0
+    for result in results:
+        if isinstance(result, Exception):
+            print(f"❌ Task failed with exception: {result}")
+            continue
+            
+        if result:
+            slug = result["slug"]
+            if slug in manager.articles_map:
+                manager.articles_map[slug].update(result)
+                print(f"🔄 Updated: {result['title']}")
+            else:
+                manager.articles_map[slug] = result
+                manager.articles.append(result)
+                print(f"✨ Added: {result['title']}")
+            successful_articles += 1
+    
+    manager.stats['articles_generated'] = successful_articles
+    print(f"🎉 Success! Generated {successful_articles} articles from top keywords per region.")
+
+async def generate_articles_from_trends_multi_region(manager: SuperArticleManager, top_n: int = 3, target_regions: List[str] = None) -> None:
+    """Generate articles from trending keywords for multiple target regions"""
+    print("🌍 Starting multi-region trend-based article generation...")
+    
+    generator = ArticleGenerator(manager)
+    article_id_counter = manager.get_next_article_id()
+    
+    # Get trending keywords
+    keywords = get_top_region_keywords(top_n=top_n)
+    if not keywords:
+        print("❌ No trending keywords found!")
+        return
+    
+    print(f"📊 Found {len(keywords)} trending keywords")
+    
+    # If no target regions specified, use original regions (fallback to existing behavior)
+    if not target_regions:
+        print("ℹ️  No target regions specified, using original keyword regions")
+        await generate_articles_from_trends(manager, top_n)
+        return
+    
+    print(f"🎯 Target regions: {', '.join(target_regions)}")
+    
+    # Filter already processed keywords and create combinations with target regions
+    keywords_to_process = []
+    for _, keyword, searches in keywords:
+        if keyword in manager.processed_keywords:
+            print(f"⏭️  SKIP: '{keyword}' already processed")
+            continue
+        
+        # Generate articles for this keyword in each target region
+        for target_region in target_regions:
+            keywords_to_process.append((target_region, keyword, searches))
+    
+    if not keywords_to_process:
+        print("ℹ️  No new trending keywords to process!")
+        return
+    
+    print(f"📝 Will generate {len(keywords_to_process)} articles ({len(target_regions)} regions × {len(set(k[1] for k in keywords_to_process))} unique keywords)")
+    
+    # Generate articles
+    tasks = []
+    async with aiohttp.ClientSession() as session:
+        for region, keyword, searches in keywords_to_process:
+            task = generator.generate_article_from_keyword(
+                session, keyword, region, article_id_counter, "", searches
+            )
+            tasks.append(task)
+            article_id_counter += 1
+        
+        print("⏳ Generating articles... This may take a few minutes.")
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    # Process results
+    successful_articles = 0
+    for result in results:
+        if isinstance(result, Exception):
+            print(f"❌ Task failed with exception: {result}")
+            continue
+            
+        if result:
+            slug = result["slug"]
+            if slug in manager.articles_map:
+                manager.articles_map[slug].update(result)
+                print(f"🔄 Updated: {result['title']}")
+            else:
+                manager.articles_map[slug] = result
+                manager.articles.append(result)
+                print(f"✨ Added: {result['title']}")
+            successful_articles += 1
+    
+    manager.stats['articles_generated'] = successful_articles
+    print(f"🎉 Success! Generated {successful_articles} articles from trends across {len(target_regions)} regions.")
+
 async def generate_articles_from_keywords(manager: SuperArticleManager, keywords: List[str], 
                                         region: str = "India", custom_prompt: str = "", 
                                         skip_existing: bool = True) -> None:
@@ -1098,6 +1257,154 @@ def interactive_keyword_input() -> Tuple[List[str], str, str]:
     
     return keywords, region, custom_prompt
 
+async def generate_images_for_articles(manager: SuperArticleManager, specific_articles: List[str] = None, 
+                                     regenerate: bool = False, image_types: List[str] = ['all']) -> None:
+    """Generate images for existing articles"""
+    print("🖼️  Starting image generation for existing articles...")
+    
+    if not manager.articles:
+        print("❌ No articles found to generate images for!")
+        return
+    
+    # Filter articles
+    articles_to_process = []
+    if specific_articles:
+        # Generate for specific articles by slug
+        for slug in specific_articles:
+            article = manager.articles_map.get(slug)
+            if article:
+                articles_to_process.append(article)
+            else:
+                print(f"❌ Article with slug '{slug}' not found")
+    else:
+        # Process all articles
+        articles_to_process = manager.articles
+    
+    if not articles_to_process:
+        print("❌ No articles to process!")
+        return
+    
+    print(f"📊 Processing {len(articles_to_process)} articles")
+    
+    images_generated = 0
+    for i, article in enumerate(articles_to_process, 1):
+        slug = article.get('slug')
+        title = article.get('title', 'Untitled')
+        
+        if not slug:
+            print(f"⏭️  SKIP: Article {i} - no slug")
+            continue
+        
+        print(f"\n📸 [{i}/{len(articles_to_process)}] Processing: {title[:50]}...")
+        
+        # Create images directory
+        article_images_dir = os.path.join(IMAGES_BASE_DIR, slug)
+        os.makedirs(article_images_dir, exist_ok=True)
+        
+        # Track what images we generate
+        generated_files = []
+        
+        # Generate main image
+        if 'all' in image_types or 'main' in image_types:
+            main_img_path = os.path.join(article_images_dir, "main.webp")
+            if regenerate or not os.path.exists(main_img_path):
+                og_title = article.get('ogTitle', title)
+                image_alt = article.get('imageAltText', f'News image for {title}')
+                
+                main_prompt = f"Professional news article image for: {og_title}. Visual style: {image_alt}. High quality, news-appropriate."
+                main_image_url = generateImage(main_prompt, main_img_path)
+                
+                if main_image_url and os.path.exists(main_img_path):
+                    # Update article with new image URL
+                    article['ogImage'] = main_image_url
+                    generated_files.append(main_img_path)
+                    print(f"   ✅ Generated main image")
+                else:
+                    print(f"   ❌ Failed to generate main image")
+            else:
+                print(f"   ⏭️  Main image already exists")
+        
+        # Generate thumbnail image
+        if 'all' in image_types or 'thumbnail' in image_types:
+            thumb_img_path = os.path.join(article_images_dir, "thumb.webp")
+            if regenerate or not os.path.exists(thumb_img_path):
+                og_title = article.get('ogTitle', title)
+                
+                thumb_prompt = f"Thumbnail for news article: {og_title}. Compact, visually appealing, news-style thumbnail."
+                thumb_image_url = generateImage(thumb_prompt, thumb_img_path)
+                
+                if thumb_image_url and os.path.exists(thumb_img_path):
+                    # Update article with new thumbnail URL
+                    article['thumbnailImageUrl'] = thumb_image_url
+                    generated_files.append(thumb_img_path)
+                    print(f"   ✅ Generated thumbnail image")
+                else:
+                    print(f"   ❌ Failed to generate thumbnail image")
+            else:
+                print(f"   ⏭️  Thumbnail image already exists")
+        
+        # Generate inline images
+        if 'all' in image_types or 'inline' in image_types:
+            inline_images = article.get('inlineImages', [])
+            if not inline_images:
+                # Try to create some inline images based on content
+                content = article.get('content', '')
+                if content and len(content) > 1000:  # Only for substantial articles
+                    # Create 2-3 inline images
+                    inline_descriptions = [
+                        {'description': f'Supporting illustration for {title}', 'caption': 'Related news illustration'},
+                        {'description': f'Visual context for {title}', 'caption': 'News context image'}
+                    ]
+                    article['inlineImages'] = []
+                else:
+                    inline_descriptions = []
+            else:
+                # Use existing inline image descriptions
+                inline_descriptions = [
+                    {'description': img.get('alt', f'Inline image for {title}'), 
+                     'caption': img.get('caption', 'Article illustration')}
+                    for img in inline_images
+                ]
+            
+            for j, img_desc in enumerate(inline_descriptions):
+                inline_img_path = os.path.join(article_images_dir, f"inline_{j+1}.webp")
+                if regenerate or not os.path.exists(inline_img_path):
+                    inline_prompt = f"Supporting image for article: {img_desc['description']}. Caption context: {img_desc['caption']}. Professional, high-quality news illustration."
+                    inline_image_url = generateImage(inline_prompt, inline_img_path)
+                    
+                    if inline_image_url and os.path.exists(inline_img_path):
+                        # Update or add to inline images
+                        if j < len(article.get('inlineImages', [])):
+                            article['inlineImages'][j]['url'] = inline_image_url
+                        else:
+                            if 'inlineImages' not in article:
+                                article['inlineImages'] = []
+                            article['inlineImages'].append({
+                                'url': inline_image_url,
+                                'alt': img_desc['description'],
+                                'caption': img_desc['caption'],
+                                'placementHint': f'after paragraph {j+2}'
+                            })
+                        generated_files.append(inline_img_path)
+                        print(f"   ✅ Generated inline image {j+1}")
+                    else:
+                        print(f"   ❌ Failed to generate inline image {j+1}")
+                else:
+                    print(f"   ⏭️  Inline image {j+1} already exists")
+        
+        # Backup generated images
+        if generated_files:
+            backup_images(slug, generated_files)
+            images_generated += len(generated_files)
+            print(f"   💾 Backed up {len(generated_files)} images")
+    
+    # Save updated articles with new image URLs
+    if images_generated > 0:
+        manager.save_articles()
+        print(f"\n🎉 Generated {images_generated} images for articles!")
+    else:
+        print(f"\nℹ️  No new images generated")
+
 # === COMMAND-LINE INTERFACE ===
 
 def create_parser() -> argparse.ArgumentParser:
@@ -1128,6 +1435,10 @@ Examples:
     trends_parser = gen_subparsers.add_parser('trends', help='Generate from trending keywords')
     trends_parser.add_argument('--count', '-c', type=int, default=3,
                               help='Number of trending keywords to process (default: 3)')
+    trends_parser.add_argument('--regions', nargs='*', 
+                              help='Target regions for articles (e.g., India USA UK). If not specified, uses original keyword regions')
+    trends_parser.add_argument('--per-region', action='store_true',
+                              help='Get top N keywords from each region separately instead of global top N')
     
     # Generate -> Keywords
     keywords_parser = gen_subparsers.add_parser('keywords', help='Generate from specific keywords')
@@ -1170,13 +1481,24 @@ Examples:
     # Stats command
     stats_parser = subparsers.add_parser('stats', help='Show article statistics')
     
+    # Images command
+    images_parser = subparsers.add_parser('images', help='Generate images for existing articles')
+    images_parser.add_argument('--regenerate', action='store_true',
+                              help='Regenerate images even if they already exist')
+    images_parser.add_argument('--missing-only', action='store_true',
+                              help='Only generate images for articles missing them (default)')
+    images_parser.add_argument('--articles', nargs='*',
+                              help='Specific article slugs to generate images for (space-separated)')
+    images_parser.add_argument('--type', choices=['main', 'thumbnail', 'inline', 'all'], default='all',
+                              help='Type of images to generate (default: all)')
+    
     # Backup command
     backup_parser = subparsers.add_parser('backup', help='Backup operations')
     backup_parser.add_argument('--images', action='store_true',
                               help='Backup all article images to local directory')
     
     # Common arguments
-    for p in [gen_parser, enhance_parser, workflow_parser, stats_parser, backup_parser]:
+    for p in [gen_parser, enhance_parser, workflow_parser, stats_parser, images_parser, backup_parser]:
         p.add_argument('--file', '-f', default=DEFAULT_ARTICLES_FILE,
                       help='Articles file to use')
         p.add_argument('--no-backup', action='store_true',
@@ -1213,7 +1535,12 @@ async def main():
                 return
                 
             if args.gen_mode == 'trends':
-                await generate_articles_from_trends(manager, args.count)
+                if args.per_region:
+                    await generate_articles_from_trends_per_region(manager, args.count, args.regions)
+                elif args.regions:
+                    await generate_articles_from_trends_multi_region(manager, args.count, args.regions)
+                else:
+                    await generate_articles_from_trends(manager, args.count)
                 
             elif args.gen_mode == 'keywords':
                 await generate_articles_from_keywords(
@@ -1305,6 +1632,21 @@ async def main():
         
         elif args.command == 'stats':
             manager.show_statistics()
+        
+        elif args.command == 'images':
+            # Determine image types to generate
+            if args.type == 'all':
+                image_types = ['main', 'thumbnail', 'inline']
+            else:
+                image_types = [args.type]
+            
+            # Generate images
+            await generate_images_for_articles(
+                manager, 
+                args.articles, 
+                args.regenerate,
+                image_types
+            )
         
         elif args.command == 'backup':
             if args.images:
