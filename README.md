@@ -9,7 +9,14 @@ A comprehensive Python-based system for generating news articles and creating a 
 ## 🌟 Features
 
 ### 📰 **Article Management**
-- **Duplicate Detection & Removal**: Advanced deduplication with smart quality scoring
+- **Dupl### 🔐 Security Features
+
+- **Contact Form Validation**: Server-side PHP validation
+- **XSS Protection**: Input sanitization
+- **CSRF Protection**: Form token validation
+- **Content Security**: No inline scripts
+- **Privacy Compliance**: GDPR-ready privacy policy
+- **Date Format Protection**: Automatic sanitization prevents sitemap XML errorsetection & Removal**: Advanced deduplication with smart quality scoring
 - **Content Enhancement**: Automatic metadata optimization and SEO improvements
 - **Quality Validation**: Comprehensive integrity checks for all articles
 - **Batch Processing**: Handle large volumes of articles efficiently
@@ -158,17 +165,17 @@ python super_article_manager.py
 
 ##### Article Generation
 ```bash
-# Autonomous generation (trending topics)
-python super_article_manager.py generate --mode autonomous --region USA --count 5
+# Trending topics generation
+python super_article_manager.py generate trends --count 5
 
 # Keyword-based generation
-python super_article_manager.py generate --mode keyword --keywords "artificial intelligence,machine learning" --region USA
+python super_article_manager.py generate keywords "artificial intelligence" "machine learning" --region USA
 
 # Interactive keyword input
-python super_article_manager.py generate --mode keyword --interactive
+python super_article_manager.py generate interactive
 
 # Batch keyword processing
-python super_article_manager.py generate --mode batch --categories "technology,business,health"
+python super_article_manager.py generate batch technology health
 ```
 
 ##### Article Enhancement & Optimization
@@ -176,87 +183,78 @@ python super_article_manager.py generate --mode batch --categories "technology,b
 # Enhance article metadata and SEO
 python super_article_manager.py enhance
 
-# Comprehensive article fixing
-python super_article_manager.py enhance --mode comprehensive
+# Comprehensive article fixing (deduplicate + fix + merge)
+python super_article_manager.py enhance --all
 
-# Quality validation only
-python super_article_manager.py enhance --mode validate
+# Individual enhancement operations
+python super_article_manager.py enhance --deduplicate
+python super_article_manager.py enhance --fix-issues
+python super_article_manager.py enhance --merge-legacy
 ```
 
-##### Duplicate Management
+##### Workflow Management
 ```bash
-# Analyze duplicates (no changes made)
-python super_article_manager.py workflow --mode analyze
+# Complete workflow (generate first, then optimize)
+python super_article_manager.py workflow --generate-first
 
-# Remove duplicates with smart quality scoring
-python super_article_manager.py workflow --mode deduplicate
-
-# Complete workflow (analyze + deduplicate + enhance)
-python super_article_manager.py workflow --mode complete
+# Complete optimization workflow
+python super_article_manager.py workflow --complete
 ```
 
 ##### Statistics & Analytics
 ```bash
 # View comprehensive statistics
 python super_article_manager.py stats
-
-# Export detailed analytics
-python super_article_manager.py stats --export --format json
-
-# Category breakdown
-python super_article_manager.py stats --categories
 ```
 
 ##### Backup Management
 ```bash
-# Backup all articles
-python super_article_manager.py backup --type articles
-
-# Backup all images
-python super_article_manager.py backup --type images
-
-# Full system backup
-python super_article_manager.py backup --type full
+# Backup all images to local directory
+python super_article_manager.py backup --images
 ```
 
 ### 🔍 **Available Generation Modes**
 
-#### 1. **Autonomous Generation** 📈
+#### 1. **Trending Topics Generation** 📈
 Generates articles based on trending topics and current events:
 ```bash
-python super_article_manager.py generate --mode autonomous --region USA --count 10
+python super_article_manager.py generate trends --count 10
 ```
 **Features**:
 - Real-time trend analysis
-- Multiple region support (USA, UK, Canada, Australia, India)
-- Automatic topic selection
+- Automatic topic selection from trending keywords
 - SEO optimization
 - Image generation
 
 #### 2. **Keyword-Based Generation** 🎯
 Generate articles from specific keywords with full control:
 ```bash
-python super_article_manager.py generate --mode keyword --keywords "blockchain,cryptocurrency,defi"
+python super_article_manager.py generate keywords "blockchain" "cryptocurrency" "defi" --region India
 ```
 **Features**:
 - Custom keyword targeting
 - Smart keyword expansion
 - Category assignment
 - Regional customization
-- Batch processing support
+- Individual keyword processing
 
-**Available Categories**:
-- 🔬 **Technology**: AI, blockchain, cybersecurity, 5G
-- 💼 **Business**: startups, e-commerce, digital marketing
-- 🏥 **Health**: wellness, fitness, nutrition, medical breakthroughs
-- ⚽ **Sports**: cricket, football, olympics, tennis
-- 🎬 **Entertainment**: Bollywood, streaming, music, celebrities
-- 🌱 **Science**: climate change, renewable energy, space exploration
+**Available Regions**:
+- 🇮🇳 **India** (default)
+- 🇺� **USA** 
+- 🇬🇧 **UK**
+- �🇦 **Canada**
+- �🇺 **Australia**
 
 #### 3. **Batch Processing** 📦
 Process predefined keyword categories efficiently:
 ```bash
-python super_article_manager.py generate --mode batch --categories "technology,business"
+python super_article_manager.py generate batch technology business health
+```
+
+#### 4. **Interactive Mode** 🎨
+Interactive keyword input with guided prompts:
+```bash
+python super_article_manager.py generate interactive
 ```
 
 ### 🔧 **Legacy Operations (For Reference)**
@@ -265,16 +263,16 @@ The following individual scripts have been consolidated into `super_article_mana
 
 #### Old Analysis & Optimization Commands
 ```bash
-# OLD METHOD - Now use: python super_article_manager.py workflow --mode analyze
+# OLD METHOD - Now use: python super_article_manager.py workflow --complete
 python analyze_duplicates.py
 
-# OLD METHOD - Now use: python super_article_manager.py workflow --mode deduplicate  
+# OLD METHOD - Now use: python super_article_manager.py enhance --deduplicate
 python deduplicate_articles.py
 
 # OLD METHOD - Now use: python super_article_manager.py enhance
 python enhance_articles.py
 
-# OLD METHOD - Now use: python super_article_manager.py enhance --mode comprehensive
+# OLD METHOD - Now use: python super_article_manager.py enhance --fix-issues
 python fix_articles.py
 
 # OLD METHOD - Now use: python super_article_manager.py stats
@@ -283,13 +281,13 @@ python final_summary.py
 
 #### Old Keyword Generation Commands
 ```bash
-# OLD METHOD - Now use: python super_article_manager.py generate --mode keyword --interactive
+# OLD METHOD - Now use: python super_article_manager.py generate interactive
 python quickKeywordGen.py --interactive
 
-# OLD METHOD - Now use: python super_article_manager.py generate --mode keyword --keywords "AI,ML"
+# OLD METHOD - Now use: python super_article_manager.py generate keywords "AI" "ML"
 python quickKeywordGen.py "artificial intelligence" "machine learning"
 
-# OLD METHOD - Now use: python super_article_manager.py generate --mode batch
+# OLD METHOD - Now use: python super_article_manager.py generate batch
 python batchKeywordGen.py
 
 # OLD METHOD - Now use: python super_article_manager.py (interactive mode)

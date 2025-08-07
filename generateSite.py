@@ -252,6 +252,57 @@ BASE_HTML_HEAD = """
         @keyframes spin {{
             to {{ transform: rotate(360deg); }}
         }}
+        
+        /* Dropdown Navigation Styles */
+        .dropdown {{
+            position: relative;
+            display: inline-block;
+        }}
+        
+        .dropdown-content {{
+            display: none;
+            position: absolute;
+            background-color: rgba(30, 58, 138, 0.95);
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1000;
+            border-radius: 0.375rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            top: 100%;
+            right: 0;
+        }}
+        
+        .dropdown-content a {{
+            color: white;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: background-color 0.3s ease;
+        }}
+        
+        .dropdown-content a:hover {{
+            background-color: rgba(59, 130, 246, 0.3);
+        }}
+        
+        .dropdown:hover .dropdown-content {{
+            display: block;
+        }}
+        
+        .dropdown-toggle {{
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }}
+        
+        .dropdown-arrow {{
+            transition: transform 0.3s ease;
+        }}
+        
+        .dropdown:hover .dropdown-arrow {{
+            transform: rotate(180deg);
+        }}
     </style>
 """
 
@@ -264,11 +315,28 @@ HEADER_HTML = """
                 </a>
             </div>
             <nav class="mt-2 sm:mt-0">
-                <ul class="flex flex-wrap justify-center sm:justify-start space-x-2 sm:space-x-4">
+                <ul class="flex flex-wrap justify-center sm:justify-start space-x-2 sm:space-x-4 items-center">
                     <li><a href="{home_link}" class="hover:text-blue-200 transition-colors px-2 py-1 rounded">Home</a></li>
-                    {category_links}
-                    <li><a href="{about_link}" class="hover:text-blue-200 transition-colors px-2 py-1 rounded">About Us</a></li>
-                    <li><a href="{contact_link}" class="hover:text-blue-200 transition-colors px-2 py-1 rounded">Contact</a></li>
+                    <li><a href="{news_link}" class="hover:text-blue-200 transition-colors px-2 py-1 rounded">News</a></li>
+                    <li><a href="{business_link}" class="hover:text-blue-200 transition-colors px-2 py-1 rounded">Business</a></li>
+                    <li><a href="{technology_link}" class="hover:text-blue-200 transition-colors px-2 py-1 rounded">Technology</a></li>
+                    <li><a href="{sports_link}" class="hover:text-blue-200 transition-colors px-2 py-1 rounded">Sports</a></li>
+                    <li><a href="{entertainment_link}" class="hover:text-blue-200 transition-colors px-2 py-1 rounded">Entertainment</a></li>
+                    <li><a href="#" class="hover:text-blue-200 transition-colors px-2 py-1 rounded">E-papers</a></li>
+                    <li class="dropdown">
+                        <span class="dropdown-toggle hover:text-blue-200 transition-colors px-2 py-1 rounded">
+                            More
+                            <svg class="dropdown-arrow w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                            </svg>
+                        </span>
+                        <div class="dropdown-content">
+                            <a href="{community_link}">Community</a>
+                            <a href="{education_link}">Education</a>
+                            <a href="{about_link}">About Us</a>
+                            <a href="{contact_link}">Contact</a>
+                        </div>
+                    </li>
                 </ul>
             </nav>
         </div>
@@ -1190,37 +1258,98 @@ def generate_slug(text):
     slug = re.sub(r'[-\s]+', '-', slug)
     return slug
 
+def consolidate_category(original_category):
+    """
+    Consolidate categories according to the new navigation strategy.
+    Maps multiple related categories to the main navigation categories.
+    """
+    if not original_category:
+        return "News"
+    
+    category_mapping = {
+        # Business categories
+        "Business": "Business",
+        "Business & International Relations": "Business", 
+        "Business and Technology": "Business",
+        "Economy": "Business",
+        "Finance": "Business",
+        
+        # Technology categories  
+        "Technology": "Technology",
+        
+        # Sports categories
+        "Sports": "Sports",
+        
+        # News categories
+        "News": "News",
+        "Defence": "News",
+        "Defense": "News",
+        "Environment": "News",
+        "Energy": "News",
+        
+        # Education categories (will be in More dropdown)
+        "Career Development": "Education",
+        
+        # Default fallback
+        "default": "News"
+    }
+    
+    return category_mapping.get(original_category, "News")
+
+def get_main_navigation_categories():
+    """Returns the main navigation categories in the desired order."""
+    return ["News", "Business", "Technology", "Sports", "Entertainment"]
+
+def get_dropdown_categories():
+    """Returns categories that should appear in the More dropdown."""
+    return ["Community", "Education"]
+
 def create_directory(path):
     """Creates a directory if it doesn't exist."""
     os.makedirs(path, exist_ok=True)
 
 def generate_header_html(unique_categories, current_page_type="home"):
-    """Generates the header HTML with dynamic category links and proper path handling."""
-    category_links = ""
-    for category in unique_categories:
-        category_slug = generate_slug(category)
-        # Adjust path based on current page type
-        if current_page_type == "article":
-            link_prefix = "../categories/"
-        elif current_page_type == "category":
-            link_prefix = "" # Already in categories directory
-        else: # home page or contact page (both at root level)
-            link_prefix = "categories/"
-        category_links += f'<li><a href="{link_prefix}{category_slug}.html" class="hover:text-blue-200 transition-colors px-2 py-1 rounded">{category}</a></li>'
+    """Generates the header HTML with the new streamlined navigation structure."""
     
     # Adjust all paths based on current page type
     if current_page_type in ["article", "category"]:
         home_link = "../index.html"
+        news_link = "../categories/news.html"
+        business_link = "../categories/business.html"
+        technology_link = "../categories/technology.html"
+        sports_link = "../categories/sports.html"
+        entertainment_link = "../categories/entertainment.html"
+        community_link = "../categories/community.html"
+        education_link = "../categories/education.html"
         contact_link = "../contact.html"
         about_link = "../about-us.html"
         logo_path = "../logo.svg"
     else: # home page and other root-level pages
         home_link = "index.html"
+        news_link = "categories/news.html"
+        business_link = "categories/business.html"
+        technology_link = "categories/technology.html"
+        sports_link = "categories/sports.html"
+        entertainment_link = "categories/entertainment.html"
+        community_link = "categories/community.html"
+        education_link = "categories/education.html"
         contact_link = "contact.html"
         about_link = "about-us.html"
         logo_path = "logo.svg"
 
-    return HEADER_HTML.format(home_link=home_link, category_links=category_links, contact_link=contact_link, about_link=about_link, logo_path=logo_path)
+    return HEADER_HTML.format(
+        home_link=home_link,
+        news_link=news_link,
+        business_link=business_link, 
+        technology_link=technology_link,
+        sports_link=sports_link,
+        entertainment_link=entertainment_link,
+        community_link=community_link,
+        education_link=education_link,
+        contact_link=contact_link,
+        about_link=about_link,
+        logo_path=logo_path
+    )
 
 def generate_footer_html(current_page_type="home"):
     """Generates the footer HTML with dynamic links."""
@@ -1770,6 +1899,60 @@ def generate_category_pages(articles_data, unique_categories):
             ))
         print(f"Generated {category_path} with {len(sorted_articles_in_category)} articles and integrated ads")
 
+def generate_empty_category_page_html(category_name, unique_categories):
+    """Generate placeholder page for empty categories."""
+    header_html = generate_header_html(unique_categories, current_page_type="category")
+    footer_html = generate_footer_html("category")
+    
+    placeholder_content = f"""
+    <div class="container mx-auto px-4 py-8">
+        <div class="text-center">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">{category_name}</h1>
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-8 max-w-2xl mx-auto">
+                <div class="text-6xl text-blue-300 mb-4">📰</div>
+                <h2 class="text-2xl font-semibold text-gray-700 mb-2">Coming Soon</h2>
+                <p class="text-gray-600 mb-4">
+                    We're working on bringing you the latest {category_name.lower()} content. 
+                    Check back soon for exciting articles in this category!
+                </p>
+                <a href="../index.html" class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    Browse All Articles
+                </a>
+            </div>
+        </div>
+    </div>
+    """
+    
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{category_name} - Country's News</title>
+    {BASE_HTML_HEAD}
+</head>
+<body class="flex flex-col min-h-screen">
+    {header_html}
+    <main class="flex-grow">
+        {placeholder_content}
+    </main>
+    {footer_html}
+</body>
+</html>"""
+
+def cleanup_old_category_pages(categories_dir, valid_categories):
+    """Remove old category pages that are no longer needed."""
+    if not os.path.exists(categories_dir):
+        return
+        
+    valid_slugs = set(generate_slug(cat) for cat in valid_categories)
+    
+    for filename in os.listdir(categories_dir):
+        if filename.endswith('.html'):
+            slug = filename[:-5]  # Remove .html extension
+            if slug not in valid_slugs:
+                old_file = os.path.join(categories_dir, filename)
+                os.remove(old_file)
+                print(f"Removed old category page: {filename}")
+
 def generate_sitemap(articles_data):
     """Generates XML sitemap for SEO."""
     print("Generating sitemap.xml...")
@@ -1805,9 +1988,22 @@ def generate_sitemap(articles_data):
 """
     
     for article in articles_data:
+        # Fix date format - remove 'Z' if it exists and ensure proper format
+        date_modified = article['dateModified']
+        if date_modified.endswith('Z'):
+            date_modified = date_modified[:-1]  # Remove the 'Z'
+        
+        # Ensure the date is in YYYY-MM-DD format
+        if len(date_modified) == 10 and date_modified.count('-') == 2:
+            formatted_date = date_modified
+        else:
+            # Fallback to current date if format is invalid
+            from datetime import datetime
+            formatted_date = datetime.now().strftime('%Y-%m-%d')
+        
         sitemap_content += f"""    <url>
         <loc>https://countrysnews.com/articles/{article['slug']}.html</loc>
-        <lastmod>{article['dateModified']}</lastmod>
+        <lastmod>{formatted_date}</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
@@ -2017,20 +2213,62 @@ def main():
         print(f"Error: {ARTICLES_DATA_FILE} not found.")
         return
     
-    # --- Logical Change: Assign default category "News" to uncategorized articles ---
+    # --- Logical Change: Consolidate categories and assign defaults ---
     for article in articles_data:
+        # First assign default category if missing
         if not article.get('category') or article['category'].strip() == "":
             article['category'] = DEFAULT_CATEGORY
             print(f"Assigned '{DEFAULT_CATEGORY}' category to article: {article['title']}")
+        
+        # Then consolidate category according to new navigation strategy
+        original_category = article['category']
+        consolidated_category = consolidate_category(original_category)
+        if original_category != consolidated_category:
+            print(f"Consolidated '{original_category}' → '{consolidated_category}' for article: {article['title']}")
+            article['category'] = consolidated_category
     # --- End of Logical Change ---
 
-    # Get unique categories that actually have articles
-    # This ensures we only link to and generate pages for non-empty categories
-    unique_categories_with_articles = sorted(list(set(article['category'] for article in articles_data)))
+    # Get unique categories after consolidation - use our predefined categories
+    main_categories = get_main_navigation_categories()
+    dropdown_categories = get_dropdown_categories()
+    all_categories = main_categories + dropdown_categories
+    
+    # Only include categories that actually have articles
+    categories_with_articles = []
+    for category in all_categories:
+        if any(article['category'] == category for article in articles_data):
+            categories_with_articles.append(category)
+    
+    print(f"\nActive categories after consolidation: {categories_with_articles}")
+    
+    unique_categories_with_articles = categories_with_articles
 
     generate_index_page(articles_data, unique_categories_with_articles)
     generate_article_pages(articles_data, unique_categories_with_articles)
     generate_category_pages(articles_data, unique_categories_with_articles) # Generate category pages
+    
+    # Create placeholder pages for empty categories and cleanup old ones
+    main_categories = get_main_navigation_categories()
+    dropdown_categories = get_dropdown_categories()
+    all_categories = main_categories + dropdown_categories
+    
+    # Generate placeholders for empty categories
+    categories_dir = os.path.join(OUTPUT_DIR, "categories")
+    for category in all_categories:
+        if category not in unique_categories_with_articles:
+            category_slug = generate_slug(category)
+            category_path = os.path.join(categories_dir, f"{category_slug}.html")
+            
+            placeholder_page_html = generate_empty_category_page_html(category, unique_categories_with_articles)
+            
+            with open(category_path, 'w', encoding='utf-8') as f:
+                f.write(placeholder_page_html)
+            
+            print(f"Generated placeholder {category_path} (no articles yet)")
+    
+    # Cleanup old category pages
+    cleanup_old_category_pages(categories_dir, all_categories)
+    
     generate_contact_page(unique_categories_with_articles)  # Generate contact page
     generate_privacy_policy_page(unique_categories_with_articles)  # Generate privacy policy page
     generate_disclaimer_page(unique_categories_with_articles)  # Generate disclaimer page

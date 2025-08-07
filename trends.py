@@ -183,7 +183,8 @@ if __name__ == "__main__":
     daily_trending_keywords = analyzer.fetch_daily_trending_searches(countries_for_daily_trends)
     
     if daily_trending_keywords:
-        daily_keywords_df = pd.DataFrame(daily_trending_keywords, columns=['Keyword','relatedKeywordsCount','topic'])
+        # Fix: Create DataFrame with single column since we only have keywords
+        daily_keywords_df = pd.DataFrame(daily_trending_keywords, columns=['Keyword'])
         daily_keywords_df.to_csv(os.path.join(output_dir, "all_unique_daily_trending_keywords.csv"), index=False)
         logger.info(f"Total unique daily trending keywords collected: {len(daily_keywords_df)}")
     else:

@@ -29,6 +29,32 @@ class UnifiedEEATSystem:
         self.output_dir = "dist"
         self.default_category = "News"
         
+        # Category consolidation mapping
+        self.category_mapping = {
+            # Business categories
+            "Business": "Business",
+            "Business & International Relations": "Business", 
+            "Business and Technology": "Business",
+            "Economy": "Business",
+            "Finance": "Business",
+            
+            # Technology categories  
+            "Technology": "Technology",
+            
+            # Sports categories
+            "Sports": "Sports",
+            
+            # News categories
+            "News": "News",
+            "Defence": "News",
+            "Defense": "News",
+            "Environment": "News",
+            "Energy": "News",
+            
+            # Education categories (will be in More dropdown)
+            "Career Development": "Education",
+        }
+        
         # Author profiles for E-E-A-T compliance
         self.author_profiles = {
             "JAMSA - Country's News": {
@@ -88,9 +114,23 @@ class UnifiedEEATSystem:
 
     # ===== ARTICLE ENHANCEMENT METHODS =====
     
+    def consolidate_category(self, original_category: str) -> str:
+        """Consolidate categories according to the new navigation strategy."""
+        if not original_category:
+            return self.default_category
+        
+        return self.category_mapping.get(original_category, self.default_category)
+    
     def enhance_article_with_eeat(self, article: Dict[str, Any]) -> Dict[str, Any]:
         """Enhance a single article with E-E-A-T elements."""
         enhanced_article = article.copy()
+        
+        # Consolidate category first
+        if 'category' in enhanced_article:
+            original_category = enhanced_article['category']
+            consolidated_category = self.consolidate_category(original_category)
+            if original_category != consolidated_category:
+                enhanced_article['category'] = consolidated_category
         
         # Add all E-E-A-T enhancements
         enhanced_article = self._add_author_profile(enhanced_article)
