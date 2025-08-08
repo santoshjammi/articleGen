@@ -43,6 +43,42 @@ DEFAULT_AD_DENSITY = "medium"
 DEFAULT_FACT_CHECKED_BY = "AI Content Review"
 DEFAULT_EDITOR_REVIEWED_BY = "AI Editor"
 DEFAULT_SPONSOR_NAME = None
+
+# === CATEGORY NORMALIZATION ===
+CATEGORY_MAPPING = {
+    # Business consolidation
+    'Business': 'Business',
+    'Finance': 'Business', 
+    'Economy': 'Business',
+    'Business & Finance': 'Business',
+    'Business & Economy': 'Business',
+    'Business & International Relations': 'Business',
+    'Business and Technology': 'Business',
+    
+    # Health consolidation
+    'Health': 'Health',
+    'Health & Wellness': 'Health',
+    'Health & Safety': 'Health',
+    
+    # World/News consolidation
+    'News': 'World',
+    'World Affairs': 'World',
+    'Defence': 'World',
+    'Defense': 'World',
+    'Energy': 'World',
+    
+    # Lifestyle consolidation
+    'Travel': 'Lifestyle',
+    'Travel News': 'Lifestyle', 
+    'Food & Drink': 'Lifestyle',
+    'Career Development': 'Lifestyle',
+    
+    # Keep as-is
+    'Sports': 'Sports',
+    'Technology': 'Technology',
+    'Entertainment': 'Entertainment',
+    'Environment': 'Environment',
+}
 DEFAULT_IS_SPONSORED_CONTENT = False
 DEFAULT_VIEWS_COUNT = 0
 DEFAULT_SHARES_COUNT = 0
@@ -80,6 +116,50 @@ def sanitize_date_format(date_str):
     
     # Fallback to current date if invalid
     return datetime.now().strftime('%Y-%m-%d')
+
+def normalize_category(category: str) -> str:
+    """Normalize category to one of the consolidated main categories"""
+    if not category:
+        return 'World'
+    
+    # Direct mapping
+    normalized = CATEGORY_MAPPING.get(category, None)
+    if normalized:
+        return normalized
+    
+    # Fuzzy matching for variations
+    category_lower = category.lower()
+    
+    # Business variations
+    if any(word in category_lower for word in ['business', 'finance', 'economy', 'economic']):
+        return 'Business'
+    
+    # Health variations  
+    if any(word in category_lower for word in ['health', 'medical', 'wellness', 'fitness']):
+        return 'Health'
+    
+    # Tech variations
+    if any(word in category_lower for word in ['technology', 'tech', 'digital', 'ai', 'software']):
+        return 'Technology'
+    
+    # Sports variations
+    if any(word in category_lower for word in ['sports', 'sport', 'athletics', 'games']):
+        return 'Sports'
+    
+    # Entertainment variations
+    if any(word in category_lower for word in ['entertainment', 'movie', 'music', 'celebrity', 'bollywood']):
+        return 'Entertainment'
+    
+    # Lifestyle variations
+    if any(word in category_lower for word in ['travel', 'food', 'lifestyle', 'career']):
+        return 'Lifestyle'
+    
+    # Environment variations
+    if any(word in category_lower for word in ['environment', 'climate', 'green', 'sustainability']):
+        return 'Environment'
+    
+    # Default to World for news, politics, international affairs, etc.
+    return 'World'
 
 def generate_slug(title: str) -> str:
     """Generate URL-friendly slug from title"""
@@ -477,6 +557,12 @@ class SuperArticleManager:
             if not article.get('slug') and article.get('title'):
                 article['slug'] = generate_slug(article['title'])
             
+            # Normalize category to consolidated categories
+            if article.get('category'):
+                article['category'] = normalize_category(article['category'])
+            else:
+                article['category'] = 'World'  # Default category
+            
             # Generate missing excerpt
             if not article.get('excerpt') and article.get('content'):
                 article['excerpt'] = generate_excerpt(article['content'])
@@ -832,7 +918,7 @@ class ArticleGenerator:
                     "author": DEFAULT_AUTHOR,
                     "publishDate": now,
                     "dateModified": now,
-                    "category": data['category'],
+                    "category": normalize_category(data['category']),
                     "subCategory": data.get('subCategory', ''),
                     "tags": all_keywords,
                     "excerpt": data['excerpt'],
