@@ -839,7 +839,7 @@ def generate_advanced_homepage(articles_data, unique_categories):
             function generateArticleCardHTML(article) {{
                 // Remove 'dist/' prefix from thumbnailImageUrl if present
                 let thumbnailUrl = article.thumbnailImageUrl || article.thumbnail || article.imageUrl || 'images/placeholder.jpg';
-                if (thumbnailUrl.startsWith('dist/')) {{
+                if (thumbnailUrl && thumbnailUrl.startsWith('dist/')) {{
                     thumbnailUrl = thumbnailUrl.substring(5); // Remove 'dist/' prefix
                 }}
                 const articleUrl = `articles/${{article.slug}}.html`;
@@ -1215,7 +1215,7 @@ def generate_single_category_page(category, category_articles, unique_categories
             function generateArticleCardHTML(article) {{
                 // Remove 'dist/' prefix from thumbnailImageUrl if present
                 let thumbnailUrl = article.thumbnailImageUrl || article.thumbnail || article.imageUrl || '../images/placeholder.jpg';
-                if (thumbnailUrl.startsWith('dist/')) {{
+                if (thumbnailUrl && thumbnailUrl.startsWith('dist/')) {{
                     thumbnailUrl = '../' + thumbnailUrl.substring(5); // Remove 'dist/' and add '../'
                 }}
                 const articleUrl = `../articles/${{article.slug}}.html`;
@@ -1801,6 +1801,11 @@ def generate_single_advanced_article(article, unique_categories):
     article_image = article.get('thumbnailImageUrl', '')
     if article_image and article_image.startswith('dist/'):
         article_image = article_image.replace('dist/', '../')
+    # Fallback to ogImage if thumbnail is missing
+    if not article_image:
+        article_image = article.get('ogImage', '')
+        if article_image.startswith('dist/'):
+            article_image = article_image.replace('dist/', '../')
     
     # Generate social hashtags
     hashtags_html = ""
@@ -1814,6 +1819,15 @@ def generate_single_advanced_article(article, unique_categories):
             </div>
         </div>
         '''
+
+    # Prepare content HTML and fix inline image paths for article pages
+    # Existing articles may have inline <img src="dist/..."> embedded in their saved content.
+    # From dist/articles/*.html, the correct relative path is ../images/...
+    raw_content_html = article.get('content', article.get('body', ''))
+    try:
+        fixed_content_html = re.sub(r'src=(["\'])dist/', r'src=\1../', raw_content_html)
+    except Exception:
+        fixed_content_html = raw_content_html
     
     article_html = f'''
     <!DOCTYPE html>
@@ -1920,7 +1934,7 @@ def generate_single_advanced_article(article, unique_categories):
                     <div class="lg:w-2/3">
                         <!-- Article Body -->
                         <div class="article-content prose prose-lg max-w-none">
-                            {article.get('content', article.get('body', ''))}
+                                    {fixed_content_html}
                         </div>
                         
                         <!-- In-Content Ad -->
