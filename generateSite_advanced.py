@@ -9,7 +9,9 @@ import json
 import os
 import shutil
 import re
-from datetime import datetime
+from collections import defaultdict
+import markdown as md
+from datetime import datetime, timezone
 from urllib.parse import quote
 
 OUTPUT_DIR = "dist"
@@ -171,6 +173,7 @@ def get_base_html_head():
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
+            scroll-behavior: smooth;
         }
         
         /* Article Content Styling */
@@ -180,10 +183,14 @@ def get_base_html_head():
             margin-bottom: 0.5em;
             font-weight: 600;
             color: #1e3a8a;
+            /* Ensure anchors scroll below sticky header */
+            scroll-margin-top: 6rem; /* ~96px for header + spacing */
         }
-        .article-content h1 { font-size: 2.5em; }
-        .article-content h2 { font-size: 2em; }
-        .article-content h3 { font-size: 1.75em; }
+    .article-content h1 { font-size: 2.5em; }
+    .article-content h2 { font-size: 2em; }
+    .article-content h3 { font-size: 1.75em; }
+    /* Extra safety: apply scroll-margin to any heading in article to cover injected IDs */
+    .article-content :is(h1,h2,h3,h4,h5,h6) { scroll-margin-top: 6rem; }
         .article-content p {
             margin-bottom: 1em;
             line-height: 1.7;
@@ -1775,21 +1782,24 @@ def generate_advanced_article_pages(articles_data, unique_categories):
     articles_dir = os.path.join(OUTPUT_DIR, 'articles')
     os.makedirs(articles_dir, exist_ok=True)
     
+    # Precompute related articles for all articles
+    related_map = compute_related_articles_map(articles_data)
+
     for i, article in enumerate(articles_data):
-        generate_single_advanced_article(article, unique_categories)
+        generate_single_advanced_article(article, unique_categories, related_map.get(article.get('slug', ''), []))
         if (i + 1) % 20 == 0:
             print(f"   ✅ Generated {i + 1}/{len(articles_data)} articles")
     
     print(f"✅ All {len(articles_data)} advanced article pages generated")
 
-def generate_single_advanced_article(article, unique_categories):
+def generate_single_advanced_article(article, unique_categories, related_list):
     """Generate single advanced article page"""
     
     # Generate author profile HTML
     author_profile_html = generate_author_profile(article)
     
     # Generate related articles
-    related_articles_html = generate_related_articles(article)
+    related_articles_html = generate_related_articles(article, related_list)
     
     # Generate social sharing
     social_sharing_html = generate_social_sharing(article)
@@ -1820,14 +1830,102 @@ def generate_single_advanced_article(article, unique_categories):
         </div>
         '''
 
-    # Prepare content HTML and fix inline image paths for article pages
-    # Existing articles may have inline <img src="dist/..."> embedded in their saved content.
-    # From dist/articles/*.html, the correct relative path is ../images/...
-    raw_content_html = article.get('content', article.get('body', ''))
+    # Prepare content HTML (support Markdown) and fix inline image paths for article pages
+    # 1) If content appears to be plain Markdown (no HTML tags), convert it to HTML
+    # 2) Rewrite any 'dist/' image paths to '../' since article pages live in dist/articles/
+    raw_content_html = article.get('content', article.get('body', '')) or ""
+
+    def looks_like_html(text: str) -> bool:
+        return bool(re.search(r'<\s*(p|h[1-6]|ul|ol|li|div|section|article|img|figure|blockquote|pre|code|table)\b', text, re.IGNORECASE))
+
+    def has_markdown(text: str) -> bool:
+        return (
+            bool(re.search(r'(^|\n)\s*[\*-]\s+\S', text)) or  # bullets
+            bool(re.search(r'(^|\n)\s*\d+\.\s+\S', text)) or  # ordered lists
+            '```' in text or                                      # fenced code
+            bool(re.search(r'(^|\n)#{1,6}\s+\S', text)) or      # ATX headings
+            bool(re.search(r'\*\*[^\n]+\*\*', text))          # bold
+        )
+
+    # Normalize common Markdown artifacts before conversion
+    normalized = raw_content_html
+    # Insert line breaks before list items when they are crammed after a colon
+    normalized = re.sub(r':\s*([\*-]\s+)', r':\n\n\1', normalized)
+    # Ensure there is a newline before subsequent bullets if missing
+    normalized = re.sub(r'(\S)\s+(\*[\s\S])', r'\1\n\n\2', normalized)
+    # Auto-close unbalanced fenced code blocks
+    if normalized.count('```') % 2 == 1:
+        normalized = normalized.rstrip() + '\n```\n'
+
+    content_html = normalized
+    if normalized.strip() and (has_markdown(normalized) or not looks_like_html(normalized)):
+        try:
+            extensions = ['extra', 'sane_lists', 'smarty', 'tables', 'fenced_code', 'attr_list']
+            # Try enabling Markdown-in-HTML if available
+            try:
+                extensions.append('md_in_html')
+            except Exception:
+                pass
+            content_html = md.markdown(normalized, extensions=extensions)
+        except Exception:
+            content_html = normalized  # fallback
+
     try:
-        fixed_content_html = re.sub(r'src=(["\'])dist/', r'src=\1../', raw_content_html)
+        fixed_content_html = re.sub(r'src=(["\'])dist/', r'src=\1../', content_html)
     except Exception:
-        fixed_content_html = raw_content_html
+        fixed_content_html = content_html
+
+    # Auto-generate a Table of Contents (TOC) by scanning headings and injecting IDs
+    def build_toc_and_inject_ids(html: str):
+        # Find all h2/h3 headings
+        heading_pattern = re.compile(r'<h([2-3])(\s[^>]*)?>(.*?)</h[2-3]>', re.IGNORECASE | re.DOTALL)
+        headings = []
+        used_ids = defaultdict(int)
+
+        def slugify(text: str) -> str:
+            base = re.sub(r"<[^>]+>", "", text)
+            base = re.sub(r"[^a-z0-9\s-]", "", base.lower())
+            base = re.sub(r"[\s-]+", "-", base).strip('-') or "section"
+            used_ids[base] += 1
+            return base if used_ids[base] == 1 else f"{base}-{used_ids[base]}"
+
+        # Inject ids into headings
+        def repl(m):
+            level = m.group(1)
+            attrs = m.group(2) or ""
+            title_html = m.group(3)
+            anchor_id = slugify(title_html)
+            if 'id=' not in attrs:
+                attrs = (attrs + f' id="{anchor_id}"').strip()
+            return f"<h{level} {attrs}>{title_html}</h{level}>"
+
+        html_with_ids = heading_pattern.sub(repl, html)
+
+        # Collect headings for TOC
+        for m in heading_pattern.finditer(html_with_ids):
+            level = int(m.group(1))
+            attrs = m.group(2) or ""
+            title_html = m.group(3)
+            # extract id value
+            id_match = re.search(r'id=["\']([^"\']+)["\']', attrs)
+            anchor_id = id_match.group(1) if id_match else slugify(title_html)
+            # Strip tags in title for display
+            title_text = re.sub(r"<[^>]+>", "", title_html).strip()
+            headings.append({"level": level, "id": anchor_id, "title": title_text})
+
+        # Build TOC HTML
+        if headings:
+            toc_links = []
+            for h in headings:
+                indent = "ml-0" if h["level"] == 2 else "ml-4"
+                toc_links.append(f'<a href="#{h["id"]}" class="block text-blue-600 hover:text-blue-800 {indent}">{h["title"]}</a>')
+            toc_html = '\n'.join(toc_links)
+        else:
+            toc_html = ''
+
+        return html_with_ids, toc_html
+
+    fixed_content_html, dynamic_toc_html = build_toc_and_inject_ids(fixed_content_html)
     
     article_html = f'''
     <!DOCTYPE html>
@@ -1932,6 +2030,16 @@ def generate_single_advanced_article(article, unique_categories):
                 <!-- Article Content with Sidebar -->
                 <div class="flex flex-col lg:flex-row gap-8">
                     <div class="lg:w-2/3">
+                        <!-- Mobile TOC (visible only on small screens) -->
+                        {(
+                            f'''<div class="bg-blue-50 p-6 rounded-xl border border-blue-200 mb-6 block lg:hidden">
+                                <h3 class="text-lg font-bold text-gray-900 mb-4">In This Article</h3>
+                                <nav class="space-y-2 text-sm">
+                                    {dynamic_toc_html}
+                                </nav>
+                            </div>'''
+                            if dynamic_toc_html else ''
+                        )}
                         <!-- Article Body -->
                         <div class="article-content prose prose-lg max-w-none">
                                     {fixed_content_html}
@@ -1963,15 +2071,13 @@ def generate_single_advanced_article(article, unique_categories):
                                 <div class="ad-placeholder">Sidebar Ad - 300x250</div>
                             </div>
                             
-                            <!-- Table of Contents (if headings exist) -->
-                            <div class="bg-blue-50 p-6 rounded-xl border border-blue-200">
+                            <!-- Table of Contents (desktop only) -->
+                            {f'''<div class="bg-blue-50 p-6 rounded-xl border border-blue-200 hidden lg:block">
                                 <h3 class="text-lg font-bold text-gray-900 mb-4">In This Article</h3>
                                 <nav class="space-y-2 text-sm">
-                                    <a href="#introduction" class="block text-blue-600 hover:text-blue-800">Introduction</a>
-                                    <a href="#main-content" class="block text-blue-600 hover:text-blue-800">Key Points</a>
-                                    <a href="#conclusion" class="block text-blue-600 hover:text-blue-800">Conclusion</a>
+                                    {dynamic_toc_html if dynamic_toc_html else '<span class="text-gray-500 text-sm">No sections available</span>'}
                                 </nav>
-                            </div>
+                            </div>''' }
                             
                             <!-- Related Articles -->
                             {related_articles_html}
@@ -2044,26 +2150,158 @@ def generate_social_sharing(article):
     </div>
     '''
 
-def generate_related_articles(article):
-    """Generate related articles section"""
-    return '''
-    <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-        <h3 class="text-xl font-bold text-gray-900 mb-4">Related Articles</h3>
-        <div class="space-y-4">
-            <a href="#" class="block group">
+def generate_related_articles(current_article, related_list):
+    """Generate related articles section given a prepared related list"""
+    if not related_list:
+        return ''
+
+    cards = []
+    for rel in related_list[:5]:
+        slug = rel.get('slug')
+        title = rel.get('title', 'Untitled')
+        img = rel.get('thumbnailImageUrl') or rel.get('ogImage') or ''
+        if img and not img.startswith('http'):
+            img = img.replace('dist/', '../') if img.startswith('dist/') else f"../{img}"
+        if not img:
+            img = '../images/placeholder.jpg'
+        rel_url = f"../articles/{slug}.html"
+        when = humanize_time_ago(rel.get('publishDate', ''))
+        cards.append(f'''
+            <a href="{rel_url}" class="block group">
                 <div class="flex space-x-3">
-                    <div class="w-16 h-12 bg-gray-200 rounded flex-shrink-0"></div>
+                    <img src="{img}" alt="{rel.get('imageAltText', title)}" class="w-16 h-12 object-cover rounded flex-shrink-0" onerror="this.src='../images/placeholder.jpg'">
                     <div class="flex-1">
-                        <h4 class="text-sm font-semibold text-gray-900 group-hover:text-blue-600 line-clamp-2">
-                            Related Article Title Here
-                        </h4>
-                        <p class="text-xs text-gray-500 mt-1">2 hours ago</p>
+                        <h4 class="text-sm font-semibold text-gray-900 group-hover:text-blue-600 line-clamp-2">{title}</h4>
+                        <p class="text-xs text-gray-500 mt-1">{when}</p>
                     </div>
                 </div>
             </a>
+        ''')
+
+    return f'''
+    <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Related Articles</h3>
+        <div class="space-y-4">
+            {''.join(cards)}
         </div>
     </div>
     '''
+
+def compute_related_articles_map(articles):
+    """Compute a map of slug -> list of related articles using lightweight scoring."""
+    # Preprocess articles
+    pre = []
+    for a in articles:
+        slug = a.get('slug')
+        if not slug:
+            continue
+        pre.append({
+            'slug': slug,
+            'ref': a,
+            'category': a.get('category', DEFAULT_CATEGORY) or DEFAULT_CATEGORY,
+            'keywords': set([k.strip().lower() for k in (a.get('keywords') or []) if isinstance(k, str)]),
+            'hashtags': set([h.strip('#').lower() for h in (a.get('socialMediaHashtags') or []) if isinstance(h, str)]),
+            'title_words': extract_significant_words(a.get('title', '')),
+            'ts': parse_date_to_ts(a.get('publishDate')),  # 0 if unknown
+        })
+    
+    # Build map
+    related = {}
+    for i, A in enumerate(pre):
+        scores = []
+        for j, B in enumerate(pre):
+            if i == j:
+                continue
+            s = 0.0
+            # Category match
+            if A['category'] == B['category']:
+                s += 4.0
+            # Shared keywords
+            if A['keywords'] and B['keywords']:
+                shared_k = A['keywords'] & B['keywords']
+                if shared_k:
+                    s += min(3.0 * len(shared_k), 9.0)
+            # Shared hashtags
+            if A['hashtags'] and B['hashtags']:
+                shared_h = A['hashtags'] & B['hashtags']
+                if shared_h:
+                    s += min(1.0 * len(shared_h), 3.0)
+            # Title word overlap
+            if A['title_words'] and B['title_words']:
+                shared_t = A['title_words'] & B['title_words']
+                if shared_t:
+                    s += min(1.5 * len(shared_t), 6.0)
+            # Recency boost for B relative to A (prefer newer)
+            if B['ts']:
+                age_days = max(0, (now_ts() - B['ts']) / 86400)
+                recency = max(0.0, 2.0 - (age_days / 30.0))  # up to +2 for within ~30 days
+                s += recency
+            if s > 0:
+                scores.append((s, B))
+        # Sort by score desc then by ts desc
+        scores.sort(key=lambda x: (x[0], x[1]['ts']), reverse=True)
+        top = [b['ref'] for (score, b) in scores[:8]]
+        related[A['slug']] = top
+    return related
+
+def extract_significant_words(text):
+    """Extract lowercased significant words from title (length>=4, not in stopwords)."""
+    if not text:
+        return set()
+    stop = {
+        'with','from','that','this','have','your','about','into','over','under','after','before','when','what','news',
+        'the','and','for','are','but','not','you','was','were','has','had','his','her','its','they','them','our','out',
+        'how','why','will','can','new','latest','updated','update'
+    }
+    words = re.findall(r"[a-zA-Z0-9']+", text.lower())
+    return {w for w in words if len(w) >= 4 and w not in stop}
+
+def parse_date_to_ts(date_str):
+    """Parse various date string formats to epoch seconds. Return 0 if unknown."""
+    if not date_str or not isinstance(date_str, str):
+        return 0
+    fmts = [
+        '%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d', '%a, %d %b %Y %H:%M:%S', '%d %b %Y', '%B %d, %Y'
+    ]
+    for fmt in fmts:
+        try:
+            dt = datetime.strptime(date_str.strip(), fmt)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return int(dt.timestamp())
+        except Exception:
+            continue
+    # Try ISO format fallback
+    try:
+        dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return int(dt.timestamp())
+    except Exception:
+        return 0
+
+def now_ts():
+    return int(datetime.now(tz=timezone.utc).timestamp())
+
+def humanize_time_ago(date_str):
+    ts = parse_date_to_ts(date_str)
+    if not ts:
+        return ''
+    diff = max(0, now_ts() - ts)
+    mins = diff // 60
+    if mins < 60:
+        return f"{int(mins)} min ago" if mins != 1 else "1 min ago"
+    hours = mins // 60
+    if hours < 24:
+        return f"{int(hours)} hours ago" if hours != 1 else "1 hour ago"
+    days = hours // 24
+    if days < 30:
+        return f"{int(days)} days ago" if days != 1 else "1 day ago"
+    months = days // 30
+    if months < 12:
+        return f"{int(months)} months ago" if months != 1 else "1 month ago"
+    years = months // 12
+    return f"{int(years)} years ago" if years != 1 else "1 year ago"
 
 def generate_article_structured_data(article):
     """Generate structured data for individual articles"""
