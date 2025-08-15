@@ -18,11 +18,76 @@ OUTPUT_DIR = "dist"
 ARTICLES_FILE = "perplexityArticles_eeat_enhanced.json"
 DEFAULT_CATEGORY = "News"
 
+def perform_preflight_checks():
+    """Critical pre-flight checks before generation"""
+    print("🔍 Performing critical pre-flight checks...")
+    
+    # Check if articles file exists
+    if not os.path.exists(ARTICLES_FILE):
+        fallback_file = 'perplexityArticles.json'
+        if not os.path.exists(fallback_file):
+            print(f"❌ CRITICAL ERROR: No articles file found ({ARTICLES_FILE} or {fallback_file})")
+            return False
+        else:
+            print(f"⚠️  Using fallback articles file: {fallback_file}")
+    
+    # Load and validate articles data
+    try:
+        articles_data = load_articles()
+        if not articles_data:
+            print("❌ CRITICAL ERROR: No articles found in articles file")
+            return False
+        
+        print(f"✅ Found {len(articles_data)} articles")
+        
+        # Check for required fields in articles
+        missing_slugs = 0
+        missing_titles = 0
+        duplicate_slugs = set()
+        seen_slugs = set()
+        
+        for i, article in enumerate(articles_data):
+            slug = article.get('slug', '').strip()
+            title = article.get('title', '').strip()
+            
+            if not slug:
+                missing_slugs += 1
+            elif slug in seen_slugs:
+                duplicate_slugs.add(slug)
+            else:
+                seen_slugs.add(slug)
+            
+            if not title:
+                missing_titles += 1
+        
+        issues = missing_slugs + missing_titles + len(duplicate_slugs)
+        if issues > 0:
+            print(f"❌ CRITICAL ERROR: Article data issues found:")
+            print(f"   - Articles missing slugs: {missing_slugs}")
+            print(f"   - Articles missing titles: {missing_titles}")
+            print(f"   - Duplicate slugs: {len(duplicate_slugs)}")
+            if duplicate_slugs:
+                print(f"   - Duplicate slug examples: {list(duplicate_slugs)[:5]}")
+            return False
+        
+        print("✅ All articles have valid slugs and titles")
+        print("✅ Pre-flight checks passed")
+        return True
+        
+    except Exception as e:
+        print(f"❌ CRITICAL ERROR: Failed to validate articles data: {e}")
+        return False
+
 def generate_advanced_site():
     """Generate advanced website with all features"""
     
     print("🚀 Generating Advanced E-E-A-T Compliant Website...")
     print("=" * 60)
+    
+    # CRITICAL: Pre-flight validation checks
+    if not perform_preflight_checks():
+        print("❌ CRITICAL ERROR: Pre-flight checks failed. Aborting generation.")
+        return False
     
     # Create output directory
     os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -51,12 +116,28 @@ def generate_advanced_site():
     generate_advanced_category_pages(articles_data, unique_categories)
     generate_static_pages(unique_categories)
     generate_sitemap(articles_data)
+    
+    # CRITICAL: Validate sitemap to prevent Google Search Console errors
+    sitemap_valid = validate_and_fix_sitemap()
+    if not sitemap_valid:
+        print("❌ CRITICAL ERROR: Sitemap validation failed!")
+        print("🚨 THIS WILL CAUSE GOOGLE SEARCH CONSOLE ERRORS!")
+        print("🚨 GENERATION CANNOT CONTINUE SAFELY!")
+        return False
+    
     generate_robots_txt()
     generate_rss_feed(articles_data)
+    
+    # Final validation checks
+    if not perform_final_validation():
+        print("❌ CRITICAL ERROR: Final validation failed!")
+        return False
     
     print("\n🎉 Advanced E-E-A-T Website Generation Complete!")
     print(f"📁 Website files generated in: {OUTPUT_DIR}/")
     print("🌟 Features included: Ads, Lazy Loading, Social Media, SEO, E-E-A-T Compliance!")
+    print("✅ All critical validations passed - safe for deployment!")
+    return True
 
 def ensure_placeholder_image():
     """Ensure placeholder image exists"""
@@ -729,7 +810,7 @@ def generate_advanced_homepage(articles_data, unique_categories):
         <meta property="og:title" content="Country's News - Professional Journalism">
         <meta property="og:description" content="Country's News delivers comprehensive coverage and professional journalism with fact-checked content.">
         <meta property="og:type" content="website">
-        <meta property="og:url" content="https://countrynews.com/">
+        <meta property="og:url" content="https://countrysnews.com/">
         <meta property="og:site_name" content="Country's News">
         
         <!-- Twitter Card -->
@@ -738,7 +819,7 @@ def generate_advanced_homepage(articles_data, unique_categories):
         <meta name="twitter:description" content="Professional journalism with comprehensive coverage and fact-checked content.">
         
         <!-- Canonical URL -->
-        <link rel="canonical" href="https://countrynews.com/">
+        <link rel="canonical" href="https://countrysnews.com/">
         
         {get_base_html_head()}
         
@@ -985,7 +1066,7 @@ def generate_homepage_structured_data(articles_data):
                 "name": "Country's News",
                 "logo": {
                     "@type": "ImageObject",
-                    "url": "https://countrynews.com/logo.svg"
+                    "url": "https://countrysnews.com/logo.svg"
                 }
             }
         }
@@ -995,8 +1076,8 @@ def generate_homepage_structured_data(articles_data):
         "@context": "https://schema.org",
         "@type": "NewsMediaOrganization",
         "name": "Country's News",
-        "url": "https://countrynews.com/",
-        "logo": "https://countrynews.com/logo.svg",
+        "url": "https://countrysnews.com/",
+        "logo": "https://countrysnews.com/logo.svg",
         "description": "Professional journalism platform delivering comprehensive news coverage with fact-checked content",
         "sameAs": [
             "https://twitter.com/countrysnews"
@@ -1067,7 +1148,7 @@ def generate_single_category_page(category, category_articles, unique_categories
         <meta property="og:title" content="{category} News | Country's News">
         <meta property="og:description" content="Latest {category.lower()} news and expert analysis from Country's News.">
         <meta property="og:type" content="website">
-        <meta property="og:url" content="https://countrynews.com/categories/{category_slug}.html">
+        <meta property="og:url" content="https://countrysnews.com/categories/{category_slug}.html">
         <meta property="og:site_name" content="Country's News">
         
         <!-- Twitter Card -->
@@ -1076,7 +1157,7 @@ def generate_single_category_page(category, category_articles, unique_categories
         <meta name="twitter:description" content="Latest {category.lower()} news and expert analysis.">
         
         <!-- Canonical URL -->
-        <link rel="canonical" href="https://countrynews.com/categories/{category_slug}.html">
+        <link rel="canonical" href="https://countrysnews.com/categories/{category_slug}.html">
         
         {get_base_html_head()}
         
@@ -1356,7 +1437,7 @@ def generate_category_structured_data(category, articles):
         "@type": "CollectionPage",
         "name": f"{category} News",
         "description": f"Latest {category.lower()} news and updates",
-        "url": f"https://countrynews.com/categories/{generate_slug(category)}.html",
+        "url": f"https://countrysnews.com/categories/{generate_slug(category)}.html",
         "mainEntity": {
             "@type": "ItemList",
             "itemListElement": articles_data
@@ -1527,7 +1608,7 @@ def generate_contact_page(unique_categories):
                                 </div>
                                 <div>
                                     <h3 class="text-lg font-semibold text-gray-900">Email</h3>
-                                    <p class="text-gray-600">contact@countrynews.com</p>
+                                    <p class="text-gray-600">contact@countrysnews.com</p>
                                 </div>
                             </div>
                             
@@ -1607,7 +1688,7 @@ def generate_privacy_page(unique_categories):
                     <p>We work hard to protect Country's News and our users from unauthorized access to or unauthorized alteration, disclosure or destruction of information we hold.</p>
                     
                     <h2>Contact Us</h2>
-                    <p>If you have any questions about this Privacy Policy, please contact us at privacy@countrynews.com.</p>
+                    <p>If you have any questions about this Privacy Policy, please contact us at privacy@countrysnews.com.</p>
                 </div>
                 
                 <!-- Ad -->
@@ -1673,65 +1754,250 @@ def generate_disclaimer_page(unique_categories):
         f.write(disclaimer_html)
 
 def generate_sitemap(articles_data):
-    """Generate XML sitemap"""
+    """Generate XML sitemap with proper URL encoding"""
     print("📝 Generating XML sitemap...")
     
-    sitemap_content = '''<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <!-- Homepage -->
-    <url>
-        <loc>https://countrynews.com/</loc>
-        <changefreq>hourly</changefreq>
-        <priority>1.0</priority>
-    </url>
-    
-    <!-- Static Pages -->
-    <url>
-        <loc>https://countrynews.com/about-us.html</loc>
-        <changefreq>monthly</changefreq>
-        <priority>0.8</priority>
-    </url>
-    <url>
-        <loc>https://countrynews.com/contact.html</loc>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
-    </url>
-    
-'''
-    
-    # Add category pages
-    categories = set([article.get('category', DEFAULT_CATEGORY) for article in articles_data])
-    for category in categories:
-        category_slug = generate_slug(category)
-        sitemap_content += f'''    <url>
-        <loc>https://countrynews.com/categories/{category_slug}.html</loc>
-        <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-    </url>
-'''
-    
-    # Add article pages
-    for article in articles_data:
-        sitemap_content += f'''    <url>
-        <loc>https://countrynews.com/articles/{article['slug']}.html</loc>
-        <changefreq>weekly</changefreq>
-        <priority>0.6</priority>
-    </url>
-'''
-    
-    sitemap_content += '</urlset>'
-    
+    # Write sitemap directly to avoid any string concatenation issues
     with open(os.path.join(OUTPUT_DIR, 'sitemap.xml'), 'w', encoding='utf-8') as f:
-        f.write(sitemap_content)
+        f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+        f.write('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')
+        
+        # Homepage
+        f.write('    <!-- Homepage -->\n')
+        f.write('    <url>\n')
+        f.write('        <loc>https://countrysnews.com/</loc>\n')
+        f.write('        <changefreq>hourly</changefreq>\n')
+        f.write('        <priority>1.0</priority>\n')
+        f.write('    </url>\n\n')
+        
+        # Static Pages
+        f.write('    <!-- Static Pages -->\n')
+        f.write('    <url>\n')
+        f.write('        <loc>https://countrysnews.com/about-us.html</loc>\n')
+        f.write('        <changefreq>monthly</changefreq>\n')
+        f.write('        <priority>0.8</priority>\n')
+        f.write('    </url>\n')
+        f.write('    <url>\n')
+        f.write('        <loc>https://countrysnews.com/contact.html</loc>\n')
+        f.write('        <changefreq>monthly</changefreq>\n')
+        f.write('        <priority>0.7</priority>\n')
+        f.write('    </url>\n\n')
+        
+        # Add category pages
+        categories = set([article.get('category', DEFAULT_CATEGORY) for article in articles_data])
+        for category in categories:
+            category_slug = generate_slug(category).strip()
+            f.write('    <url>\n')
+            f.write(f'        <loc>https://countrysnews.com/categories/{category_slug}.html</loc>\n')
+            f.write('        <changefreq>daily</changefreq>\n')
+            f.write('        <priority>0.8</priority>\n')
+            f.write('    </url>\n')
+        
+        # Add article pages
+        for article in articles_data:
+            article_slug = str(article['slug']).strip().replace('\n', '').replace('\r', '')
+            # Escape any special characters that might cause XML issues
+            escaped_slug = article_slug.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            f.write('    <url>\n')
+            f.write(f'        <loc>https://countrysnews.com/articles/{escaped_slug}.html</loc>\n')
+            f.write('        <changefreq>weekly</changefreq>\n')
+            f.write('        <priority>0.6</priority>\n')
+            f.write('    </url>\n')
+        
+        f.write('</urlset>\n')
     
     print("✅ XML sitemap generated")
+
+def validate_and_fix_sitemap():
+    """Validate sitemap XML and fix any issues - CRITICAL for Google Search Console"""
+    print("🔍 Validating sitemap XML structure...")
+    
+    sitemap_path = os.path.join(OUTPUT_DIR, 'sitemap.xml')
+    
+    if not os.path.exists(sitemap_path):
+        print("❌ CRITICAL ERROR: Sitemap file not found!")
+        return False
+    
+    try:
+        # Parse and validate XML structure
+        import xml.etree.ElementTree as ET
+        tree = ET.parse(sitemap_path)
+        root = tree.getroot()
+        
+        # Check namespace
+        expected_namespace = "http://www.sitemaps.org/schemas/sitemap/0.9"
+        if root.tag != f'{{{expected_namespace}}}urlset':
+            print(f"❌ CRITICAL ERROR: Invalid sitemap namespace. Expected {expected_namespace}")
+            return False
+        
+        # Get all URL entries
+        urls = root.findall(f'.//{{{expected_namespace}}}url')
+        print(f"📊 Found {len(urls)} URL entries in sitemap")
+        
+        # Validate each URL
+        problematic_urls = 0
+        invalid_chars = 0
+        too_long_urls = 0
+        
+        for i, url in enumerate(urls):
+            loc_element = url.find(f'{{{expected_namespace}}}loc')
+            if loc_element is None:
+                print(f"❌ CRITICAL ERROR: URL entry {i+1} missing <loc> element")
+                problematic_urls += 1
+                continue
+                
+            url_text = loc_element.text
+            if not url_text:
+                print(f"❌ CRITICAL ERROR: URL entry {i+1} has empty <loc> element")
+                problematic_urls += 1
+                continue
+            
+            # Check for line breaks (the main issue)
+            if '\n' in url_text or '\r' in url_text:
+                print(f"❌ CRITICAL ERROR: URL entry {i+1} contains line breaks: {repr(url_text[:50])}...")
+                problematic_urls += 1
+            
+            # Check for invalid characters
+            if any(ord(c) < 32 and c not in '\t\n\r' for c in url_text):
+                print(f"❌ CRITICAL ERROR: URL entry {i+1} contains invalid control characters")
+                invalid_chars += 1
+            
+            # Check URL length (Google recommends < 2048 characters)
+            if len(url_text) > 2048:
+                print(f"⚠️  WARNING: URL entry {i+1} is very long ({len(url_text)} chars): {url_text[:50]}...")
+                too_long_urls += 1
+            
+            # Validate URL format
+            if not url_text.startswith(('http://', 'https://')):
+                print(f"❌ CRITICAL ERROR: URL entry {i+1} has invalid protocol: {url_text[:50]}...")
+                problematic_urls += 1
+        
+        # Report results
+        total_issues = problematic_urls + invalid_chars
+        
+        if total_issues == 0:
+            print("✅ SITEMAP VALIDATION PASSED: All URLs are properly formatted")
+            if too_long_urls > 0:
+                print(f"⚠️  Note: {too_long_urls} URLs are longer than recommended (>2048 chars)")
+            return True
+        else:
+            print(f"❌ SITEMAP VALIDATION FAILED: {total_issues} critical issues found")
+            print(f"   - URLs with line breaks: {problematic_urls}")
+            print(f"   - URLs with invalid characters: {invalid_chars}")
+            print(f"   - URLs too long: {too_long_urls}")
+            
+            # Attempt to fix the sitemap
+            print("🔧 Attempting to fix sitemap issues...")
+            return fix_sitemap_issues(sitemap_path, tree, expected_namespace)
+            
+    except ET.ParseError as e:
+        print(f"❌ CRITICAL ERROR: Sitemap XML is malformed: {e}")
+        print("🔧 Attempting to regenerate sitemap...")
+        # Try to regenerate sitemap
+        try:
+            articles_data = load_articles()
+            generate_sitemap(articles_data)
+            print("✅ Sitemap regenerated successfully")
+            return validate_and_fix_sitemap()  # Recursive validation
+        except Exception as regen_error:
+            print(f"❌ CRITICAL ERROR: Failed to regenerate sitemap: {regen_error}")
+            return False
+    except Exception as e:
+        print(f"❌ CRITICAL ERROR: Unexpected error during sitemap validation: {e}")
+        return False
+
+def fix_sitemap_issues(sitemap_path, tree, namespace):
+    """Attempt to fix sitemap issues"""
+    try:
+        root = tree.getroot()
+        urls = root.findall(f'.//{{{namespace}}}url')
+        fixed_count = 0
+        
+        for url in urls:
+            loc_element = url.find(f'{{{namespace}}}loc')
+            if loc_element is not None and loc_element.text:
+                original_text = loc_element.text
+                
+                # Fix line breaks and control characters
+                cleaned_text = original_text.replace('\n', '').replace('\r', '').strip()
+                
+                # Remove any other control characters except tab
+                cleaned_text = ''.join(c for c in cleaned_text if ord(c) >= 32 or c == '\t')
+                
+                if cleaned_text != original_text:
+                    loc_element.text = cleaned_text
+                    fixed_count += 1
+        
+        if fixed_count > 0:
+            # Write the fixed sitemap
+            tree.write(sitemap_path, encoding='utf-8', xml_declaration=True)
+            print(f"✅ Fixed {fixed_count} URL issues in sitemap")
+            
+            # Validate again to ensure fix worked
+            return validate_and_fix_sitemap()
+        else:
+            print("❌ No fixable issues found, but validation still failed")
+            return False
+            
+    except Exception as e:
+        print(f"❌ CRITICAL ERROR: Failed to fix sitemap: {e}")
+        return False
+
+def perform_final_validation():
+    """Final validation checks after generation"""
+    print("🔍 Performing final validation checks...")
+    
+    critical_files = [
+        'index.html',
+        'sitemap.xml',
+        'robots.txt',
+        'rss.xml'
+    ]
+    
+    missing_files = []
+    for file in critical_files:
+        file_path = os.path.join(OUTPUT_DIR, file)
+        if not os.path.exists(file_path):
+            missing_files.append(file)
+    
+    if missing_files:
+        print(f"❌ CRITICAL ERROR: Missing critical files: {missing_files}")
+        return False
+    
+    # Check if articles directory exists and has files
+    articles_dir = os.path.join(OUTPUT_DIR, 'articles')
+    if not os.path.exists(articles_dir):
+        print("❌ CRITICAL ERROR: Articles directory not created")
+        return False
+    
+    article_files = [f for f in os.listdir(articles_dir) if f.endswith('.html')]
+    if not article_files:
+        print("❌ CRITICAL ERROR: No article HTML files generated")
+        return False
+    
+    # Check categories directory
+    categories_dir = os.path.join(OUTPUT_DIR, 'categories')
+    if not os.path.exists(categories_dir):
+        print("❌ CRITICAL ERROR: Categories directory not created")
+        return False
+    
+    category_files = [f for f in os.listdir(categories_dir) if f.endswith('.html')]
+    if not category_files:
+        print("❌ CRITICAL ERROR: No category HTML files generated")
+        return False
+    
+    print(f"✅ All critical files present")
+    print(f"✅ Generated {len(article_files)} article pages")
+    print(f"✅ Generated {len(category_files)} category pages")
+    print("✅ Final validation passed")
+    return True
 
 def generate_robots_txt():
     """Generate robots.txt"""
     robots_content = '''User-agent: *
 Allow: /
 
-Sitemap: https://countrynews.com/sitemap.xml
+Sitemap: https://countrysnews.com/sitemap.xml
 '''
     
     with open(os.path.join(OUTPUT_DIR, 'robots.txt'), 'w', encoding='utf-8') as f:
@@ -1749,7 +2015,7 @@ def generate_rss_feed(articles_data):
     <channel>
         <title>Country's News</title>
         <description>Your trusted source for verified news with expert analysis</description>
-        <link>https://countrynews.com/</link>
+        <link>https://countrysnews.com/</link>
         <language>en-us</language>
         <lastBuildDate>{datetime.now().strftime('%a, %d %b %Y %H:%M:%S')} GMT</lastBuildDate>
         
@@ -1759,8 +2025,8 @@ def generate_rss_feed(articles_data):
         rss_content += f'''        <item>
             <title><![CDATA[{article['title']}]]></title>
             <description><![CDATA[{article.get('excerpt', '')[:500]}]]></description>
-            <link>https://countrynews.com/articles/{article['slug']}.html</link>
-            <guid>https://countrynews.com/articles/{article['slug']}.html</guid>
+            <link>https://countrysnews.com/articles/{article['slug']}.html</link>
+            <guid>https://countrysnews.com/articles/{article['slug']}.html</guid>
             <pubDate>{article.get('publishDate', '')}</pubDate>
             <category>{article.get('category', 'News')}</category>
         </item>
@@ -1946,7 +2212,7 @@ def generate_single_advanced_article(article, unique_categories, related_list):
         <meta property="og:title" content="{article['title']}">
         <meta property="og:description" content="{article.get('excerpt', '')[:160]}">
         <meta property="og:type" content="article">
-        <meta property="og:url" content="https://countrynews.com/articles/{article['slug']}.html">
+        <meta property="og:url" content="https://countrysnews.com/articles/{article['slug']}.html">
         <meta property="og:image" content="{article_image}">
         <meta property="og:site_name" content="Country's News">
         
@@ -1957,7 +2223,7 @@ def generate_single_advanced_article(article, unique_categories, related_list):
         <meta name="twitter:image" content="{article_image}">
         
         <!-- Canonical URL -->
-        <link rel="canonical" href="https://countrynews.com/articles/{article['slug']}.html">
+        <link rel="canonical" href="https://countrysnews.com/articles/{article['slug']}.html">
         
         {get_base_html_head()}
         
@@ -2125,7 +2391,7 @@ def generate_author_profile(article):
 
 def generate_social_sharing(article):
     """Generate social sharing buttons"""
-    article_url = f"https://countrynews.com/articles/{article['slug']}.html"
+    article_url = f"https://countrysnews.com/articles/{article['slug']}.html"
     article_title = quote(article['title'])
     
     return f'''
@@ -2321,12 +2587,12 @@ def generate_article_structured_data(article):
             "name": "Country's News",
             "logo": {
                 "@type": "ImageObject",
-                "url": "https://countrynews.com/logo.svg"
+                "url": "https://countrysnews.com/logo.svg"
             }
         },
         "mainEntityOfPage": {
             "@type": "WebPage",
-            "@id": f"https://countrynews.com/articles/{article['slug']}.html"
+            "@id": f"https://countrysnews.com/articles/{article['slug']}.html"
         }
     }
     

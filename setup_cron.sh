@@ -19,9 +19,9 @@ fi
 chmod +x "$AUTO_PUBLISH_SCRIPT"
 
 # Create cron job entry
-CRON_ENTRY="0 * * * * $AUTO_PUBLISH_SCRIPT >> $SCRIPT_DIR/logs/cron.log 2>&1"
+CRON_ENTRY="0 */6 * * * $AUTO_PUBLISH_SCRIPT >> $SCRIPT_DIR/logs/cron.log 2>&1"
 
-echo "The following cron job will be added to run every hour:"
+echo "The following cron job will be added to run every 6 hours:"
 echo "$CRON_ENTRY"
 echo ""
 
