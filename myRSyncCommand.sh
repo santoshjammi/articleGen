@@ -1,0 +1,1 @@
+rsync -avz --progress dist u237278792.countrysnews.com@212.1.209.3:/public_html

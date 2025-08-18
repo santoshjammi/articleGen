@@ -76,6 +76,23 @@ generate_trend_articles() {
     fi
 }
 
+# Function to generate local manifest
+generate_local_manifest() {
+    log "Generating local manifest..."
+    
+    # Activate virtual environment before running Python scripts
+    activate_venv
+    
+    cd "$SCRIPT_DIR"
+    if python3 generateLocalManifest.py >> "$LOG_FILE" 2>&1; then
+        log_success "Local manifest generated successfully"
+        return 0
+    else
+        log_error "Failed to generate local manifest"
+        return 1
+    fi
+}
+
 # Function to run workflow.py with option 2 (fetch fresh trends + generate articles)
 run_workflow_fresh_trends() {
     log "Running workflow.py with option 2 (fetch fresh trends + generate articles)..."
@@ -120,6 +137,23 @@ cleanup_logs() {
     log "Log cleanup completed"
 }
 
+# Function to sync to FTP server (FINAL STEP)
+sync_to_ftp() {
+    log "Syncing to FTP server using ultra-fast parallel upload..."
+    
+    # Activate virtual environment before running Python scripts
+    activate_venv
+    
+    cd "$SCRIPT_DIR"
+    if python3 ultraFastSync.py >> "$LOG_FILE" 2>&1; then
+        log_success "FTP sync completed successfully"
+        return 0
+    else
+        log_error "FTP sync failed"
+        return 1
+    fi
+}
+
 # Main execution function
 main() {
     log "=== Starting Simplified Article Generation (Every 6 Hours) ==="
@@ -130,6 +164,13 @@ main() {
     
     # Create backup
     backup_articles
+    
+    # Step 0: Generate local manifest (FIRST STEP)
+    log "Step 0: Generating local manifest..."
+    if ! generate_local_manifest; then
+        log_error "Failed to generate local manifest"
+        return 1
+    fi
     
     # Step 1: Generate 15 trend-based articles per region
     log "Step 1: Generating trend-based articles..."
@@ -142,6 +183,13 @@ main() {
     log "Step 2: Running fresh trends workflow..."
     if ! run_workflow_fresh_trends; then
         log_error "Failed to run fresh trends workflow"
+        return 1
+    fi
+    
+    # Step 3: Sync to FTP server (FINAL STEP)
+    log "Step 3: Syncing to FTP server..."
+    if ! sync_to_ftp; then
+        log_error "Failed to sync to FTP server"
         return 1
     fi
     
