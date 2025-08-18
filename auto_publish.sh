@@ -137,6 +137,23 @@ cleanup_logs() {
     log "Log cleanup completed"
 }
 
+# Function to generate differential manifest (STEP 2.5)
+generate_differential_manifest() {
+    log "Generating differential manifest (smart change detection)..."
+    
+    # Activate virtual environment before running Python scripts
+    activate_venv
+    
+    cd "$SCRIPT_DIR"
+    if python3 generateDifferentialManifest.py >> "$LOG_FILE" 2>&1; then
+        log_success "Differential manifest generated successfully"
+        return 0
+    else
+        log_error "Failed to generate differential manifest"
+        return 1
+    fi
+}
+
 # Function to sync to FTP server (FINAL STEP)
 sync_to_ftp() {
     log "Syncing to FTP server using ultra-fast parallel upload..."
@@ -183,6 +200,13 @@ main() {
     log "Step 2: Running fresh trends workflow..."
     if ! run_workflow_fresh_trends; then
         log_error "Failed to run fresh trends workflow"
+        return 1
+    fi
+    
+    # Step 2.5: Generate differential manifest (smart change detection)
+    log "Step 2.5: Analyzing changes for differential sync..."
+    if ! generate_differential_manifest; then
+        log_error "Failed to generate differential manifest"
         return 1
     fi
     

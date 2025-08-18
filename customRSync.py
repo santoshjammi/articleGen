@@ -41,6 +41,7 @@ MAX_WORKERS = int(os.getenv("MAX_WORKERS", 16)) # Increased default for better p
 
 # Manifest file path to store uploaded file details
 MANIFEST_FILE_PATH = os.path.join(LOCAL_DIRECTORY, ".sync_manifest.json")
+DIFFERENTIAL_MANIFEST_PATH = os.path.join(LOCAL_DIRECTORY, ".differential_sync.json")
 
 # --- Helper Function to verify remote directory structure ---
 def verify_remote_directory(remote_dir, ftp_credentials):
