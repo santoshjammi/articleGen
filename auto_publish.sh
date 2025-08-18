@@ -137,6 +137,121 @@ cleanup_logs() {
     log "Log cleanup completed"
 }
 
+# Function to generate missing images with retry logic and verification
+generate_missing_images() {
+    local step_name="$1"
+    local max_retries=3
+    local wait_seconds=15
+    local retry_count=0
+    
+    log "Generating missing images after $step_name..."
+    
+    while [ $retry_count -lt $max_retries ]; do
+        retry_count=$((retry_count + 1))
+        log "Image generation attempt $retry_count/$max_retries..."
+        
+        # Activate virtual environment
+        activate_venv
+        cd "$SCRIPT_DIR"
+        
+        # Run image generation
+        if python3 super_article_manager.py images >> "$LOG_FILE" 2>&1; then
+            log "Image generation command executed successfully"
+        else
+            log_warning "Image generation command returned error (attempt $retry_count)"
+        fi
+        
+        # Verify images after generation
+        log "Verifying generated images..."
+        if verify_images; then
+            log_success "All images verified successfully after $retry_count attempt(s)"
+            return 0
+        else
+            if [ $retry_count -lt $max_retries ]; then
+                log_warning "Image verification failed, waiting ${wait_seconds}s before retry..."
+                sleep $wait_seconds
+            else
+                log_warning "Image verification failed after $max_retries attempts"
+                log_warning "Continuing with process - some images may be missing"
+                return 1
+            fi
+        fi
+    done
+    
+    return 1
+}
+
+# Function to verify images (WebP format and count validation)
+verify_images() {
+    local dist_dir="$SCRIPT_DIR/dist"
+    local error_count=0
+    local missing_images=0
+    local non_webp_images=0
+    local total_images=0
+    
+    if [ ! -d "$dist_dir" ]; then
+        log_error "Distribution directory not found: $dist_dir"
+        return 1
+    fi
+    
+    log "Scanning for image verification in $dist_dir..."
+    
+    # Count total images
+    total_images=$(find "$dist_dir" -type f \( -name "*.webp" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" \) | wc -l)
+    
+    # Check for non-WebP images (should be converted)
+    non_webp_images=$(find "$dist_dir" -type f \( -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" \) | wc -l)
+    
+    # Check for missing main.webp and inline_*.webp files
+    local main_webp_missing=0
+    local inline_webp_missing=0
+    
+    # Check for main.webp files in article directories
+    while IFS= read -r -d '' article_dir; do
+        if [ ! -f "$article_dir/main.webp" ]; then
+            main_webp_missing=$((main_webp_missing + 1))
+            log_warning "Missing main.webp in: $(basename "$article_dir")"
+        fi
+        
+        # Check for inline images referenced in HTML but missing as WebP
+        if [ -f "$article_dir/index.html" ]; then
+            local inline_count
+            inline_count=$(grep -o 'inline_[0-9]*.webp' "$article_dir/index.html" 2>/dev/null | sort -u | wc -l)
+            local actual_inline
+            actual_inline=$(find "$article_dir" -name "inline_*.webp" | wc -l)
+            
+            if [ "$inline_count" -gt "$actual_inline" ]; then
+                inline_webp_missing=$((inline_webp_missing + (inline_count - actual_inline)))
+                log_warning "Missing $(($inline_count - $actual_inline)) inline images in: $(basename "$article_dir")"
+            fi
+        fi
+    done < <(find "$dist_dir" -type d -name "*" -path "*/articles/*" -print0 2>/dev/null)
+    
+    # Calculate total missing images
+    missing_images=$((main_webp_missing + inline_webp_missing))
+    
+    # Log verification results
+    log "📊 IMAGE VERIFICATION RESULTS:"
+    log "   📸 Total images found: $total_images"
+    log "   ✅ WebP format images: $((total_images - non_webp_images))"
+    log "   ⚠️  Non-WebP images: $non_webp_images"
+    log "   ❌ Missing main.webp: $main_webp_missing"
+    log "   ❌ Missing inline.webp: $inline_webp_missing"
+    log "   🔢 Total missing images: $missing_images"
+    
+    # Determine verification result
+    if [ $missing_images -eq 0 ] && [ $non_webp_images -eq 0 ]; then
+        log_success "✅ Image verification PASSED - All images present in WebP format"
+        return 0
+    elif [ $missing_images -lt 5 ] && [ $non_webp_images -eq 0 ]; then
+        log_warning "⚠️ Image verification ACCEPTABLE - Only $missing_images missing images"
+        return 0
+    else
+        log_warning "❌ Image verification FAILED - $missing_images missing, $non_webp_images non-WebP"
+        return 1
+    fi
+}
+
 # Function to generate differential manifest (STEP 2.5)
 generate_differential_manifest() {
     log "Generating differential manifest (smart change detection)..."
@@ -196,12 +311,20 @@ main() {
         return 1
     fi
     
+    # Step 1.5: Generate missing images (after trend articles)
+    log "Step 1.5: Generating missing images after trend articles..."
+    generate_missing_images "trend articles"
+    
     # Step 2: Run workflow.py with option 2 (fetch fresh trends + generate articles)
     log "Step 2: Running fresh trends workflow..."
     if ! run_workflow_fresh_trends; then
         log_error "Failed to run fresh trends workflow"
         return 1
     fi
+    
+    # Step 2.25: Generate missing images (after fresh trends workflow)
+    log "Step 2.25: Generating missing images after fresh trends workflow..."
+    generate_missing_images "fresh trends workflow"
     
     # Step 2.5: Generate differential manifest (smart change detection)
     log "Step 2.5: Analyzing changes for differential sync..."

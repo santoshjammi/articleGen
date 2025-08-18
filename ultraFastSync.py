@@ -87,6 +87,51 @@ def load_manifest():
     logger.warning("No manifest found. Please ensure auto_publish.sh has run generateLocalManifest.py first.")
     return {}
 
+def create_directories_smart(directories_to_create, ftp_credentials):
+    """Smart directory creation - only create directories that don't exist"""
+    if not directories_to_create:
+        return
+    
+    host, user, password = ftp_credentials
+    directories_created = 0
+    directories_checked = len(directories_to_create)
+    
+    logger.info("Smart directory creation starting...")
+    start_time = time.time()
+    
+    try:
+        with ftplib.FTP(host) as ftp:
+            ftp.login(user=user, passwd=password)
+            
+            for directory in sorted(directories_to_create):
+                try:
+                    # Try to change to the directory to check if it exists
+                    current_dir = ftp.pwd()
+                    ftp.cwd(directory)
+                    ftp.cwd(current_dir)  # Return to original directory
+                    # If we get here, directory exists - skip creation
+                    logger.debug(f"📂 Directory exists, skipped: {directory}")
+                except ftplib.error_perm:
+                    # Directory doesn't exist, create it
+                    try:
+                        ftp.mkd(directory)
+                        directories_created += 1
+                        logger.info(f"✅ Created new directory: {directory}")
+                    except ftplib.error_perm:
+                        # Might be a permission issue or already created by another thread
+                        logger.debug(f"⚠️ Could not create directory: {directory}")
+                        pass
+    except Exception as e:
+        logger.warning(f"⚠️ Directory creation error: {e}")
+    
+    creation_time = time.time() - start_time
+    directories_skipped = directories_checked - directories_created
+    
+    logger.info(f"✅ Smart directory creation completed in {creation_time:.2f} seconds")
+    logger.info(f"   📂 Directories checked: {directories_checked}")
+    logger.info(f"   🆕 New directories created: {directories_created}")
+    logger.info(f"   ✅ Existing directories skipped: {directories_skipped}")
+
 def upload_file(local_path, remote_path, ftp_credentials):
     """Ultra-fast upload function with manifest tracking"""
     host, user, password = ftp_credentials
@@ -168,22 +213,13 @@ def differential_sync():
         print("🎉 No changes detected - sync completed instantly!")
         return True
     
-    # Create directories in batch
+    # Create directories smartly (only those that don't exist)
     if directories_to_create:
         dir_start = time.time()
-        logger.info(f"Creating {len(directories_to_create)} directories...")
-        try:
-            with ftplib.FTP(FTP_HOST) as ftp:
-                ftp.login(user=FTP_USER, passwd=FTP_PASS)
-                for remote_dir_path in sorted(directories_to_create):
-                    try:
-                        ftp.mkd(remote_dir_path)
-                    except ftplib.error_perm:
-                        pass  # Directory exists
-        except Exception:
-            pass  # Continue anyway
+        logger.info(f"Checking {len(directories_to_create)} directories...")
+        create_directories_smart(directories_to_create, ftp_credentials)
         dir_time = time.time() - dir_start
-        logger.info(f"✅ Directory creation completed in {dir_time:.2f} seconds")
+        logger.info(f"✅ Smart directory creation completed in {dir_time:.2f} seconds")
     
     logger.info(f"🚀 Starting differential upload with {MAX_WORKERS} workers...")
     upload_start = time.time()
@@ -291,22 +327,13 @@ def fast_sync():
     logger.info(f"📁 Found {len(directories_to_create)} directories to create")
     logger.info(f"📄 Found {len(files_to_upload)} files to upload")
     
-    # Create directories in batch (silent)
+    # Create directories smartly (only those that don't exist)
     if directories_to_create:
         dir_start = time.time()
-        logger.info(f"Creating {len(directories_to_create)} directories...")
-        try:
-            with ftplib.FTP(FTP_HOST) as ftp:
-                ftp.login(user=FTP_USER, passwd=FTP_PASS)
-                for remote_dir_path in sorted(directories_to_create):
-                    try:
-                        ftp.mkd(remote_dir_path)
-                    except ftplib.error_perm:
-                        pass  # Directory exists
-        except Exception:
-            pass  # Continue anyway
+        logger.info(f"Checking {len(directories_to_create)} directories...")
+        create_directories_smart(directories_to_create, ftp_credentials)
         dir_time = time.time() - dir_start
-        logger.info(f"✅ Directory creation completed in {dir_time:.2f} seconds")
+        logger.info(f"✅ Smart directory creation completed in {dir_time:.2f} seconds")
     
     if not files_to_upload:
         logger.info("✅ No files to upload - everything is up to date!")
