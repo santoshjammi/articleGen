@@ -288,7 +288,8 @@ sync_to_ftp() {
 
 # Main execution function
 main() {
-    log "=== Starting Simplified Article Generation (Every 6 Hours) ==="
+    log "=== Starting SEO-Focused Article Generation (Daily at 6PM IST) ==="
+    log "🎯 SEO Strategy: Global trends >100K searches + India TOP 15"
     log "Timestamp: $(date '+%Y-%m-%d %H:%M:%S')"
     
     # Cleanup old logs
@@ -304,8 +305,8 @@ main() {
         return 1
     fi
     
-    # Step 1: Generate 15 trend-based articles per region
-    log "Step 1: Generating trend-based articles..."
+    # Step 1: Generate 15 trend-based articles per region (using SEO-filtered trends)
+    log "Step 1: Generating SEO-qualified trend-based articles..."
     if ! generate_trend_articles; then
         log_error "Failed to generate trend-based articles"
         return 1
@@ -315,8 +316,8 @@ main() {
     log "Step 1.5: Generating missing images after trend articles..."
     generate_missing_images "trend articles"
     
-    # Step 2: Run workflow.py with option 2 (fetch fresh trends + generate articles)
-    log "Step 2: Running fresh trends workflow..."
+    # Step 2: Run workflow.py with option 2 (fetch fresh SEO-filtered trends + generate articles)
+    log "Step 2: Running fresh SEO-filtered trends workflow..."
     if ! run_workflow_fresh_trends; then
         log_error "Failed to run fresh trends workflow"
         return 1
@@ -340,8 +341,9 @@ main() {
         return 1
     fi
     
-    log_success "=== All tasks completed successfully ==="
-    log "Next run should be in 6 hours"
+    log_success "=== All SEO-focused tasks completed successfully ==="
+    log "🎯 Generated articles only for high-traffic trends"
+    log "📈 Next run scheduled for tomorrow at 6PM IST"
     log "=== Process completed at $(date '+%Y-%m-%d %H:%M:%S') ==="
 }
 
