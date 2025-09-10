@@ -1,0 +1,435 @@
+{
+  "categories": {
+    "Technology": {
+      "subcategories": [
+        "AI",
+        "Software",
+        "Hardware",
+        "Web Development",
+        "Cybersecurity",
+        "Data Science",
+        "Machine Learning",
+        "Cloud Computing",
+        "DevOps",
+        "Mobile Development"
+      ],
+      "keywords": [
+        "tech",
+        "digital",
+        "software",
+        "ai",
+        "artificial intelligence",
+        "programming",
+        "development",
+        "computing",
+        "cyber",
+        "data",
+        "algorithm",
+        "code"
+      ],
+      "confidence": 1.0,
+      "created_at": "2025-09-10T10:34:13.721270"
+    },
+    "Business": {
+      "subcategories": [
+        "Finance",
+        "Marketing",
+        "Strategy",
+        "Entrepreneurship",
+        "E-commerce",
+        "Banking",
+        "Investment",
+        "Startup"
+      ],
+      "keywords": [
+        "business",
+        "finance",
+        "economy",
+        "marketing",
+        "startup",
+        "investment",
+        "banking",
+        "commerce",
+        "trade",
+        "corporate",
+        "strategy",
+        "entrepreneur"
+      ],
+      "confidence": 1.0,
+      "created_at": "2025-09-10T10:34:13.721282"
+    },
+    "Health": {
+      "subcategories": [
+        "Wellness",
+        "Medical",
+        "Fitness",
+        "Mental Health",
+        "Nutrition",
+        "Healthcare"
+      ],
+      "keywords": [
+        "health",
+        "medical",
+        "wellness",
+        "fitness",
+        "healthcare",
+        "doctor",
+        "medicine",
+        "nutrition",
+        "mental",
+        "therapy",
+        "hospital"
+      ],
+      "confidence": 1.0,
+      "created_at": "2025-09-10T10:34:13.721285"
+    },
+    "Sports": {
+      "subcategories": [
+        "Football",
+        "Cricket",
+        "Basketball",
+        "Olympics",
+        "Tennis",
+        "Soccer"
+      ],
+      "keywords": [
+        "sports",
+        "game",
+        "tournament",
+        "player",
+        "team",
+        "match",
+        "football",
+        "cricket",
+        "basketball",
+        "olympics",
+        "athletic"
+      ],
+      "confidence": 1.0,
+      "created_at": "2025-09-10T10:34:13.721287"
+    },
+    "Entertainment": {
+      "subcategories": [
+        "Movies",
+        "Music",
+        "TV",
+        "Celebrity",
+        "Gaming",
+        "Streaming"
+      ],
+      "keywords": [
+        "movie",
+        "music",
+        "entertainment",
+        "celebrity",
+        "film",
+        "tv",
+        "gaming",
+        "streaming",
+        "show",
+        "actor",
+        "singer"
+      ],
+      "confidence": 1.0,
+      "created_at": "2025-09-10T10:34:13.721289"
+    },
+    "Lifestyle": {
+      "subcategories": [
+        "Travel",
+        "Food",
+        "Fashion",
+        "Career",
+        "Home",
+        "Beauty"
+      ],
+      "keywords": [
+        "travel",
+        "food",
+        "lifestyle",
+        "fashion",
+        "career",
+        "home",
+        "beauty",
+        "cooking",
+        "recipe",
+        "style",
+        "decoration"
+      ],
+      "confidence": 1.0,
+      "created_at": "2025-09-10T10:34:13.721291"
+    },
+    "Environment": {
+      "subcategories": [
+        "Climate",
+        "Sustainability",
+        "Green Energy",
+        "Conservation",
+        "Pollution"
+      ],
+      "keywords": [
+        "environment",
+        "climate",
+        "green",
+        "sustainability",
+        "eco",
+        "pollution",
+        "renewable",
+        "conservation",
+        "carbon",
+        "emission"
+      ],
+      "confidence": 1.0,
+      "created_at": "2025-09-10T10:34:13.721293"
+    },
+    "World": {
+      "subcategories": [
+        "Politics",
+        "International",
+        "News",
+        "Government",
+        "Global"
+      ],
+      "keywords": [
+        "news",
+        "politics",
+        "international",
+        "government",
+        "world",
+        "global",
+        "country",
+        "nation",
+        "diplomatic",
+        "policy"
+      ],
+      "confidence": 1.0,
+      "created_at": "2025-09-10T10:34:13.721295"
+    }
+  },
+  "subcategory_mapping": {
+    "Agile Certifications": "Technology",
+    "Agile Project Management": "Technology",
+    "Agile Methodologies": "Technology",
+    "Product Management": "Technology",
+    "Emerging Technologies": "Technology",
+    "Web Development": "Technology",
+    "Digital Economy": "Technology",
+    "Artificial Intelligence": "Technology",
+    "Software Development": "Technology",
+    "Programming": "Technology",
+    "DevOps": "Technology",
+    "Cloud Computing": "Technology",
+    "Cybersecurity": "Technology",
+    "Data Science": "Technology",
+    "Machine Learning": "Technology",
+    "Tech News": "Technology",
+    "Mobile Development": "Technology",
+    "API Development": "Technology",
+    "Database Management": "Technology",
+    "System Administration": "Technology",
+    "IT Management": "Technology",
+    "Digital Strategy": "Business",
+    "Marketing Strategy": "Business",
+    "Business Strategy": "Business",
+    "Digital Marketing": "Business",
+    "International Business": "Business",
+    "Banking": "Business",
+    "Recruitment": "Business",
+    "Stock Market": "Business",
+    "Stock Analysis": "Business",
+    "Personal Finance": "Business",
+    "Retail": "Business",
+    "Fast Food": "Business",
+    "Semiconductors": "Business",
+    "Project Management": "Business",
+    "Business Analytics": "Business",
+    "E-commerce": "Business",
+    "Fintech": "Business",
+    "Startup": "Business",
+    "Entrepreneurship": "Business",
+    "Corporate Strategy": "Business",
+    "Business Development": "Business",
+    "Sales": "Business",
+    "Customer Service": "Business",
+    "Banking News": "Business"
+  },
+  "category_keywords": {},
+  "category_stats": {
+    "Technology": {
+      "article_count": 0,
+      "avg_confidence": 1.0,
+      "last_used": "2025-09-10T10:34:13.721300",
+      "trending_score": 0
+    },
+    "Business": {
+      "article_count": 0,
+      "avg_confidence": 1.0,
+      "last_used": "2025-09-10T10:34:13.721303",
+      "trending_score": 0
+    },
+    "Health": {
+      "article_count": 0,
+      "avg_confidence": 1.0,
+      "last_used": "2025-09-10T10:34:13.721306",
+      "trending_score": 0.0
+    },
+    "Sports": {
+      "article_count": 0,
+      "avg_confidence": 1.0,
+      "last_used": "2025-09-10T10:34:13.721308",
+      "trending_score": 0
+    },
+    "Entertainment": {
+      "article_count": 0,
+      "avg_confidence": 1.0,
+      "last_used": "2025-09-10T10:34:13.721310",
+      "trending_score": 0
+    },
+    "Lifestyle": {
+      "article_count": 0,
+      "avg_confidence": 1.0,
+      "last_used": "2025-09-10T10:34:13.721312",
+      "trending_score": 0.0
+    },
+    "Environment": {
+      "article_count": 0,
+      "avg_confidence": 1.0,
+      "last_used": "2025-09-10T10:34:13.721317",
+      "trending_score": 0.0
+    },
+    "World": {
+      "article_count": 0,
+      "avg_confidence": 1.0,
+      "last_used": "2025-09-10T10:34:13.721319",
+      "trending_score": 0
+    }
+  },
+  "learning_data": {
+    "keyword_associations": {},
+    "confidence_scores": {},
+    "trend_patterns": {
+      "World": {
+        "trending_keywords": [
+          {
+            "keyword": "[IN] bpsc: 100,000 searches, 7 related keywords, topics: Jobs and Education, Law and Government",
+            "searches": 0,
+            "region": "IN",
+            "timestamp": "2025-09-10T10:35:41.266752"
+          },
+          {
+            "keyword": "[IN] bpsc admit card 2025: 10,000 searches, 2 related keywords, topics: Jobs and Education, Law and Government",
+            "searches": 0,
+            "region": "IN",
+            "timestamp": "2025-09-10T10:35:41.360850"
+          }
+        ],
+        "total_searches": 0,
+        "regions": "{'IN'}"
+      },
+      "Sports": {
+        "trending_keywords": [
+          {
+            "keyword": "[IN] ukraine vs france: 50,000 searches, 6 related keywords, topics: Sports",
+            "searches": 0,
+            "region": "IN",
+            "timestamp": "2025-09-10T10:35:41.274010"
+          },
+          {
+            "keyword": "[IN] sri lanka vs zimbabwe: 100,000 searches, 6 related keywords, topics: Sports",
+            "searches": 0,
+            "region": "IN",
+            "timestamp": "2025-09-10T10:35:41.285250"
+          },
+          {
+            "keyword": "[IN] lesotho vs south africa: 20,000 searches, 1 related keywords, topics: Sports",
+            "searches": 0,
+            "region": "IN",
+            "timestamp": "2025-09-10T10:35:41.309706"
+          },
+          {
+            "keyword": "[IN] italy vs estonia: 20,000 searches, 3 related keywords, topics: Sports",
+            "searches": 0,
+            "region": "IN",
+            "timestamp": "2025-09-10T10:35:41.337887"
+          },
+          {
+            "keyword": "[IN] aj lee: 20,000 searches, 2 related keywords, topics: Sports, Entertainment",
+            "searches": 0,
+            "region": "IN",
+            "timestamp": "2025-09-10T10:35:41.345548"
+          }
+        ],
+        "total_searches": 0,
+        "regions": "{'IN'}"
+      },
+      "Business": {
+        "trending_keywords": [
+          {
+            "keyword": "[IN] itr filing deadline: 100,000 searches, 4 related keywords, topics: Business and Finance",
+            "searches": 0,
+            "region": "IN",
+            "timestamp": "2025-09-10T10:35:41.298969"
+          }
+        ],
+        "total_searches": 0,
+        "regions": "{'IN'}"
+      },
+      "Technology": {
+        "trending_keywords": [
+          {
+            "keyword": "[IN] अनंत चतुर्दशी: 20,000 searches, 8 related keywords, topics: Hobbies and Leisure",
+            "searches": 0,
+            "region": "IN",
+            "timestamp": "2025-09-10T10:35:41.321749"
+          },
+          {
+            "keyword": "[IN] chandra grahan kab hai: 20,000 searches, 19 related keywords, topics: Other",
+            "searches": 0,
+            "region": "IN",
+            "timestamp": "2025-09-10T10:35:41.352459"
+          },
+          {
+            "keyword": "[IN] lunar eclipse 2025: 20,000 searches, 11 related keywords, topics: Science",
+            "searches": 0,
+            "region": "IN",
+            "timestamp": "2025-09-10T10:35:41.380480"
+          },
+          {
+            "keyword": "[IN] lalbaugcha raja live: 20,000 searches, 5 related keywords, topics: Hobbies and Leisure",
+            "searches": 0,
+            "region": "IN",
+            "timestamp": "2025-09-10T10:35:41.387820"
+          }
+        ],
+        "total_searches": 0,
+        "regions": "{'IN'}"
+      },
+      "Entertainment": {
+        "trending_keywords": [
+          {
+            "keyword": "[IN] baaghi 4 movie tiger shroff: 50,000 searches, 17 related keywords, topics: Entertainment",
+            "searches": 0,
+            "region": "IN",
+            "timestamp": "2025-09-10T10:35:41.331745"
+          },
+          {
+            "keyword": "[IN] salma hayek: 10,000 searches, 1 related keywords, topics: Entertainment",
+            "searches": 0,
+            "region": "IN",
+            "timestamp": "2025-09-10T10:35:41.366942"
+          },
+          {
+            "keyword": "[IN] conjuring 4: 50,000 searches, 7 related keywords, topics: Entertainment",
+            "searches": 0,
+            "region": "IN",
+            "timestamp": "2025-09-10T10:35:41.373071"
+          }
+        ],
+        "total_searches": 0,
+        "regions": "{'IN'}"
+      }
+    },
+    "last_update": "2025-09-10T10:35:41.393877"
+  },
+  "version": "1.0.0",
+  "created_at": "2025-09-10T10:34:11.952451"
+}

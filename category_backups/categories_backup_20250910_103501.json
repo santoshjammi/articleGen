@@ -1,0 +1,314 @@
+{
+  "categories": {
+    "Technology": {
+      "subcategories": [
+        "AI",
+        "Software",
+        "Hardware",
+        "Web Development",
+        "Cybersecurity",
+        "Data Science",
+        "Machine Learning",
+        "Cloud Computing",
+        "DevOps",
+        "Mobile Development"
+      ],
+      "keywords": [
+        "tech",
+        "digital",
+        "software",
+        "ai",
+        "artificial intelligence",
+        "programming",
+        "development",
+        "computing",
+        "cyber",
+        "data",
+        "algorithm",
+        "code"
+      ],
+      "confidence": 1.0,
+      "created_at": "2025-09-10T10:34:13.721270"
+    },
+    "Business": {
+      "subcategories": [
+        "Finance",
+        "Marketing",
+        "Strategy",
+        "Entrepreneurship",
+        "E-commerce",
+        "Banking",
+        "Investment",
+        "Startup"
+      ],
+      "keywords": [
+        "business",
+        "finance",
+        "economy",
+        "marketing",
+        "startup",
+        "investment",
+        "banking",
+        "commerce",
+        "trade",
+        "corporate",
+        "strategy",
+        "entrepreneur"
+      ],
+      "confidence": 1.0,
+      "created_at": "2025-09-10T10:34:13.721282"
+    },
+    "Health": {
+      "subcategories": [
+        "Wellness",
+        "Medical",
+        "Fitness",
+        "Mental Health",
+        "Nutrition",
+        "Healthcare"
+      ],
+      "keywords": [
+        "health",
+        "medical",
+        "wellness",
+        "fitness",
+        "healthcare",
+        "doctor",
+        "medicine",
+        "nutrition",
+        "mental",
+        "therapy",
+        "hospital"
+      ],
+      "confidence": 1.0,
+      "created_at": "2025-09-10T10:34:13.721285"
+    },
+    "Sports": {
+      "subcategories": [
+        "Football",
+        "Cricket",
+        "Basketball",
+        "Olympics",
+        "Tennis",
+        "Soccer"
+      ],
+      "keywords": [
+        "sports",
+        "game",
+        "tournament",
+        "player",
+        "team",
+        "match",
+        "football",
+        "cricket",
+        "basketball",
+        "olympics",
+        "athletic"
+      ],
+      "confidence": 1.0,
+      "created_at": "2025-09-10T10:34:13.721287"
+    },
+    "Entertainment": {
+      "subcategories": [
+        "Movies",
+        "Music",
+        "TV",
+        "Celebrity",
+        "Gaming",
+        "Streaming"
+      ],
+      "keywords": [
+        "movie",
+        "music",
+        "entertainment",
+        "celebrity",
+        "film",
+        "tv",
+        "gaming",
+        "streaming",
+        "show",
+        "actor",
+        "singer"
+      ],
+      "confidence": 1.0,
+      "created_at": "2025-09-10T10:34:13.721289"
+    },
+    "Lifestyle": {
+      "subcategories": [
+        "Travel",
+        "Food",
+        "Fashion",
+        "Career",
+        "Home",
+        "Beauty"
+      ],
+      "keywords": [
+        "travel",
+        "food",
+        "lifestyle",
+        "fashion",
+        "career",
+        "home",
+        "beauty",
+        "cooking",
+        "recipe",
+        "style",
+        "decoration"
+      ],
+      "confidence": 1.0,
+      "created_at": "2025-09-10T10:34:13.721291"
+    },
+    "Environment": {
+      "subcategories": [
+        "Climate",
+        "Sustainability",
+        "Green Energy",
+        "Conservation",
+        "Pollution"
+      ],
+      "keywords": [
+        "environment",
+        "climate",
+        "green",
+        "sustainability",
+        "eco",
+        "pollution",
+        "renewable",
+        "conservation",
+        "carbon",
+        "emission"
+      ],
+      "confidence": 1.0,
+      "created_at": "2025-09-10T10:34:13.721293"
+    },
+    "World": {
+      "subcategories": [
+        "Politics",
+        "International",
+        "News",
+        "Government",
+        "Global"
+      ],
+      "keywords": [
+        "news",
+        "politics",
+        "international",
+        "government",
+        "world",
+        "global",
+        "country",
+        "nation",
+        "diplomatic",
+        "policy"
+      ],
+      "confidence": 1.0,
+      "created_at": "2025-09-10T10:34:13.721295"
+    }
+  },
+  "subcategory_mapping": {
+    "Agile Certifications": "Technology",
+    "Agile Project Management": "Technology",
+    "Agile Methodologies": "Technology",
+    "Product Management": "Technology",
+    "Emerging Technologies": "Technology",
+    "Web Development": "Technology",
+    "Digital Economy": "Technology",
+    "Artificial Intelligence": "Technology",
+    "Software Development": "Technology",
+    "Programming": "Technology",
+    "DevOps": "Technology",
+    "Cloud Computing": "Technology",
+    "Cybersecurity": "Technology",
+    "Data Science": "Technology",
+    "Machine Learning": "Technology",
+    "Tech News": "Technology",
+    "Mobile Development": "Technology",
+    "API Development": "Technology",
+    "Database Management": "Technology",
+    "System Administration": "Technology",
+    "IT Management": "Technology",
+    "Digital Strategy": "Business",
+    "Marketing Strategy": "Business",
+    "Business Strategy": "Business",
+    "Digital Marketing": "Business",
+    "International Business": "Business",
+    "Banking": "Business",
+    "Recruitment": "Business",
+    "Stock Market": "Business",
+    "Stock Analysis": "Business",
+    "Personal Finance": "Business",
+    "Retail": "Business",
+    "Fast Food": "Business",
+    "Semiconductors": "Business",
+    "Project Management": "Business",
+    "Business Analytics": "Business",
+    "E-commerce": "Business",
+    "Fintech": "Business",
+    "Startup": "Business",
+    "Entrepreneurship": "Business",
+    "Corporate Strategy": "Business",
+    "Business Development": "Business",
+    "Sales": "Business",
+    "Customer Service": "Business",
+    "Banking News": "Business"
+  },
+  "category_keywords": {},
+  "category_stats": {
+    "Technology": {
+      "article_count": 0,
+      "avg_confidence": 1.0,
+      "last_used": "2025-09-10T10:34:13.721300",
+      "trending_score": 0.0
+    },
+    "Business": {
+      "article_count": 0,
+      "avg_confidence": 1.0,
+      "last_used": "2025-09-10T10:34:13.721303",
+      "trending_score": 0.0
+    },
+    "Health": {
+      "article_count": 0,
+      "avg_confidence": 1.0,
+      "last_used": "2025-09-10T10:34:13.721306",
+      "trending_score": 0.0
+    },
+    "Sports": {
+      "article_count": 0,
+      "avg_confidence": 1.0,
+      "last_used": "2025-09-10T10:34:13.721308",
+      "trending_score": 0.0
+    },
+    "Entertainment": {
+      "article_count": 0,
+      "avg_confidence": 1.0,
+      "last_used": "2025-09-10T10:34:13.721310",
+      "trending_score": 0.0
+    },
+    "Lifestyle": {
+      "article_count": 0,
+      "avg_confidence": 1.0,
+      "last_used": "2025-09-10T10:34:13.721312",
+      "trending_score": 0.0
+    },
+    "Environment": {
+      "article_count": 0,
+      "avg_confidence": 1.0,
+      "last_used": "2025-09-10T10:34:13.721317",
+      "trending_score": 0.0
+    },
+    "World": {
+      "article_count": 0,
+      "avg_confidence": 1.0,
+      "last_used": "2025-09-10T10:34:13.721319",
+      "trending_score": 0.0
+    }
+  },
+  "learning_data": {
+    "keyword_associations": {},
+    "confidence_scores": {},
+    "trend_patterns": {},
+    "last_update": "2025-09-10T10:34:13.721540"
+  },
+  "version": "1.0.0",
+  "created_at": "2025-09-10T10:34:11.952451"
+}

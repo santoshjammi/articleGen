@@ -36,7 +36,16 @@ FTP_HOST = os.getenv("FTP_HOST")
 FTP_USER = os.getenv("FTP_USER")
 FTP_PASS = os.getenv("FTP_PASS")
 LOCAL_DIRECTORY = os.getenv("LOCAL_DIRECTORY")
-REMOTE_DIRECTORY = os.getenv("REMOTE_DIRECTORY")
+# Normalize remote directory: ensure it starts with a slash and no trailing slash
+_raw_remote = os.getenv("REMOTE_DIRECTORY") or ""
+if _raw_remote:
+    if not _raw_remote.startswith('/'):
+        _raw_remote = '/' + _raw_remote
+    if len(_raw_remote) > 1 and _raw_remote.endswith('/'):
+        _raw_remote = _raw_remote.rstrip('/')
+    REMOTE_DIRECTORY = _raw_remote
+else:
+    REMOTE_DIRECTORY = _raw_remote
 MAX_WORKERS = int(os.getenv("MAX_WORKERS", 16)) # Increased default for better performance
 
 # Manifest file path to store uploaded file details

@@ -6,12 +6,13 @@ social features, SEO optimization, and E-E-A-T compliance.
 """
 
 import json
+import html
 import os
 import shutil
 import re
 from collections import defaultdict
 import markdown as md
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from urllib.parse import quote
 
 OUTPUT_DIR = "dist"
@@ -238,6 +239,7 @@ def get_base_html_head():
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Favicon and Logo -->
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/favicon.svg">
     
@@ -245,7 +247,6 @@ def get_base_html_head():
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="//cdn.tailwindcss.com">
-    <link rel="dns-prefetch" href="//pagead2.googlesyndication.com">
     
     <!-- RSS feed -->
     <link rel="alternate" type="application/rss+xml" title="Country's News RSS" href="/rss.xml">
@@ -309,18 +310,21 @@ def get_base_html_head():
         }
         
         /* Ad Container Styles */
+        /* Ad containers remain in DOM for layout but are inert until populated by an ad script */
         .ad-container {
             margin: 2rem 0;
-            padding: 1rem;
+            padding: 0.5rem;
             text-align: center;
-            background-color: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.75rem;
-            min-height: 250px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background-color: transparent; /* don't show placeholder background */
+            border: none;
+            border-radius: 0.5rem;
+            min-height: 0; /* collapsed until content appears */
+            display: block;
+            align-items: stretch;
+            justify-content: stretch;
             position: relative;
+            overflow: hidden;
+            transition: min-height 0.25s ease, padding 0.25s ease;
         }
         
         .ad-container.mobile-bottom {
@@ -340,12 +344,8 @@ def get_base_html_head():
             height: 90px;
         }
         
-        .ad-placeholder {
-            color: #9ca3af;
-            font-size: 0.875rem;
-            font-style: italic;
-            text-align: center;
-        }
+        /* Placeholder text removed — ad-slot elements are empty until populated by ad JS */
+        .ad-placeholder { display: none; }
         
         /* Author Profile Styling */
         .author-profile {
@@ -427,6 +427,7 @@ def get_base_html_head():
             z-index: 1000;
             border-radius: 0.75rem;
             border: 1px solid rgba(255, 255, 255, 0.1);
+            -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
             top: 100%;
             right: 0;
@@ -517,7 +518,8 @@ def generate_header_html(unique_categories, current_page_type="home"):
                 </nav>
                 
                 <!-- Mobile Menu Button -->
-                <button id="mobile-menu-btn" class="lg:hidden text-white hover:text-blue-200">
+                <button id="mobile-menu-btn" class="lg:hidden text-white hover:text-blue-200" aria-label="Open mobile menu">
+                    <span class="sr-only">Open mobile menu</span>
                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
                     </svg>
@@ -538,7 +540,7 @@ def generate_header_html(unique_categories, current_page_type="home"):
     
     <!-- Top Banner Ad -->
     <div class="ad-container banner">
-        <div class="ad-placeholder">Advertisement - 728x90 Banner</div>
+        <div data-ad-slot="banner-top" aria-hidden="true"></div>
     </div>
     '''
 
@@ -550,7 +552,7 @@ def generate_footer_html(current_page_type="home"):
     return f'''
     <!-- Footer Ad -->
     <div class="ad-container banner mt-12">
-        <div class="ad-placeholder">Advertisement - 728x90 Footer Banner</div>
+        <div data-ad-slot="banner-footer" aria-hidden="true"></div>
     </div>
     
     <footer class="bg-gray-900 text-white shadow-inner">
@@ -618,7 +620,7 @@ def generate_footer_html(current_page_type="home"):
     
     <!-- Mobile Bottom Ad -->
     <div class="ad-container mobile-bottom fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 lg:hidden z-40">
-        <div class="ad-placeholder">Mobile Ad - 320x50</div>
+        <div data-ad-slot="mobile-bottom" aria-hidden="true"></div>
     </div>
     
     <!-- JavaScript for mobile menu and lazy loading -->
@@ -755,7 +757,7 @@ def generate_advanced_homepage(articles_data, unique_categories):
             featured_cards_html += '''
             <div class="col-span-full">
                 <div class="ad-container">
-                    <div class="ad-placeholder">Advertisement - 728x90 In-Content</div>
+                    <div data-ad-slot="in-content-featured" aria-hidden="true"></div>
                 </div>
             </div>
             '''
@@ -768,7 +770,7 @@ def generate_advanced_homepage(articles_data, unique_categories):
             recent_cards_html += '''
             <div class="col-span-full">
                 <div class="ad-container">
-                    <div class="ad-placeholder">Advertisement - 728x90 In-Content</div>
+                    <div data-ad-slot="in-content-recent" aria-hidden="true"></div>
                 </div>
             </div>
             '''
@@ -856,7 +858,7 @@ def generate_advanced_homepage(articles_data, unique_categories):
                     <aside class="lg:w-80 space-y-6">
                         <!-- Sidebar Ad 1 -->
                         <div class="ad-container sidebar">
-                            <div class="ad-placeholder">Sidebar Ad - 300x250</div>
+                            <div data-ad-slot="sidebar-1" aria-hidden="true"></div>
                         </div>
                         
                         <!-- Newsletter Signup -->
@@ -874,7 +876,7 @@ def generate_advanced_homepage(articles_data, unique_categories):
                         
                         <!-- Sidebar Ad 2 -->
                         <div class="ad-container sidebar">
-                            <div class="ad-placeholder">Sidebar Ad - 300x250</div>
+                            <div data-ad-slot="sidebar-2" aria-hidden="true"></div>
                         </div>
                         
                         <!-- Trending Categories -->
@@ -887,7 +889,7 @@ def generate_advanced_homepage(articles_data, unique_categories):
                         
                         <!-- Sidebar Ad 3 -->
                         <div class="ad-container sidebar">
-                            <div class="ad-placeholder">Sidebar Ad - 300x600 Skyscraper</div>
+                            <div data-ad-slot="sidebar-3" aria-hidden="true"></div>
                         </div>
                     </aside>
                 </div>
@@ -1124,7 +1126,7 @@ def generate_single_category_page(category, category_articles, unique_categories
             articles_html += '''
             <div class="col-span-full">
                 <div class="ad-container">
-                    <div class="ad-placeholder">Category Page Advertisement - 728x90</div>
+                    <div data-ad-slot="category-banner" aria-hidden="true"></div>
                 </div>
             </div>
             '''
@@ -1234,7 +1236,7 @@ def generate_single_category_page(category, category_articles, unique_categories
                             <div class="sticky top-24 space-y-6">
                                 <!-- Sidebar Ad -->
                                 <div class="ad-container sidebar">
-                                    <div class="ad-placeholder">Category Sidebar Ad - 300x250</div>
+                                    <div data-ad-slot="category-sidebar-1" aria-hidden="true"></div>
                                 </div>
                                 
                                 <!-- Category Stats -->
@@ -1266,7 +1268,7 @@ def generate_single_category_page(category, category_articles, unique_categories
                                 
                                 <!-- Another Sidebar Ad -->
                                 <div class="ad-container sidebar">
-                                    <div class="ad-placeholder">Category Sidebar Ad - 300x600</div>
+                                    <div data-ad-slot="category-sidebar-2" aria-hidden="true"></div>
                                 </div>
                             </div>
                         </aside>
@@ -1537,7 +1539,7 @@ def generate_about_page(unique_categories):
                 
                 <!-- Ad -->
                 <div class="ad-container my-12">
-                    <div class="ad-placeholder">About Page Advertisement - 728x90</div>
+                    <div data-ad-slot="about-banner" aria-hidden="true"></div>
                 </div>
             </div>
         </main>
@@ -1639,7 +1641,7 @@ def generate_contact_page(unique_categories):
                         
                         <!-- Ad -->
                         <div class="ad-container sidebar mt-8">
-                            <div class="ad-placeholder">Contact Sidebar Ad - 300x250</div>
+                            <div data-ad-slot="contact-sidebar" aria-hidden="true"></div>
                         </div>
                     </div>
                 </div>
@@ -1693,7 +1695,7 @@ def generate_privacy_page(unique_categories):
                 
                 <!-- Ad -->
                 <div class="ad-container my-12">
-                    <div class="ad-placeholder">Privacy Policy Ad - 728x90</div>
+                    <div data-ad-slot="privacy-banner" aria-hidden="true"></div>
                 </div>
             </div>
         </main>
@@ -1740,7 +1742,7 @@ def generate_disclaimer_page(unique_categories):
                 
                 <!-- Ad -->
                 <div class="ad-container my-12">
-                    <div class="ad-placeholder">Disclaimer Ad - 728x90</div>
+                    <div data-ad-slot="disclaimer-banner" aria-hidden="true"></div>
                 </div>
             </div>
         </main>
@@ -1766,21 +1768,24 @@ def generate_sitemap(articles_data):
         f.write('    <!-- Homepage -->\n')
         f.write('    <url>\n')
         f.write('        <loc>https://countrysnews.com/</loc>\n')
-        f.write('        <changefreq>hourly</changefreq>\n')
-        f.write('        <priority>1.0</priority>\n')
+        f.write(f'        <lastmod>{date.today().isoformat()}</lastmod>\n')
         f.write('    </url>\n\n')
         
         # Static Pages
         f.write('    <!-- Static Pages -->\n')
         f.write('    <url>\n')
         f.write('        <loc>https://countrysnews.com/about-us.html</loc>\n')
-        f.write('        <changefreq>monthly</changefreq>\n')
-        f.write('        <priority>0.8</priority>\n')
+        about_path = os.path.join(OUTPUT_DIR, 'about-us.html')
+        if os.path.exists(about_path):
+            about_mtime = date.fromtimestamp(os.path.getmtime(about_path)).isoformat()
+            f.write(f'        <lastmod>{about_mtime}</lastmod>\n')
         f.write('    </url>\n')
         f.write('    <url>\n')
         f.write('        <loc>https://countrysnews.com/contact.html</loc>\n')
-        f.write('        <changefreq>monthly</changefreq>\n')
-        f.write('        <priority>0.7</priority>\n')
+        contact_path = os.path.join(OUTPUT_DIR, 'contact.html')
+        if os.path.exists(contact_path):
+            contact_mtime = date.fromtimestamp(os.path.getmtime(contact_path)).isoformat()
+            f.write(f'        <lastmod>{contact_mtime}</lastmod>\n')
         f.write('    </url>\n\n')
         
         # Add category pages
@@ -1789,8 +1794,10 @@ def generate_sitemap(articles_data):
             category_slug = generate_slug(category).strip()
             f.write('    <url>\n')
             f.write(f'        <loc>https://countrysnews.com/categories/{category_slug}.html</loc>\n')
-            f.write('        <changefreq>daily</changefreq>\n')
-            f.write('        <priority>0.8</priority>\n')
+            cat_path = os.path.join(OUTPUT_DIR, 'categories', f'{category_slug}.html')
+            if os.path.exists(cat_path):
+                cat_mtime = date.fromtimestamp(os.path.getmtime(cat_path)).isoformat()
+                f.write(f'        <lastmod>{cat_mtime}</lastmod>\n')
             f.write('    </url>\n')
         
         # Add article pages
@@ -1800,8 +1807,24 @@ def generate_sitemap(articles_data):
             escaped_slug = article_slug.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
             f.write('    <url>\n')
             f.write(f'        <loc>https://countrysnews.com/articles/{escaped_slug}.html</loc>\n')
-            f.write('        <changefreq>weekly</changefreq>\n')
-            f.write('        <priority>0.6</priority>\n')
+            # Use lastmod from article data or file modification time
+            lastmod = None
+            if isinstance(article.get('lastmod'), str) and article.get('lastmod'):
+                lastmod = article.get('lastmod')
+            elif isinstance(article.get('datePublished'), str) and article.get('datePublished'):
+                lastmod = article.get('datePublished')
+            else:
+                article_path = os.path.join(OUTPUT_DIR, 'articles', f'{escaped_slug}.html')
+                if os.path.exists(article_path):
+                    lastmod = date.fromtimestamp(os.path.getmtime(article_path)).isoformat()
+            if lastmod:
+                # Ensure ISO date format (YYYY-MM-DD)
+                try:
+                    parsed = date.fromisoformat(str(lastmod)[:10])
+                    f.write(f'        <lastmod>{parsed.isoformat()}</lastmod>\n')
+                except Exception:
+                    # Skip lastmod if parsing fails
+                    pass
             f.write('    </url>\n')
         
         f.write('</urlset>\n')
@@ -2073,15 +2096,30 @@ def generate_single_advanced_article(article, unique_categories, related_list):
     # Generate structured data for article
     structured_data = generate_article_structured_data(article)
     
-    # Get article image
-    article_image = article.get('thumbnailImageUrl', '')
+    # Get article image (relative for in-page use) and public absolute URL for meta/og/twitter/structured-data
+    raw_thumb = article.get('thumbnailImageUrl', '') or ''
+    raw_og = article.get('ogImage', '') or ''
+    raw_image = raw_thumb or raw_og or ''
+    # Keep a relative form for in-page img tags (previous logic)
+    article_image = raw_image
     if article_image and article_image.startswith('dist/'):
         article_image = article_image.replace('dist/', '../')
-    # Fallback to ogImage if thumbnail is missing
-    if not article_image:
-        article_image = article.get('ogImage', '')
-        if article_image.startswith('dist/'):
-            article_image = article_image.replace('dist/', '../')
+
+    # Public absolute URL for meta tags and structured data
+    def _to_public_url(path: str) -> str:
+        if not path:
+            return ''
+        path = str(path)
+        if path.startswith('http://') or path.startswith('https://'):
+            return path
+        if path.startswith('dist/'):
+            return f"https://countrysnews.com/{path[len('dist/'):]}"
+        if path.startswith('/'):
+            return f"https://countrysnews.com{path}"
+        # fallback
+        return f"https://countrysnews.com/{path.lstrip('./')}"
+
+    article_image_public = _to_public_url(raw_image)
     
     # Generate social hashtags
     hashtags_html = ""
@@ -2091,7 +2129,7 @@ def generate_single_advanced_article(article, unique_categories, related_list):
         <div class="hashtags">
             <h3 class="text-sm font-semibold text-gray-500 mb-2">TRENDING TOPICS</h3>
             <div class="flex flex-wrap gap-2">
-                {' '.join([f'<a href="#" class="hashtag">#{tag}</a>' for tag in social_hashtags[:8]])}
+                {' '.join([f'<span class="hashtag">#{tag}</span>' for tag in social_hashtags[:5]])}
             </div>
         </div>
         '''
@@ -2193,13 +2231,16 @@ def generate_single_advanced_article(article, unique_categories, related_list):
 
     fixed_content_html, dynamic_toc_html = build_toc_and_inject_ids(fixed_content_html)
     
+    # Helper to safely escape attribute values
+    esc = html.escape
+
     article_html = f'''
     <!DOCTYPE html>
     <html lang="en">
     <head>
-        <title>{article['title']} | Country's News</title>
-        <meta name="description" content="{article.get('excerpt', '')[:160]}">
-        <meta name="keywords" content="{', '.join(article.get('keywords', []))}">
+        <title>{esc(article['title'])} | Country's News</title>
+        <meta name="description" content="{esc(article.get('excerpt', '')[:160])}">
+        <meta name="keywords" content="{esc(', '.join(article.get('keywords', [])))}">
         
         <!-- E-E-A-T Meta Tags -->
         <meta name="author" content="{article.get('author', 'Editorial Team')}">
@@ -2209,18 +2250,18 @@ def generate_single_advanced_article(article, unique_categories, related_list):
         <meta name="article:section" content="{article.get('category', 'News')}">
         
         <!-- Open Graph -->
-        <meta property="og:title" content="{article['title']}">
-        <meta property="og:description" content="{article.get('excerpt', '')[:160]}">
+    <meta property="og:title" content="{esc(article['title'])}">
+    <meta property="og:description" content="{esc(article.get('excerpt', '')[:160])}">
         <meta property="og:type" content="article">
         <meta property="og:url" content="https://countrysnews.com/articles/{article['slug']}.html">
-        <meta property="og:image" content="{article_image}">
+    <meta property="og:image" content="{article_image_public}">
         <meta property="og:site_name" content="Country's News">
         
         <!-- Twitter Card -->
         <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:title" content="{article['title']}">
-        <meta name="twitter:description" content="{article.get('excerpt', '')[:160]}">
-        <meta name="twitter:image" content="{article_image}">
+    <meta name="twitter:title" content="{esc(article['title'])}">
+    <meta name="twitter:description" content="{esc(article.get('excerpt', '')[:160])}">
+    <meta name="twitter:image" content="{article_image_public}">
         
         <!-- Canonical URL -->
         <link rel="canonical" href="https://countrysnews.com/articles/{article['slug']}.html">
@@ -2313,7 +2354,7 @@ def generate_single_advanced_article(article, unique_categories, related_list):
                         
                         <!-- In-Content Ad -->
                         <div class="ad-container my-8">
-                            <div class="ad-placeholder">In-Content Advertisement - 728x90</div>
+                            <div data-ad-slot="article-content-1" aria-hidden="true"></div>
                         </div>
                         
                         <!-- Social Hashtags -->
@@ -2324,7 +2365,7 @@ def generate_single_advanced_article(article, unique_categories, related_list):
                         
                         <!-- Second In-Content Ad -->
                         <div class="ad-container my-8">
-                            <div class="ad-placeholder">In-Content Advertisement - 728x90</div>
+                            <div data-ad-slot="article-content-2" aria-hidden="true"></div>
                         </div>
                     </div>
                     
@@ -2334,7 +2375,7 @@ def generate_single_advanced_article(article, unique_categories, related_list):
                         <div class="sticky top-24 space-y-6">
                             <!-- Sidebar Ad -->
                             <div class="ad-container sidebar">
-                                <div class="ad-placeholder">Sidebar Ad - 300x250</div>
+                                <div data-ad-slot="article-sidebar-1" aria-hidden="true"></div>
                             </div>
                             
                             <!-- Table of Contents (desktop only) -->
@@ -2350,7 +2391,7 @@ def generate_single_advanced_article(article, unique_categories, related_list):
                             
                             <!-- Another Sidebar Ad -->
                             <div class="ad-container sidebar">
-                                <div class="ad-placeholder">Sidebar Ad - 300x600</div>
+                                <div data-ad-slot="article-sidebar-2" aria-hidden="true"></div>
                             </div>
                         </div>
                     </aside>
@@ -2400,6 +2441,8 @@ def generate_social_sharing(article):
         <div class="flex gap-2">
             <a href="https://twitter.com/intent/tweet?text={article_title}&url={article_url}" 
                target="_blank" 
+               rel="noopener"
+               title="Share on Twitter"
                class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg transition-colors">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M6.29 18.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0020 3.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.073 4.073 0 01.8 7.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 010 16.407a11.616 11.616 0 006.29 1.84"/>
@@ -2407,6 +2450,8 @@ def generate_social_sharing(article):
             </a>
             <a href="https://www.facebook.com/sharer/sharer.php?u={article_url}" 
                target="_blank"
+               rel="noopener"
+               title="Share on Facebook"
                class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M20 10c0-5.523-4.477-10-10-10S0 4.477 0 10c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V10h2.54V7.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V10h2.773l-.443 2.89h-2.33v6.988C16.343 19.128 20 14.991 20 10z" clip-rule="evenodd"/>
@@ -2596,12 +2641,26 @@ def generate_article_structured_data(article):
         }
     }
     
-    # Add image if available
+    # Add image if available (use absolute public URL when possible)
+    def _local_to_public(p):
+        if not p:
+            return ''
+        p = str(p)
+        if p.startswith('http://') or p.startswith('https://'):
+            return p
+        if p.startswith('dist/'):
+            return f"https://countrysnews.com/{p[len('dist/'):]}"
+        if p.startswith('/'):
+            return f"https://countrysnews.com{p}"
+        return f"https://countrysnews.com/{p.lstrip('./')}"
+
     if article.get('thumbnailImageUrl'):
-        structured_data["image"] = {
-            "@type": "ImageObject",
-            "url": article['thumbnailImageUrl']
-        }
+        img_pub = _local_to_public(article.get('thumbnailImageUrl'))
+        if img_pub:
+            structured_data["image"] = {
+                "@type": "ImageObject",
+                "url": img_pub
+            }
     
     return f'<script type="application/ld+json">{json.dumps(structured_data, indent=2)}</script>'
 

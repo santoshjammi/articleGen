@@ -12,6 +12,20 @@ api_key=os.environ.get('GEM_API_KEY')
 client = genai.Client(api_key=api_key)
 
 def generateImage(prompt, filename):
+    """
+    /*************  ✨ Windsurf Command ⭐  *************/
+
+    Generate an image based on the given prompt using the Gemini 2.0 model.
+
+    Args:
+        prompt (str): The text prompt to generate an image from.
+        filename (str): The filename to save the generated image as.
+
+    Returns:
+        str: The filename of the generated image.
+        /*******  7162e5fa-9b53-415a-993f-b714458d2a7b  *******/
+
+    """
     contents=prompt
     # print(contents)
 
@@ -19,6 +33,7 @@ def generateImage(prompt, filename):
 
     if not os.path.exists(filename):
         response = client.models.generate_content(
+            # model="gemini-2.5-flash-image-preview",
             model="gemini-2.0-flash-exp-image-generation",
             contents=contents,
             config=types.GenerateContentConfig(
@@ -171,4 +186,24 @@ def batch_convert_to_webp(images_dir="./images/", quality=85):
 #         newName="./images/"+os.path.splitext(file)[0]+'.webp'
 #         print(newName)
 #         im.save(newName)
+if __name__ == "__main__":
+    # Create images directory if it doesn't exist
+    os.makedirs('./images/', exist_ok=True)
     
+    # Sample prompt for testing
+    sample_prompt = "A futuristic AI laboratory with scientists working on advanced artificial intelligence research, modern technology, clean and bright environment, high-tech equipment, professional photography style"
+    
+    # Sample filename
+    sample_filename = "./images/01-sample_ai_research_lab.webp"
+    
+    print("🎨 Generating sample image...")
+    print(f"📝 Prompt: {sample_prompt}")
+    print(f"💾 Saving to: {sample_filename}")
+    
+    # Generate the sample image
+    result = generateImage(sample_prompt, sample_filename)
+    
+    if result:
+        print(f"✅ Successfully generated image: {result}")
+    else:
+        print("❌ Failed to generate image")

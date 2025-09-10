@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Simplified Automated Article Generation Script
-# Runs every 6 hours to generate 15 trend-based articles and update website
+# Runs daily to generate 10 trend-based articles (5 India + 5 Worldwide)
 # Commands to run:
-# 1. python super_article_manager.py generate trends --count 15 --per-region
-# 2. python workflow.py with option 2 (fetch fresh trends + generate articles)
+# 1. python super_article_manager.py generate trends --count 5 --per-region (for India)
+# 2. python super_article_manager.py generate trends --count 5 (for Worldwide)
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -61,17 +61,27 @@ activate_venv() {
 
 # Function to generate trend-based articles
 generate_trend_articles() {
-    log "Generating 15 trend-based articles per region..."
+    log "Generating 5 trend-based articles for India region..."
     
     # Activate virtual environment before running Python scripts
     activate_venv
     
     cd "$SCRIPT_DIR"
-    if python3 super_article_manager.py generate trends --count 15 --per-region >> "$LOG_FILE" 2>&1; then
-        log_success "Generated 15 trend-based articles per region"
+    # Generate 5 articles specifically for India region
+    if python3 super_article_manager.py generate trends --count 5 --per-region --regions India >> "$LOG_FILE" 2>&1; then
+        log_success "Generated 5 trend-based articles for India region"
+    else
+        log_error "Failed to generate India region articles"
+        return 1
+    fi
+    
+    # Generate 5 articles for worldwide trends (no region restriction)
+    log "Generating 5 worldwide trend-based articles..."
+    if python3 super_article_manager.py generate trends --count 5 >> "$LOG_FILE" 2>&1; then
+        log_success "Generated 5 worldwide trend-based articles"
         return 0
     else
-        log_error "Failed to generate trend-based articles"
+        log_error "Failed to generate worldwide trend-based articles"
         return 1
     fi
 }
@@ -305,7 +315,7 @@ main() {
         return 1
     fi
     
-    # Step 1: Generate 15 trend-based articles per region (using SEO-filtered trends)
+    # Step 1: Generate 10 trend-based articles (5 India + 5 Worldwide) using SEO-filtered trends
     log "Step 1: Generating SEO-qualified trend-based articles..."
     if ! generate_trend_articles; then
         log_error "Failed to generate trend-based articles"
@@ -326,6 +336,46 @@ main() {
     # Step 2.25: Generate missing images (after fresh trends workflow)
     log "Step 2.25: Generating missing images after fresh trends workflow..."
     generate_missing_images "fresh trends workflow"
+
+        # Step 2.4: Generate the full site (dist/) and copy into output/ so manifests include site files
+        log "Step 2.4: Generating full site (generateSite_advanced.py) and merging into output/..."
+        # Function to generate site and copy dist -> output
+        generate_full_site() {
+            log "Generating site using generateSite_advanced.py..."
+
+            # Activate virtual environment
+            activate_venv
+            cd "$SCRIPT_DIR"
+
+            if python3 generateSite_advanced.py >> "$LOG_FILE" 2>&1; then
+                log_success "Site generated to dist/"
+            else
+                log_error "generateSite_advanced.py failed"
+                return 1
+            fi
+
+            # Merge dist/ into output/ so the differential manifest includes site files (sitemap, articles, images)
+            mkdir -p "$SCRIPT_DIR/output"
+            log "Copying dist/ -> output/..."
+            if cp -a "$SCRIPT_DIR/dist/." "$SCRIPT_DIR/output/" >> "$LOG_FILE" 2>&1; then
+                log_success "Copied dist/ into output/"
+            else
+                log_error "Failed to copy dist/ into output/"
+                return 1
+            fi
+
+            return 0
+        }
+
+        if ! generate_full_site; then
+            log_warning "Continuing even though site generation or copy failed"
+        else
+            # Re-generate local manifest so it includes files copied from dist/
+            log "Regenerating local manifest to include site files..."
+            if ! generate_local_manifest; then
+                log_warning "Regenerating local manifest failed; differential manifest may be incomplete"
+            fi
+        fi
     
     # Step 2.5: Generate differential manifest (smart change detection)
     log "Step 2.5: Analyzing changes for differential sync..."
@@ -342,7 +392,7 @@ main() {
     fi
     
     log_success "=== All SEO-focused tasks completed successfully ==="
-    log "🎯 Generated articles only for high-traffic trends"
+    log "🎯 Generated 10 articles daily (5 India + 5 Worldwide from high-traffic trends)"
     log "📈 Next run scheduled for tomorrow at 6PM IST"
     log "=== Process completed at $(date '+%Y-%m-%d %H:%M:%S') ==="
 }

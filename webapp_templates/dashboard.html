@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEO Article Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .glass-effect { 
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px); 
+            background: rgba(255, 255, 255, 0.1); 
+        }
+        .progress-bar-initial { width: 0%; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="gradient-bg shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-newspaper text-white text-2xl mr-3"></i>
+                    <h1 class="text-white text-xl font-bold">SEO Article Generator</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="historyBtn" class="text-white hover:text-gray-200 px-3 py-2 rounded">
+                        <i class="fas fa-history mr-2"></i>History
+                    </button>
+                    <button id="logoutBtn" class="text-white hover:text-gray-200 px-3 py-2 rounded">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        
+        <!-- Login Modal -->
+        <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+                <h2 class="text-2xl font-bold mb-4 text-center">Login to SEO Generator</h2>
+                
+                <!-- Default Credentials Info -->
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-info-circle text-blue-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-blue-700">
+                                <strong>Default Admin Credentials:</strong><br>
+                                Username: <code class="bg-blue-100 px-1 rounded">admin</code><br>
+                                Password: <code class="bg-blue-100 px-1 rounded">admin123</code>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <form id="loginForm">
+                    <div class="mb-4">
+                        <label for="loginUsername" class="block text-gray-700 text-sm font-bold mb-2">Username</label>
+                        <input type="text" id="loginUsername" name="loginUsername" placeholder="Enter your username" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <div class="mb-6">
+                        <label for="loginPassword" class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+                        <input type="password" id="loginPassword" name="loginPassword" placeholder="Enter your password" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200">
+                        Login
+                    </button>
+                </form>
+                <p class="mt-4 text-center text-sm">
+                    Don't have an account? 
+                    <a href="#" id="showRegister" class="text-blue-500 hover:underline">Register here</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Registration Modal -->
+        <div id="registerModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+                <h2 class="text-2xl font-bold mb-6 text-center">Create Account</h2>
+                <form id="registerForm">
+                    <div class="mb-4">
+                        <label for="regUsername" class="block text-gray-700 text-sm font-bold mb-2">Username</label>
+                        <input type="text" id="regUsername" name="regUsername" placeholder="Choose a username" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="regEmail" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                        <input type="email" id="regEmail" name="regEmail" placeholder="Enter your email address" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <div class="mb-6">
+                        <label for="regPassword" class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+                        <input type="password" id="regPassword" name="regPassword" placeholder="Create a password" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <button type="submit" class="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition duration-200">
+                        Register
+                    </button>
+                </form>
+                <p class="mt-4 text-center text-sm">
+                    Already have an account? 
+                    <a href="#" id="showLogin" class="text-blue-500 hover:underline">Login here</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div id="dashboard" class="hidden">
+            
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                            <i class="fas fa-newspaper text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">Articles Generated</p>
+                            <p class="text-2xl font-semibold text-gray-900" id="totalArticles">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-green-100 text-green-600">
+                            <i class="fas fa-rocket text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">Deployed</p>
+                            <p class="text-2xl font-semibold text-gray-900" id="totalDeployed">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                            <i class="fas fa-clock text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">Active Jobs</p>
+                            <p class="text-2xl font-semibold text-gray-900" id="activeJobs">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                            <i class="fas fa-search text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">SEO Score</p>
+                            <p class="text-2xl font-semibold text-gray-900">95%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Article Generation Form -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold mb-6 flex items-center">
+                    <i class="fas fa-magic mr-3 text-blue-600"></i>
+                    Generate SEO Articles
+                </h2>
+                
+                <form id="generateForm" class="space-y-6">
+                    <!-- Keywords Section -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-tags mr-2"></i>Keywords (one per line)
+                        </label>
+                        <textarea id="keywords" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                  placeholder="artificial intelligence&#10;machine learning&#10;python programming&#10;web development" required></textarea>
+                        <p class="text-sm text-gray-500 mt-1">Enter up to 20 keywords. Each will generate multiple high-quality articles.</p>
+                    </div>
+
+                    <!-- Configuration Sections -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        <!-- Website Configuration -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Website Settings</h3>
+                            <div>
+                                <label for="websiteUrl" class="block text-sm font-medium text-gray-700">Website URL</label>
+                                <input type="url" id="websiteUrl" name="websiteUrl" value="https://countrysnews.com" placeholder="https://yourwebsite.com" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label for="websiteName" class="block text-sm font-medium text-gray-700">Website Name</label>
+                                <input type="text" id="websiteName" name="websiteName" value="Country's News" placeholder="Your Website Name" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label for="authorName" class="block text-sm font-medium text-gray-700">Author Name</label>
+                                <input type="text" id="authorName" name="authorName" value="News Team" placeholder="Author or Team Name" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+
+                        <!-- FTP Configuration -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-semibold text-gray-800">FTP Deployment</h3>
+                            <div>
+                                <label for="ftpHost" class="block text-sm font-medium text-gray-700">FTP Host</label>
+                                <input type="text" id="ftpHost" name="ftpHost" value="212.1.209.3" placeholder="ftp.yourhost.com" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label for="ftpUsername" class="block text-sm font-medium text-gray-700">Username</label>
+                                <input type="text" id="ftpUsername" name="ftpUsername" placeholder="Your FTP username" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                            <div>
+                                <label for="ftpPassword" class="block text-sm font-medium text-gray-700">Password</label>
+                                <input type="password" id="ftpPassword" name="ftpPassword" placeholder="Your FTP password" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                            <div>
+                                <label for="remoteDir" class="block text-sm font-medium text-gray-700">Remote Directory</label>
+                                <input type="text" id="remoteDir" name="remoteDir" value="/public_html" placeholder="/public_html" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+
+                        <!-- Content Configuration -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Content Settings</h3>
+                            <div>
+                                <label for="articlesPerKeyword" class="block text-sm font-medium text-gray-700">Articles per Keyword</label>
+                                <select id="articlesPerKeyword" name="articlesPerKeyword" title="Select number of articles to generate per keyword" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="1">1 Article</option>
+                                    <option value="2">2 Articles</option>
+                                    <option value="3" selected>3 Articles</option>
+                                    <option value="5">5 Articles</option>
+                                    <option value="10">10 Articles</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Target Regions</label>
+                                <div class="flex flex-wrap gap-2 mt-2">
+                                    <label class="inline-flex items-center">
+                                        <input type="checkbox" value="US" checked class="region-checkbox" title="Target USA region">
+                                        <span class="ml-2 text-sm">🇺🇸 USA</span>
+                                    </label>
+                                    <label class="inline-flex items-center">
+                                        <input type="checkbox" value="IN" checked class="region-checkbox" title="Target India region">
+                                        <span class="ml-2 text-sm">🇮🇳 India</span>
+                                    </label>
+                                    <label class="inline-flex items-center">
+                                        <input type="checkbox" value="GB" checked class="region-checkbox" title="Target UK region">
+                                        <span class="ml-2 text-sm">🇬🇧 UK</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="generateImages" name="generateImages" checked class="mr-2" title="Generate images for articles">
+                                <label for="generateImages" class="text-sm font-medium text-gray-700">Generate Images</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="deployImmediately" name="deployImmediately" class="mr-2" title="Deploy articles immediately after generation">
+                                <label for="deployImmediately" class="text-sm font-medium text-gray-700">Deploy Immediately</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="flex justify-center">
+                        <button type="submit" id="generateBtn" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition duration-200 transform hover:scale-105">
+                            <i class="fas fa-rocket mr-2"></i>
+                            Generate SEO Articles
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Progress Section -->
+            <div id="progressSection" class="bg-white rounded-lg shadow-lg p-6 hidden">
+                <h3 class="text-xl font-bold mb-4">
+                    <i class="fas fa-cog fa-spin mr-2 text-blue-600"></i>
+                    Generation Progress
+                </h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span id="progressMessage">Initializing...</span>
+                        <span id="progressPercent" class="font-semibold">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div id="progressBar" class="bg-gradient-to-r from-blue-600 to-purple-600 h-3 rounded-full transition-all duration-300 progress-bar-initial"></div>
+                    </div>
+                    <div id="jobId" class="text-sm text-gray-500"></div>
+                </div>
+            </div>
+
+            <!-- Recent Jobs -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-xl font-bold mb-4">
+                    <i class="fas fa-history mr-2 text-gray-600"></i>
+                    Recent Jobs
+                </h3>
+                <div id="recentJobs" class="space-y-3">
+                    <!-- Jobs will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let authToken = localStorage.getItem('authToken');
+        let currentJobId = null;
+        let progressInterval = null;
+
+        // API base URL
+        const API_BASE = '';
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('App initializing...');
+            console.log('Auth token from localStorage:', authToken);
+            
+            if (authToken) {
+                console.log('Token found, showing dashboard');
+                showDashboard();
+                loadRecentJobs();
+            } else {
+                console.log('No token found, showing login modal');
+                showLoginModal();
+            }
+        });
+
+        // Authentication functions
+        function showLoginModal() {
+            document.getElementById('loginModal').classList.remove('hidden');
+            document.getElementById('registerModal').classList.add('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+        }
+
+        function showRegisterModal() {
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('registerModal').classList.remove('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('registerModal').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+        }
+
+        // Event listeners
+        document.getElementById('showRegister').addEventListener('click', showRegisterModal);
+        document.getElementById('showLogin').addEventListener('click', showLoginModal);
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    console.log('Login successful, token received:', authToken ? 'Yes' : 'No');
+                    localStorage.setItem('authToken', authToken);
+                    showDashboard();
+                    loadRecentJobs();
+                } else {
+                    console.error('Login failed with status:', response.status);
+                    alert('Invalid credentials');
+                }
+            } catch (error) {
+                alert('Login failed: ' + error.message);
+            }
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+
+            try {
+                const response = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                if (response.ok) {
+                    alert('Registration successful! Please login.');
+                    showLoginModal();
+                } else {
+                    const error = await response.json();
+                    alert('Registration failed: ' + error.detail);
+                }
+            } catch (error) {
+                alert('Registration failed: ' + error.message);
+            }
+        });
+
+        document.getElementById('generateForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const keywords = document.getElementById('keywords').value.split('\n').filter(k => k.trim());
+            if (keywords.length === 0) {
+                alert('Please enter at least one keyword');
+                return;
+            }
+
+            const targetRegions = Array.from(document.querySelectorAll('.region-checkbox:checked')).map(cb => cb.value);
+
+            const requestData = {
+                keywords: keywords,
+                website_config: {
+                    website_url: document.getElementById('websiteUrl').value,
+                    website_name: document.getElementById('websiteName').value,
+                    author_name: document.getElementById('authorName').value
+                },
+                ftp_config: {
+                    ftp_host: document.getElementById('ftpHost').value,
+                    ftp_username: document.getElementById('ftpUsername').value,
+                    ftp_password: document.getElementById('ftpPassword').value,
+                    remote_directory: document.getElementById('remoteDir').value
+                },
+                content_config: {
+                    articles_per_keyword: parseInt(document.getElementById('articlesPerKeyword').value),
+                    target_regions: targetRegions,
+                    generate_images: document.getElementById('generateImages').checked
+                },
+                deploy_immediately: document.getElementById('deployImmediately').checked
+            };
+
+            try {
+                console.log('Starting article generation with token:', authToken ? 'Present' : 'Missing');
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                console.log('Generate API response status:', response.status);
+                if (response.ok) {
+                    const data = await response.json();
+                    currentJobId = data.job_id;
+                    document.getElementById('jobId').textContent = `Job ID: ${currentJobId}`;
+                    document.getElementById('progressSection').classList.remove('hidden');
+                    startProgressMonitoring();
+                } else {
+                    console.error('Generate API failed with status:', response.status);
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    alert('Failed to start generation');
+                }
+            } catch (error) {
+                console.error('Generate request error:', error);
+                alert('Error: ' + error.message);
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            localStorage.removeItem('authToken');
+            authToken = null;
+            showLoginModal();
+        });
+
+        // Progress monitoring
+        function startProgressMonitoring() {
+            if (progressInterval) clearInterval(progressInterval);
+            
+            progressInterval = setInterval(async function() {
+                if (!currentJobId) return;
+
+                try {
+                    const response = await fetch(`/api/job/${currentJobId}`, {
+                        headers: { 'Authorization': `Bearer ${authToken}` }
+                    });
+
+                    if (response.ok) {
+                        const job = await response.json();
+                        updateProgress(job);
+
+                        if (job.status === 'completed' || job.status === 'failed') {
+                            clearInterval(progressInterval);
+                            loadRecentJobs();
+                        }
+                    }
+                } catch (error) {
+                    console.error('Progress monitoring error:', error);
+                }
+            }, 2000);
+        }
+
+        function updateProgress(job) {
+            document.getElementById('progressMessage').textContent = job.message;
+            document.getElementById('progressPercent').textContent = `${job.progress}%`;
+            document.getElementById('progressBar').style.width = `${job.progress}%`;
+
+            if (job.status === 'completed') {
+                document.getElementById('progressMessage').textContent = '✅ ' + job.message;
+                document.getElementById('progressSection').classList.add('border-green-500');
+            } else if (job.status === 'failed') {
+                document.getElementById('progressMessage').textContent = '❌ ' + job.message;
+                document.getElementById('progressSection').classList.add('border-red-500');
+            }
+        }
+
+        // Load recent jobs
+        async function loadRecentJobs() {
+            try {
+                console.log('Loading recent jobs with token:', authToken ? 'Present' : 'Missing');
+                const response = await fetch('/api/history', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                console.log('History API response status:', response.status);
+                if (response.ok) {
+                    const jobs = await response.json();
+                    displayRecentJobs(jobs);
+                    updateStats(jobs);
+                } else {
+                    console.error('History API failed with status:', response.status);
+                }
+            } catch (error) {
+                console.error('Failed to load jobs:', error);
+            }
+        }
+
+        function displayRecentJobs(jobs) {
+            const container = document.getElementById('recentJobs');
+            container.innerHTML = '';
+
+            if (jobs.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-4">No jobs yet. Start generating articles!</p>';
+                return;
+            }
+
+            jobs.slice(0, 10).forEach(job => {
+                const jobElement = document.createElement('div');
+                jobElement.className = 'flex items-center justify-between p-4 border rounded-lg';
+                
+                const statusIcon = job.status === 'completed' ? '✅' : 
+                                 job.status === 'failed' ? '❌' : 
+                                 job.status === 'running' ? '🔄' : '⏳';
+
+                jobElement.innerHTML = `
+                    <div>
+                        <div class="font-medium">${statusIcon} ${job.keywords.slice(0, 3).join(', ')}${job.keywords.length > 3 ? '...' : ''}</div>
+                        <div class="text-sm text-gray-500">${new Date(job.created_at).toLocaleString()}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-medium">${job.articles_generated || 0} articles</div>
+                        <div class="text-sm text-gray-500">${job.status}</div>
+                    </div>
+                `;
+                container.appendChild(jobElement);
+            });
+        }
+
+        function updateStats(jobs) {
+            const totalArticles = jobs.reduce((sum, job) => sum + (job.articles_generated || 0), 0);
+            const completedJobs = jobs.filter(job => job.status === 'completed').length;
+            const runningJobs = jobs.filter(job => job.status === 'running').length;
+
+            document.getElementById('totalArticles').textContent = totalArticles;
+            document.getElementById('totalDeployed').textContent = completedJobs;
+            document.getElementById('activeJobs').textContent = runningJobs;
+        }
+    </script>
+</body>
+</html>

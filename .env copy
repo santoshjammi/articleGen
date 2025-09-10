@@ -1,0 +1,61 @@
+# =============================================================================
+# 🚀 SEO Article Generator - Complete Environment Configuration
+# =============================================================================
+
+# --- Core Article Generation ---
+# Gemini API Key for article generation (Required for generateImage.py and other scripts)
+GEM_API_KEY=AIzaSyBg8mNv71rcL_BqaUcDSn1I4J94ftRJdOo
+
+# --- Local Directory Configuration ---
+# Local directory path for file operations (Required for sync operations)
+LOCAL_DIRECTORY=/Users/kgt/Desktop/Projects/articleGen/output
+
+# --- FTP Configuration for Article Deployment ---
+# Primary FTP settings (used by customRSync.py and other deployment scripts)
+FTP_HOST=212.1.209.3
+FTP_USER=u237278792.countrysnews.com
+FTP_PASS=Q1w2e3r4t5y6@123456
+FTP_PORT=21
+REMOTE_DIRECTORY=public_html
+
+# SSL/TLS Configuration for FTP
+FTP_SSL_ENABLED=yes
+FTP_SSL_VERIFY_CERT=no
+FTP_SSL_FORCE=no
+
+# --- Performance Configuration ---
+# Maximum workers for parallel operations
+MAX_WORKERS=16
+
+# --- Web Application Configuration ---
+# Production Environment Settings
+ENVIRONMENT=production
+SECRET_KEY=b968dda66ca6c93bf5d33aaedcc582f01a6d5f6b9c115643aa891f62ea370f7c
+DATABASE_URL=sqlite:///webapp_users.db
+
+# Default FTP Configuration for WebApp (fallback values)
+DEFAULT_FTP_HOST=212.1.209.3
+DEFAULT_FTP_REMOTE_DIR=/public_html
+
+# Security Settings
+# ALLOWED_HOSTS=your-domain.com,www.your-domain.com
+# CORS_ORIGINS=https://your-domain.com,https://www.your-domain.com
+
+# Performance Settings for WebApp
+TIMEOUT=120
+
+# --- Optional: Email Notification Settings ---
+# Uncomment and configure if you want email notifications
+# NOTIFICATION_EMAIL=your-email@example.com
+# SMTP_SERVER=smtp.gmail.com
+# SMTP_PORT=587
+# SMTP_USER=your-smtp-user@gmail.com
+# SMTP_PASS=your-smtp-password
+
+# =============================================================================
+# 📝 Configuration Notes:
+# - Replace 'your_gemini_api_key_here' with your actual Gemini API key
+# - Update FTP credentials with your actual hosting details
+# - Modify LOCAL_DIRECTORY if you want files stored elsewhere
+# - Change SECRET_KEY for production deployment security
+# =============================================================================
