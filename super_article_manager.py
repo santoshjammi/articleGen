@@ -782,45 +782,45 @@ def generate_infographic_prompt(keyword: str, section_heading: str, infographic_
                                content_elements: Dict, section_content: str) -> str:
     """Generate AI prompt for creating infographics based on analysis"""
     
-    base_prompt = f"Create a professional, clean infographic for the article section '{section_heading}' about '{keyword}'. "
+    base_prompt = f"Create a professional, clean infographic for the article section '{section_heading}' about '{keyword}'. It is very important not to have any garbled text in the images."
     
     if infographic_type == 'flowchart':
         elements = content_elements.get('numbered_lists', [])
         if elements:
             steps_text = " → ".join(elements[:5])  # Limit to 5 steps for clarity
-            prompt = f"{base_prompt}Design a horizontal flowchart showing the process: {steps_text}. Use clean boxes connected by arrows, professional colors (blues and grays), and include the keyword '{keyword}' in the title. Make it suitable for a business article."
+            prompt = f"{base_prompt}Design a horizontal flowchart showing the process: {steps_text}. Use clean boxes connected by arrows, professional colors (blues and grays), and include the keyword '{keyword}' in the title. Make it suitable for a business article. Avoid clutter."
         else:
-            prompt = f"{base_prompt}Create a process flowchart infographic showing how {keyword} works. Use connected boxes with arrows, clean typography, and professional styling."
+            prompt = f"{base_prompt}Create a process flowchart infographic showing how {keyword} works. Use connected boxes with arrows, clean typography, and professional styling. Include the keyword '{keyword}' prominently in the title."
     
     elif infographic_type == 'comparison_chart':
-        prompt = f"{base_prompt}Design a comparison chart/table infographic comparing {keyword} with its alternatives. Use a clean table format or side-by-side comparison with pros/cons, checkmarks and X marks. Include the keyword '{keyword}' prominently in the title."
+        prompt = f"{base_prompt}Design a comparison chart/table infographic comparing {keyword} with its alternatives. Use a clean table format or side-by-side comparison with pros/cons, checkmarks and X marks. Include the keyword '{keyword}' prominently in the title. Use professional colors."
     
     elif infographic_type == 'data_visualization':
         stats = content_elements.get('statistics', [])
         if stats:
             stats_text = ", ".join(stats[:3])
-            prompt = f"{base_prompt}Create a data visualization infographic featuring these key statistics: {stats_text}. Use bar charts, pie charts, or statistical callouts. Include '{keyword}' in the title and use professional color scheme."
+            prompt = f"{base_prompt}Create a data visualization infographic featuring these key statistics: {stats_text}. Use bar charts, pie charts, or statistical callouts. Include '{keyword}' in the title and use professional color scheme. Avoid clutter."
         else:
-            prompt = f"{base_prompt}Design a statistical infographic about {keyword} trends and data. Include charts, graphs, and key numbers with clean, professional styling."
+            prompt = f"{base_prompt}Design a statistical infographic about {keyword} trends and data. Include charts, graphs, and key numbers with clean, professional styling. Make sure to feature the keyword '{keyword}' prominently."
     
     elif infographic_type == 'case_study_layout':
         prompt = f"{base_prompt}Create a case study layout infographic showing successful examples of {keyword} implementation. Use before/after sections, success metrics, and clean professional design with the keyword '{keyword}' featured prominently."
     
     elif infographic_type == 'tool_comparison':
-        prompt = f"{base_prompt}Design a tools and resources infographic for {keyword}. Show different software/platforms in a grid layout with icons, names, and key features. Include '{keyword}' in the title."
+        prompt = f"{base_prompt}Design a tools and resources infographic for {keyword}. Show different software/platforms in a grid layout with icons, names, and key features. Include '{keyword}' in the title. Use clean, professional colors."
     
     elif infographic_type == 'warning_infographic':
-        prompt = f"{base_prompt}Create a 'mistakes to avoid' infographic for {keyword}. Use warning icons, red accent colors for don'ts, and green for do's. List common pitfalls in a clean, organized layout."
+        prompt = f"{base_prompt}Create a 'mistakes to avoid' infographic for {keyword}. Use warning icons, red accent colors for don'ts, and green for do's. List common pitfalls in a clean, organized layout. Include the keyword '{keyword}' in the title."
     
     elif infographic_type == 'numbered_infographic':
         elements = content_elements.get('numbered_lists', [])
         if elements:
-            prompt = f"{base_prompt}Design a numbered list infographic with these key points: {'; '.join(elements[:5])}. Use numbered circles, clean typography, and include '{keyword}' in the title."
+            prompt = f"{base_prompt}Design a numbered list infographic with these key points: {'; '.join(elements[:5])}. Use numbered circles, clean typography, and include '{keyword}' in the title. Use professional colors."
         else:
-            prompt = f"{base_prompt}Create a numbered steps infographic for {keyword}. Use clean numbered design with professional styling."
+            prompt = f"{base_prompt}Create a numbered steps infographic for {keyword}. Use clean numbered design with professional styling. Include the keyword '{keyword}' prominently in the title."
     
     else:  # concept_diagram
-        prompt = f"{base_prompt}Design a concept diagram infographic explaining {keyword}. Use interconnected elements, clean typography, and professional color scheme with the keyword prominently displayed."
+        prompt = f"{base_prompt}Design a concept diagram infographic explaining {keyword}. Use interconnected elements, clean typography, and professional color scheme with the keyword prominently displayed. Avoid clutter."
     
     return prompt
 
@@ -1656,12 +1656,12 @@ class ArticleGenerator:
                 os.makedirs(os.path.join(IMAGES_BASE_DIR, slug), exist_ok=True)
                 
                 # Generate main image
-                og_image_prompt = f"Professional news article image for: {data['ogTitle']}. Visual style: {data['imageAltText']}. High quality, news-appropriate."
+                og_image_prompt = f"Professional news article image for: {data['ogTitle']}. Visual style: {data['imageAltText']}. High quality, news-appropriate. It is very important not to have any garbled text in the images."
                 og_img_fp = os.path.join(IMAGES_BASE_DIR, slug, "main.webp")
                 og_image_url = generateImage(og_image_prompt, og_img_fp) or generate_placeholder_image_url(data['ogTitle'])
                 
                 # Generate thumbnail image
-                thumb_image_prompt = f"Thumbnail for news article: {data['ogTitle']}. Compact, visually appealing, news-style thumbnail."
+                thumb_image_prompt = f"Thumbnail for news article: {data['ogTitle']}. Compact, visually appealing, news-style thumbnail. High quality. It is very important not to have any garbled text in the images."
                 thumb_img_fp = os.path.join(IMAGES_BASE_DIR, slug, "thumb.webp")
                 thumbnail_url = generateImage(thumb_image_prompt, thumb_img_fp) or generate_placeholder_image_url(data['ogTitle'], 400, 200)
                 
@@ -1678,7 +1678,7 @@ class ArticleGenerator:
                 
                 for i, img_desc in enumerate(inline_image_descs):
                     # Standard inline image generation
-                    inline_prompt = f"Supporting image for article section: {img_desc['description']}. Caption context: {img_desc['caption']}. Professional, high-quality."
+                    inline_prompt = f"Supporting image for article section: {img_desc['description']}. Caption context: {img_desc['caption']}. Professional, high-quality. It is very important not to have any garbled text in the images."
                     inline_fp = os.path.join(IMAGES_BASE_DIR, slug, f"inline_{i+1}.webp")
                     inline_url = generateImage(inline_prompt, inline_fp) or generate_placeholder_image_url(
                         img_desc.get("description", f"Article Image {i+1}")
@@ -2231,7 +2231,7 @@ async def generate_images_for_articles(manager: SuperArticleManager, specific_ar
                 og_title = article.get('ogTitle', title)
                 image_alt = article.get('imageAltText', f'News image for {title}')
                 
-                main_prompt = f"Professional news article image for: {og_title}. Visual style: {image_alt}. High quality, news-appropriate."
+                main_prompt = f"Professional news article image for: {og_title}. Visual style: {image_alt}. High quality, news-appropriate. It is very important not to have any garbled text in the images. Only one image. No text overlays."
                 main_image_url = generateImage(main_prompt, main_img_path)
                 
                 if main_image_url and os.path.exists(main_img_path):
@@ -2250,7 +2250,7 @@ async def generate_images_for_articles(manager: SuperArticleManager, specific_ar
             if regenerate or not os.path.exists(thumb_img_path):
                 og_title = article.get('ogTitle', title)
                 
-                thumb_prompt = f"Thumbnail for news article: {og_title}. Compact, visually appealing, news-style thumbnail."
+                thumb_prompt = f"Thumbnail for news article: {og_title}. Compact, visually appealing, news-style thumbnail. It is very important not to have any garbled text in the images. Only one image. No text overlays."
                 thumb_image_url = generateImage(thumb_prompt, thumb_img_path)
                 
                 if thumb_image_url and os.path.exists(thumb_img_path):
@@ -2289,7 +2289,7 @@ async def generate_images_for_articles(manager: SuperArticleManager, specific_ar
             for j, img_desc in enumerate(inline_descriptions):
                 inline_img_path = os.path.join(article_images_dir, f"inline_{j+1}.webp")
                 if regenerate or not os.path.exists(inline_img_path):
-                    inline_prompt = f"Supporting image for article: {img_desc['description']}. Caption context: {img_desc['caption']}. Professional, high-quality news illustration."
+                    inline_prompt = f"Supporting image for article: {img_desc['description']}. Caption context: {img_desc['caption']}. Professional, high-quality news illustration. It is very important not to have any garbled text in the images. Only one image. No text overlays."
                     inline_image_url = generateImage(inline_prompt, inline_img_path)
                     
                     if inline_image_url and os.path.exists(inline_img_path):
