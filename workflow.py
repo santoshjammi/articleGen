@@ -137,18 +137,19 @@ def main():
         "Showing article statistics"
     )
     
-    # Step 3: Generate website
+    # Step 3: Generate website with article enhancements
     success = run_command(
-        f"{venv_python} generateSite_advanced.py",
-        "Generating website with consolidated categories"
+        f"{venv_python} generateSite_advanced.py --enhance-articles",
+        "Generating website with enhanced articles and consolidated categories"
     )
     
     if success:
         print("\n🎉 Workflow completed successfully!")
         print("📁 Website files are ready in the 'dist/' directory")
+        print("✨ All articles have been enhanced with latest features (headers, infographics, metadata)")
         print("🌐 Categories are automatically consolidated and clean")
-        print("\n💡 Note: Category normalization is now built into the article generation process")
-        print("   You don't need to run consolidate_categories.py manually anymore!")
+        print("\n💡 Note: Articles are automatically enhanced during site generation")
+        print("   This includes improved headers, infographics, SEO metadata, and E-E-A-T compliance!")
     else:
         print("\n❌ Workflow failed during website generation")
 

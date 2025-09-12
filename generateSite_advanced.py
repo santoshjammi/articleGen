@@ -3,11 +3,16 @@
 Advanced Site Generator with E-E-A-T Standards
 Generates a comprehensive website with all advanced features including ads, lazy loading, 
 social features, SEO optimization, and E-E-A-T compliance.
+
+Options:
+- --enhance-articles: Enhance existing articles with latest features before generating site
 """
 
 import json
 import html
 import os
+import sys
+import argparse
 import shutil
 import re
 from collections import defaultdict
@@ -79,11 +84,46 @@ def perform_preflight_checks():
         print(f"❌ CRITICAL ERROR: Failed to validate articles data: {e}")
         return False
 
-def generate_advanced_site():
+def enhance_existing_articles():
+    """Enhance existing articles using super_article_manager system"""
+    try:
+        print("🚀 Enhancing existing articles with latest features...")
+        print("=" * 60)
+        
+        # Import the SuperArticleManager class
+        import subprocess
+        import os
+        
+        # Run the enhancement using the super_article_manager
+        result = subprocess.run([
+            'python', 'super_article_manager.py', 'enhance', '--all'
+        ], capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            print("✅ Article enhancement completed successfully!")
+            print(result.stdout)
+            return True
+        else:
+            print("❌ Article enhancement failed!")
+            print(result.stderr)
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error during article enhancement: {e}")
+        return False
+
+def generate_advanced_site(enhance_articles=False):
     """Generate advanced website with all features"""
     
     print("🚀 Generating Advanced E-E-A-T Compliant Website...")
     print("=" * 60)
+    
+    # Optionally enhance articles first
+    if enhance_articles:
+        if not enhance_existing_articles():
+            print("⚠️  Article enhancement failed, continuing with existing articles...")
+        else:
+            print("✅ Articles enhanced successfully!")
     
     # CRITICAL: Pre-flight validation checks
     if not perform_preflight_checks():
@@ -479,6 +519,13 @@ def generate_header_html(unique_categories, current_page_type="home"):
             link_path = f"categories/{category_slug}.html" if current_page_type == "home" else f"../categories/{category_slug}.html"
             dropdown_categories += f'<a href="{link_path}">{category}</a>'
     
+    # Mobile menu links - include ALL categories
+    mobile_category_links = ""
+    for category in unique_categories:
+        category_slug = generate_slug(category)
+        link_path = f"categories/{category_slug}.html" if current_page_type == "home" else f"../categories/{category_slug}.html"
+        mobile_category_links += f'<a href="{link_path}" class="block py-2 hover:text-blue-200">{category}</a>'
+    
     home_link = "index.html" if current_page_type == "home" else "../index.html"
     logo_path = "logo-header.svg" if current_page_type == "home" else "../logo-header.svg"
     
@@ -531,7 +578,7 @@ def generate_header_html(unique_categories, current_page_type="home"):
         <div id="mobile-menu" class="lg:hidden hidden bg-blue-800 border-t border-blue-600">
             <div class="px-4 py-2 space-y-2">
                 <a href="{home_link}" class="block py-2 hover:text-blue-200">Home</a>
-                {category_links.replace('<li><a', '<a').replace('</a></li>', '</a>').replace(' class="hover:text-blue-200 transition-colors px-2 py-1 rounded"', ' class="block py-2 hover:text-blue-200"')}
+                {mobile_category_links}
                 <a href="about-us.html" class="block py-2 hover:text-blue-200">About Us</a>
                 <a href="contact.html" class="block py-2 hover:text-blue-200">Contact</a>
             </div>
@@ -1574,25 +1621,29 @@ def generate_contact_page(unique_categories):
                     <!-- Contact Form -->
                     <div>
                         <h2 class="text-2xl font-bold text-gray-900 mb-6">Send us a message</h2>
-                        <form class="space-y-6">
+                        <form id="contactForm" class="space-y-6" method="post" action="#" novalidate>
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Name</label>
-                                <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">Name</label>
+                                <input type="text" name="name" id="name" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                             </div>
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
-                                <input type="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                                <input type="email" name="email" id="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                             </div>
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
-                                <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <label for="subject" class="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
+                                <input type="text" name="subject" id="subject" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                             </div>
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Message</label>
-                                <textarea rows="6" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                                <label for="message" class="block text-sm font-semibold text-gray-700 mb-2">Message</label>
+                                <textarea rows="6" name="message" id="message" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
                             </div>
-                            <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-semibold">
-                                Send Message
+                            <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-semibold flex items-center justify-center">
+                                <svg id="submitSpinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span id="submitBtnText">Send Message</span>
                             </button>
                         </form>
                     </div>
@@ -1622,7 +1673,7 @@ def generate_contact_page(unique_categories):
                                 </div>
                                 <div>
                                     <h3 class="text-lg font-semibold text-gray-900">Phone</h3>
-                                    <p class="text-gray-600">+1 (555) 123-4567</p>
+                                    <p class="text-gray-600">+91 (011) 1234-5678</p>
                                 </div>
                             </div>
                             
@@ -1634,7 +1685,7 @@ def generate_contact_page(unique_categories):
                                 </div>
                                 <div>
                                     <h3 class="text-lg font-semibold text-gray-900">Address</h3>
-                                    <p class="text-gray-600">123 News Street<br>Media City, MC 12345</p>
+                                    <p class="text-gray-600">New Delhi, India<br>PIN: 110001</p>
                                 </div>
                             </div>
                         </div>
@@ -1649,6 +1700,110 @@ def generate_contact_page(unique_categories):
         </main>
         
         {generate_footer_html("home")}
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {{
+        const contactForm = document.getElementById('contactForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const submitBtnText = document.getElementById('submitBtnText');
+        const submitSpinner = document.getElementById('submitSpinner');
+        
+        if (contactForm) {{
+            contactForm.addEventListener('submit', function(e) {{
+                e.preventDefault();
+                
+                // Get form data
+                const formData = new FormData(contactForm);
+                const data = {{
+                    name: formData.get('name'),
+                    email: formData.get('email'),
+                    subject: formData.get('subject'),
+                    message: formData.get('message'),
+                    timestamp: new Date().toISOString()
+                }};
+                
+                // Validate form
+                if (!data.name || !data.email || !data.subject || !data.message) {{
+                    showMessage('Please fill in all fields.', 'error');
+                    return;
+                }}
+                
+                if (!isValidEmail(data.email)) {{
+                    showMessage('Please enter a valid email address.', 'error');
+                    return;
+                }}
+                
+                // Show loading state
+                submitBtn.disabled = true;
+                submitSpinner.classList.remove('hidden');
+                submitBtnText.textContent = 'Sending...';
+                
+                // Simulate form submission (replace with actual backend integration)
+                setTimeout(() => {{
+                    // Reset button state
+                    submitBtn.disabled = false;
+                    submitSpinner.classList.add('hidden');
+                    submitBtnText.textContent = 'Send Message';
+                    
+                    // Show success message
+                    showMessage('Thank you for your message! We\\'ll get back to you soon.', 'success');
+                    
+                    // Reset form
+                    contactForm.reset();
+                    
+                    // For now, create a mailto link as fallback
+                    const subject = encodeURIComponent(data.subject);
+                    const body = encodeURIComponent(`Name: ${{data.name}}\\nEmail: ${{data.email}}\\n\\nMessage:\\n${{data.message}}`);
+                    const mailtoLink = `mailto:contact@countrysnews.com?subject=${{subject}}&body=${{body}}`;
+                    
+                    // Open email client after a short delay
+                    setTimeout(() => {{
+                        window.location.href = mailtoLink;
+                    }}, 2000);
+                    
+                }}, 1500);
+            }});
+        }}
+    }});
+    
+    function isValidEmail(email) {{
+        const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+        return emailRegex.test(email);
+    }}
+    
+    function showMessage(message, type) {{
+        // Remove existing messages
+        const existingMessages = document.querySelectorAll('.form-message');
+        existingMessages.forEach(msg => msg.remove());
+        
+        // Create message element
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `form-message p-4 rounded-lg mb-4 ${{
+            type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 
+            'bg-red-100 text-red-800 border border-red-200'
+        }}`;
+        messageDiv.innerHTML = `
+            <div class="flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    ${{type === 'success' ? 
+                        '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>' :
+                        '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>'
+                    }}
+                </svg>
+                ${{message}}
+            </div>
+        `;
+        
+        // Insert message before the form
+        const form = document.getElementById('contactForm');
+        form.parentNode.insertBefore(messageDiv, form);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {{
+            messageDiv.remove();
+        }}, 5000);
+    }}
+    </script>
     </body>
     </html>
     '''
@@ -2665,4 +2820,12 @@ def generate_article_structured_data(article):
     return f'<script type="application/ld+json">{json.dumps(structured_data, indent=2)}</script>'
 
 if __name__ == "__main__":
-    generate_advanced_site()
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Generate advanced E-E-A-T compliant website')
+    parser.add_argument('--enhance-articles', action='store_true',
+                       help='Enhance existing articles with latest features before generating site')
+    
+    args = parser.parse_args()
+    
+    # Generate site with optional article enhancement
+    generate_advanced_site(enhance_articles=args.enhance_articles)

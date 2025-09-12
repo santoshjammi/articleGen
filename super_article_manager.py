@@ -2388,8 +2388,12 @@ Examples:
                                help='Fix article issues (IDs, titles, etc.)')
     enhance_parser.add_argument('--merge-legacy', action='store_true',
                                help='Merge articles from legacy articles.json')
+    enhance_parser.add_argument('--headers-only', action='store_true',
+                               help='Enhance headers with keywords (fast, no infographics)')
     enhance_parser.add_argument('--all', action='store_true',
                                help='Run all enhancement operations')
+    enhance_parser.add_argument('--max-articles', type=int,
+                               help='Maximum number of articles to process (for testing)')
     
     # Workflow command
     workflow_parser = subparsers.add_parser('workflow', help='Complete workflow operations')
@@ -2520,10 +2524,37 @@ async def main():
                 if fixed > 0:
                     operations_run.append(f"Fixed {fixed} articles")
             
-            # Always enhance articles
-            enhanced = manager.enhance_articles()
-            if enhanced > 0:
-                operations_run.append(f"Enhanced {enhanced} articles")
+            # Header enhancement with keywords (fast, cost-effective)
+            if args.headers_only:
+                try:
+                    from enhance_existing_headers import ExistingArticleHeaderEnhancer
+                    
+                    enhancer = ExistingArticleHeaderEnhancer(manager.articles_file)
+                    results = enhancer.enhance_all_articles(
+                        max_articles=args.max_articles,
+                        backup=True
+                    )
+                    
+                    if results.get('success') and results.get('enhanced_count', 0) > 0:
+                        enhanced_count = results.get('enhanced_count', 0)
+                        operations_run.append(f"Enhanced headers for {enhanced_count} articles")
+                        # Reload articles after header enhancement
+                        manager.load_articles()
+                    elif results.get('success'):
+                        print("ℹ️  No articles needed header enhancement")
+                    else:
+                        print(f"❌ Header enhancement failed: {results.get('error', 'Unknown error')}")
+                        
+                except ImportError:
+                    print("❌ Header enhancement module not found. Please ensure enhance_existing_headers.py exists.")
+                except Exception as e:
+                    print(f"❌ Error during header enhancement: {e}")
+            
+            # Full enhancement (with infographics) - only if not headers-only
+            elif args.all or (not args.headers_only and not args.merge_legacy and not args.deduplicate and not args.fix_issues):
+                enhanced = manager.enhance_articles()
+                if enhanced > 0:
+                    operations_run.append(f"Enhanced {enhanced} articles")
             
             if operations_run:
                 manager.save_articles()

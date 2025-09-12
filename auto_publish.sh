@@ -103,20 +103,22 @@ generate_local_manifest() {
     fi
 }
 
-# Function to run workflow.py with option 2 (fetch fresh trends + generate articles)
-run_workflow_fresh_trends() {
-    log "Running workflow.py with option 2 (fetch fresh trends + generate articles)..."
+# Function to refresh trends data for next run (non-interactive)
+refresh_trends_data() {
+    log "Refreshing trends data for next run..."
     
     # Activate virtual environment before running Python scripts
     activate_venv
     
     cd "$SCRIPT_DIR"
-    # Use echo to provide option 2 to the interactive script
-    if echo "2" | python3 workflow.py >> "$LOG_FILE" 2>&1; then
-        log_success "Workflow.py completed successfully"
+    
+    # Fetch fresh trending data for next run
+    log "Fetching fresh trending data for next run..."
+    if python3 fetch_fresh_trends.py >> "$LOG_FILE" 2>&1; then
+        log_success "Fresh trends data refreshed successfully"
         return 0
     else
-        log_error "Workflow.py failed"
+        log_warning "Fresh trends refresh failed, will use cached data next time"
         return 1
     fi
 }
@@ -326,29 +328,28 @@ main() {
     log "Step 1.5: Generating missing images after trend articles..."
     generate_missing_images "trend articles"
     
-    # Step 2: Run workflow.py with option 2 (fetch fresh SEO-filtered trends + generate articles)
-    log "Step 2: Running fresh SEO-filtered trends workflow..."
-    if ! run_workflow_fresh_trends; then
-        log_error "Failed to run fresh trends workflow"
-        return 1
+    # Step 2: Refresh trends data for next run (optional, non-blocking)
+    log "Step 2: Refreshing trends data for next run..."
+    if ! refresh_trends_data; then
+        log_warning "Failed to refresh trends data, continuing with site generation"
     fi
     
-    # Step 2.25: Generate missing images (after fresh trends workflow)
-    log "Step 2.25: Generating missing images after fresh trends workflow..."
-    generate_missing_images "fresh trends workflow"
+    # Step 2.25: Generate missing images (after trends refresh)
+    log "Step 2.25: Generating missing images..."
+    generate_missing_images "after trends refresh"
 
         # Step 2.4: Generate the full site (dist/) and copy into output/ so manifests include site files
         log "Step 2.4: Generating full site (generateSite_advanced.py) and merging into output/..."
         # Function to generate site and copy dist -> output
         generate_full_site() {
-            log "Generating site using generateSite_advanced.py..."
+            log "Generating site with article enhancements using generateSite_advanced.py..."
 
             # Activate virtual environment
             activate_venv
             cd "$SCRIPT_DIR"
 
-            if python3 generateSite_advanced.py >> "$LOG_FILE" 2>&1; then
-                log_success "Site generated to dist/"
+            if python3 generateSite_advanced.py --enhance-articles >> "$LOG_FILE" 2>&1; then
+                log_success "Site generated to dist/ with enhanced articles"
             else
                 log_error "generateSite_advanced.py failed"
                 return 1
