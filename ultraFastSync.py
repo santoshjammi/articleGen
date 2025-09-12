@@ -100,13 +100,14 @@ def load_manifest():
 def create_directories_smart(directories_to_create, ftp_credentials):
     """Smart directory creation - only create directories that don't exist"""
     if not directories_to_create:
+        logger.debug("📂 No directories to create - skipping directory creation")
         return
     
     host, user, password = ftp_credentials
     directories_created = 0
     directories_checked = len(directories_to_create)
     
-    logger.info("Smart directory creation starting...")
+    logger.info(f"Smart directory creation starting for {directories_checked} directories...")
     start_time = time.time()
     
     try:
@@ -157,12 +158,14 @@ def upload_file(local_path, remote_path, ftp_credentials):
 def update_manifest(uploaded_files):
     """Update manifest with uploaded files (with logging)"""
     if not uploaded_files:
+        logger.debug("No files to update in manifest - skipping")
         return
         
     logger.info(f"Updating manifest with {len(uploaded_files)} files...")
     manifest = load_manifest()
-    for remote_path, file_size in uploaded_files.items():
-        manifest[remote_path] = file_size
+    
+    # Batch update for better performance
+    manifest.update({remote_path: file_size for remote_path, file_size in uploaded_files.items()})
     
     try:
         with open(MANIFEST_FILE_PATH, 'w') as f:
@@ -200,7 +203,6 @@ def differential_sync():
     
     # Extract files to upload from differential analysis
     files_to_upload = []
-    directories_to_create = set(diff_manifest.get('new_directories', []))
     
     # Add new files
     for file_info in diff_manifest.get('new_files', []):
@@ -215,21 +217,31 @@ def differential_sync():
     logger.info(f"   🆕 New files: {summary.get('new_files', 0)}")
     logger.info(f"   🔄 Changed files: {summary.get('changed_files', 0)}")
     logger.info(f"   ✅ Unchanged files: {summary.get('unchanged_files', 0)}")
-    logger.info(f"   📂 Directories: {len(directories_to_create)}")
     logger.info(f"   ⚡ Total to upload: {len(files_to_upload)}")
     
     if len(files_to_upload) == 0:
         logger.info("🎉 No changes detected - sync completed instantly!")
+        logger.info("   📂 Skipped directory creation (no files to upload)")
         print("🎉 No changes detected - sync completed instantly!")
         return True
     
-    # Create directories smartly (only those that don't exist)
+    # Smart optimization: Only create directories needed by files being uploaded
+    directories_to_create = set()
+    for local_path, remote_path in files_to_upload:
+        # Extract directory path from remote file path
+        remote_dir = os.path.dirname(remote_path)
+        if remote_dir and remote_dir != '.' and remote_dir != '/':
+            directories_to_create.add(remote_dir)
+    
+    # Create directories smartly (only for files being uploaded)
     if directories_to_create:
         dir_start = time.time()
-        logger.info(f"Checking {len(directories_to_create)} directories...")
+        logger.info(f"🎯 Smart directory optimization: Checking {len(directories_to_create)} directories needed by uploaded files...")
         create_directories_smart(directories_to_create, ftp_credentials)
         dir_time = time.time() - dir_start
-        logger.info(f"✅ Smart directory creation completed in {dir_time:.2f} seconds")
+        logger.info(f"✅ Optimized directory creation completed in {dir_time:.2f} seconds")
+    else:
+        logger.info("📂 No directories needed for upload - skipping directory creation")
     
     logger.info(f"🚀 Starting differential upload with {MAX_WORKERS} workers...")
     upload_start = time.time()
@@ -316,15 +328,9 @@ def fast_sync():
     logger.info(f"Manifest processing completed in {manifest_time:.2f} seconds")
     
     files_to_upload = []
-    directories_to_create = set()
     
-    # Collect files and directories
+    # Collect files to upload
     for root, dirs, files in os.walk(LOCAL_DIRECTORY):
-        for dir_name in dirs:
-            local_subdir = os.path.join(root, dir_name)
-            remote_subdir = os.path.join(REMOTE_DIRECTORY, os.path.relpath(local_subdir, LOCAL_DIRECTORY)).replace("\\", "/")
-            directories_to_create.add(remote_subdir)
-
         for file_name in files:
             local_path = os.path.join(root, file_name)
             relative_path = os.path.relpath(local_path, LOCAL_DIRECTORY)
@@ -334,20 +340,33 @@ def fast_sync():
             if remote_path not in remote_files or remote_files[remote_path] != local_size:
                 files_to_upload.append((local_path, remote_path))
     
-    logger.info(f"📁 Found {len(directories_to_create)} directories to create")
-    logger.info(f"📄 Found {len(files_to_upload)} files to upload")
+    logger.info(f"� Found {len(files_to_upload)} files to upload")
     
-    # Create directories smartly (only those that don't exist)
+    if not files_to_upload:
+        sync_time = time.time() - sync_start
+        logger.info("🎉 No files to upload - everything is up to date!")
+        logger.info(f"⚡ Fast sync completed instantly in {sync_time:.2f} seconds")
+        print("🎉 No files to upload - everything is up to date!")
+        return True
+    
+    # Smart optimization: Only create directories needed by files being uploaded
+    directories_to_create = set()
+    for local_path, remote_path in files_to_upload:
+        # Extract directory path from remote file path
+        remote_dir = os.path.dirname(remote_path)
+        if remote_dir and remote_dir != '.' and remote_dir != '/':
+            directories_to_create.add(remote_dir)
+    
+    logger.info(f"🎯 Smart directory optimization: {len(directories_to_create)} unique directories needed by uploaded files")
+    
+    # Create directories smartly (only for files being uploaded)
     if directories_to_create:
         dir_start = time.time()
-        logger.info(f"Checking {len(directories_to_create)} directories...")
         create_directories_smart(directories_to_create, ftp_credentials)
         dir_time = time.time() - dir_start
         logger.info(f"✅ Smart directory creation completed in {dir_time:.2f} seconds")
-    
-    if not files_to_upload:
-        logger.info("✅ No files to upload - everything is up to date!")
-        return
+    else:
+        logger.debug("📂 No directories needed for upload - skipping directory creation")
     
     logger.info(f"� Starting ultra-fast upload with {MAX_WORKERS} workers...")
     upload_start = time.time()
@@ -401,10 +420,6 @@ def fast_sync():
         update_manifest(uploaded_files)
         manifest_update_time = time.time() - manifest_update_start
         logger.info(f"📝 Manifest updated in {manifest_update_time:.2f} seconds")
-    
-    # Update manifest with successful uploads
-    if uploaded_files:
-        update_manifest(uploaded_files)
 
 if __name__ == "__main__":
     start_time = time.time()

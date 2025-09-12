@@ -264,43 +264,110 @@ verify_images() {
     fi
 }
 
-# Function to generate differential manifest (STEP 2.5)
+# Function to generate enhanced differential manifest with article intelligence (STEP 2.5)
 generate_differential_manifest() {
-    log "Generating differential manifest (smart change detection)..."
+    log "Generating enhanced differential manifest with article intelligence..."
     
     # Activate virtual environment before running Python scripts
     activate_venv
     
     cd "$SCRIPT_DIR"
     if python3 generateDifferentialManifest.py >> "$LOG_FILE" 2>&1; then
-        log_success "Differential manifest generated successfully"
+        log_success "Enhanced differential manifest with article intelligence generated successfully"
         return 0
     else
-        log_error "Failed to generate differential manifest"
+        log_error "Failed to generate enhanced differential manifest"
         return 1
     fi
 }
 
-# Function to sync to FTP server (FINAL STEP)
+# Function to sync to FTP server with intelligent monitoring (FINAL STEP)
 sync_to_ftp() {
-    log "Syncing to FTP server using ultra-fast parallel upload..."
+    log "Syncing to FTP server using ultra-fast parallel upload with intelligent sync..."
+    
+    # Check differential sync status first
+    if [[ -f "$SCRIPT_DIR/output/.differential_sync.json" ]]; then
+        local files_to_sync changed_articles sync_strategy
+        
+        # Use Python to safely parse JSON and extract sync statistics
+        local sync_stats
+        sync_stats=$(python3 -c "
+import json
+try:
+    with open('output/.differential_sync.json', 'r') as f:
+        data = json.load(f)
+    files_to_sync = len(data.get('changed_files', [])) + len(data.get('new_files', []))
+    changed_articles = data.get('article_metadata', {}).get('changed_articles', 0) 
+    sync_strategy = data.get('sync_strategy', 'unknown')
+    print(f'{files_to_sync}|{changed_articles}|{sync_strategy}')
+except:
+    print('unknown|unknown|unknown')
+" 2>/dev/null)
+        
+        IFS='|' read -r files_to_sync changed_articles sync_strategy <<< "$sync_stats"
+        
+        log "🧠 INTELLIGENT SYNC ANALYSIS:"
+        log "   📊 Files to sync: $files_to_sync"
+        log "   📄 Articles changed: $changed_articles"
+        log "   ⚡ Strategy: $sync_strategy"
+        
+        if [[ "$files_to_sync" == "0" ]]; then
+            log "✅ No changes detected - site is already synchronized!"
+            log_success "Intelligent sync: No FTP upload needed"
+            return 0
+        fi
+    else
+        log_warning "Differential sync manifest not found, proceeding with full sync"
+    fi
     
     # Activate virtual environment before running Python scripts
     activate_venv
     
     cd "$SCRIPT_DIR"
     if python3 ultraFastSync.py >> "$LOG_FILE" 2>&1; then
-        log_success "FTP sync completed successfully"
+        log_success "Intelligent FTP sync completed successfully"
         return 0
     else
-        log_error "FTP sync failed"
+        log_error "Intelligent FTP sync failed"
         return 1
     fi
 }
 
+# Function to display intelligent sync summary
+display_sync_summary() {
+    log "📊 INTELLIGENT SYNC SUMMARY:"
+    
+    if [[ -f "$SCRIPT_DIR/output/.differential_sync.json" ]]; then
+        local summary
+        summary=$(python3 -c "
+import json
+try:
+    with open('output/.differential_sync.json', 'r') as f:
+        data = json.load(f)
+    total_files = len(data.get('changed_files', [])) + len(data.get('new_files', []))
+    changed_files = len(data.get('changed_files', []))
+    new_files = len(data.get('new_files', []))
+    changed_articles = data.get('article_metadata', {}).get('changed_articles', 0)
+    strategy = data.get('sync_strategy', 'unknown')
+    print(f'   📁 Total files synced: {total_files}')
+    print(f'   🔄 Changed files: {changed_files}')
+    print(f'   🆕 New files: {new_files}')
+    print(f'   📄 Articles processed: {changed_articles}')
+    print(f'   ⚡ Sync strategy: {strategy}')
+except Exception as e:
+    print(f'   ❌ Error reading sync summary: {e}')
+" 2>/dev/null)
+        log "$summary"
+    else
+        log "   ❌ Sync manifest not available"
+    fi
+    log ""
+}
+
 # Main execution function
 main() {
-    log "=== Starting SEO-Focused Article Generation (Daily at 6PM IST) ==="
+    log "=== Starting Intelligent SEO Article Generation (Daily at 6PM IST) ==="
+    log "🧠 New Feature: Unified intelligent sync with article-level change detection"
     log "🎯 SEO Strategy: Global trends >100K searches + India TOP 15"
     log "Timestamp: $(date '+%Y-%m-%d %H:%M:%S')"
     
@@ -309,13 +376,6 @@ main() {
     
     # Create backup
     backup_articles
-    
-    # Step 0: Generate local manifest (FIRST STEP)
-    log "Step 0: Generating local manifest..."
-    if ! generate_local_manifest; then
-        log_error "Failed to generate local manifest"
-        return 1
-    fi
     
     # Step 1: Generate 10 trend-based articles (5 India + 5 Worldwide) using SEO-filtered trends
     log "Step 1: Generating SEO-qualified trend-based articles..."
@@ -338,62 +398,51 @@ main() {
     log "Step 2.25: Generating missing images..."
     generate_missing_images "after trends refresh"
 
-        # Step 2.4: Generate the full site (dist/) and copy into output/ so manifests include site files
-        log "Step 2.4: Generating full site (generateSite_advanced.py) and merging into output/..."
-        # Function to generate site and copy dist -> output
-        generate_full_site() {
-            log "Generating site with article enhancements using generateSite_advanced.py..."
+        # Step 2.4: Generate site with intelligent differential processing
+        log "Step 2.4: Generating site with intelligent sync system..."
+        generate_intelligent_site() {
+            log "Using intelligent differential site generation with article enhancements..."
 
             # Activate virtual environment
             activate_venv
             cd "$SCRIPT_DIR"
 
-            if python3 generateSite_advanced.py --enhance-articles >> "$LOG_FILE" 2>&1; then
-                log_success "Site generated to dist/ with enhanced articles"
+            # Use the new intelligent differential mode with enhancement
+            if python3 generateSite_advanced.py generate site --differential --enhance >> "$LOG_FILE" 2>&1; then
+                log_success "Intelligent differential site generation completed successfully"
+                return 0
             else
-                log_error "generateSite_advanced.py failed"
+                log_error "Intelligent site generation failed"
                 return 1
             fi
-
-            # Merge dist/ into output/ so the differential manifest includes site files (sitemap, articles, images)
-            mkdir -p "$SCRIPT_DIR/output"
-            log "Copying dist/ -> output/..."
-            if cp -a "$SCRIPT_DIR/dist/." "$SCRIPT_DIR/output/" >> "$LOG_FILE" 2>&1; then
-                log_success "Copied dist/ into output/"
-            else
-                log_error "Failed to copy dist/ into output/"
-                return 1
-            fi
-
-            return 0
         }
 
-        if ! generate_full_site; then
-            log_warning "Continuing even though site generation or copy failed"
-        else
-            # Re-generate local manifest so it includes files copied from dist/
-            log "Regenerating local manifest to include site files..."
-            if ! generate_local_manifest; then
-                log_warning "Regenerating local manifest failed; differential manifest may be incomplete"
-            fi
+        if ! generate_intelligent_site; then
+            log_error "Failed to generate site with intelligent sync system"
+            return 1
         fi
     
-    # Step 2.5: Generate differential manifest (smart change detection)
-    log "Step 2.5: Analyzing changes for differential sync..."
+    # Step 2.5: Generate enhanced differential manifest with article intelligence
+    log "Step 2.5: Analyzing changes with intelligent sync system..."
     if ! generate_differential_manifest; then
-        log_error "Failed to generate differential manifest"
+        log_error "Failed to generate enhanced differential manifest with article intelligence"
         return 1
     fi
     
-    # Step 3: Sync to FTP server (FINAL STEP)
-    log "Step 3: Syncing to FTP server..."
+    # Step 3: Intelligent FTP sync (FINAL STEP)
+    log "Step 3: Intelligent FTP sync with smart change detection..."
     if ! sync_to_ftp; then
-        log_error "Failed to sync to FTP server"
+        log_error "Failed to complete intelligent FTP sync"
         return 1
     fi
     
-    log_success "=== All SEO-focused tasks completed successfully ==="
+    # Display intelligent sync summary
+    display_sync_summary
+    
+    log_success "=== All intelligent SEO-focused tasks completed successfully ==="
+    log "🧠 New: Unified intelligent sync with article-level change detection"
     log "🎯 Generated 10 articles daily (5 India + 5 Worldwide from high-traffic trends)"
+    log "⚡ Smart differential sync - only uploads changed content"
     log "📈 Next run scheduled for tomorrow at 6PM IST"
     log "=== Process completed at $(date '+%Y-%m-%d %H:%M:%S') ==="
 }

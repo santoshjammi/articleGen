@@ -5,7 +5,9 @@ Generates a comprehensive website with all advanced features including ads, lazy
 social features, SEO optimization, and E-E-A-T compliance.
 
 Options:
-- --enhance-articles: Enhance existing articles with latest features before generating site
+- --differential: Use differential generation mode (default)
+- --full: Force full regeneration of all files  
+- --enhance: Enhance existing articles before generation
 """
 
 import json
@@ -15,10 +17,18 @@ import sys
 import argparse
 import shutil
 import re
+import time
 from collections import defaultdict
-import markdown as md
 from datetime import datetime, timezone, date
 from urllib.parse import quote
+
+# Optional markdown support
+try:
+    import markdown as md
+    MARKDOWN_AVAILABLE = True
+except ImportError:
+    MARKDOWN_AVAILABLE = False
+    print("⚠️  Markdown module not available - using fallback HTML processing")
 
 OUTPUT_DIR = "dist"
 ARTICLES_FILE = "perplexityArticles_eeat_enhanced.json"
@@ -2819,13 +2829,415 @@ def generate_article_structured_data(article):
     
     return f'<script type="application/ld+json">{json.dumps(structured_data, indent=2)}</script>'
 
+def compare_articles_differential(current_articles, baseline_path):
+    """Compare current articles with baseline to identify changes"""
+    changes = {
+        'changed': [],
+        'new': [],
+        'removed': [],
+        'stats': {
+            'total_current': len(current_articles),
+            'total_baseline': 0
+        }
+    }
+    
+    # Load baseline if it exists
+    baseline_articles = []
+    if os.path.exists(baseline_path):
+        try:
+            with open(baseline_path, 'r', encoding='utf-8') as f:
+                baseline_articles = json.load(f)
+            print(f"📊 Loaded baseline with {len(baseline_articles)} articles from {baseline_path}")
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            print(f"⚠️  Could not load baseline: {e}")
+    else:
+        print(f"📁 No baseline found at {baseline_path} - treating all articles as new")
+    
+    changes['stats']['total_baseline'] = len(baseline_articles)
+    
+    # Create lookup maps by id for efficient comparison
+    current_map = {str(article.get('id', '')): article for article in current_articles if article.get('id')}
+    baseline_map = {str(article.get('id', '')): article for article in baseline_articles if article.get('id')}
+    
+    # Find new articles (in current but not in baseline)
+    for article_id, article in current_map.items():
+        if article_id not in baseline_map:
+            changes['new'].append(article)
+            continue
+        
+        # Compare existing articles for changes
+        baseline_article = baseline_map[article_id]
+        
+        # Check multiple fields for changes
+        current_modified = article.get('dateModified', '')
+        baseline_modified = baseline_article.get('dateModified', '')
+        current_enhanced = article.get('enhancement_date', '')
+        baseline_enhanced = baseline_article.get('enhancement_date', '')
+        
+        # Article is changed if any tracking field differs
+        is_changed = (
+            current_modified != baseline_modified or
+            current_enhanced != baseline_enhanced or
+            article.get('title', '') != baseline_article.get('title', '') or
+            article.get('content', '') != baseline_article.get('content', '')
+        )
+        
+        if is_changed:
+            changes['changed'].append(article)
+    
+    # Find removed articles (in baseline but not in current)
+    for article_id, article in baseline_map.items():
+        if article_id not in current_map:
+            changes['removed'].append(article)
+    
+    return changes
+
+def save_articles_baseline(articles, baseline_path):
+    """Save current articles as new baseline"""
+    try:
+        os.makedirs(os.path.dirname(baseline_path), exist_ok=True)
+        with open(baseline_path, 'w', encoding='utf-8') as f:
+            json.dump(articles, f, indent=2, ensure_ascii=False)
+        print(f"💾 Saved new baseline with {len(articles)} articles to {baseline_path}")
+        return True
+    except Exception as e:
+        print(f"❌ Error saving baseline: {e}")
+        return False
+
+def update_sync_manifest_with_articles(articles_data, changes):
+    """Update sync manifest with article metadata for intelligent sync decisions"""
+    sync_manifest_path = os.path.join(OUTPUT_DIR, '.sync_manifest.json')
+    differential_manifest_path = os.path.join(OUTPUT_DIR, '.differential_sync.json')
+    
+    # Load existing sync manifest if it exists
+    sync_manifest = {}
+    if os.path.exists(sync_manifest_path):
+        try:
+            with open(sync_manifest_path, 'r', encoding='utf-8') as f:
+                sync_manifest = json.load(f)
+        except Exception as e:
+            print(f"⚠️  Could not load sync manifest: {e}")
+    
+    # Create article metadata mapping
+    article_metadata = {}
+    for article in articles_data:
+        if article.get('slug'):
+            article_metadata[article['slug']] = {
+                'id': article.get('id', ''),
+                'dateModified': article.get('dateModified', ''),
+                'enhancement_date': article.get('enhancement_date', ''),
+                'publishDate': article.get('publishDate', ''),
+                'title': article.get('title', ''),
+                'category': article.get('category', DEFAULT_CATEGORY)
+            }
+    
+    # Track files that need sync due to article changes
+    files_to_sync = set()
+    
+    # Process changed and new articles
+    changed_articles = changes.get('changed', []) + changes.get('new', [])
+    for article in changed_articles:
+        article_slug = article.get('slug')
+        if not article_slug:
+            continue
+        
+        # Mark article HTML file for sync
+        article_file = f"articles/{article_slug}.html"
+        files_to_sync.add(article_file)
+        
+        # Update sync manifest entry with article metadata
+        if article_file in sync_manifest:
+            # Enhance existing entry
+            sync_manifest[article_file].update({
+                'article_id': article.get('id', ''),
+                'dateModified': article.get('dateModified', ''),
+                'enhancement_date': article.get('enhancement_date', ''),
+                'sync_reason': 'article_changed',
+                'last_content_update': datetime.now(timezone.utc).isoformat()
+            })
+        
+        # Mark category page for sync if needed
+        category = article.get('category', DEFAULT_CATEGORY)
+        if category:
+            category_slug = generate_slug(category)
+            category_file = f"categories/{category_slug}.html"
+            files_to_sync.add(category_file)
+    
+    # Always mark critical pages for sync if any articles changed
+    if changed_articles:
+        critical_pages = ['index.html', 'sitemap.xml', 'rss.xml', 'robots.txt']
+        for page in critical_pages:
+            files_to_sync.add(page)
+    
+    # Update differential sync manifest
+    differential_sync = {
+        'timestamp': datetime.now(timezone.utc).isoformat(),
+        'article_changes': {
+            'changed': len(changes.get('changed', [])),
+            'new': len(changes.get('new', [])),
+            'removed': len(changes.get('removed', []))
+        },
+        'files_to_sync': list(files_to_sync),
+        'article_metadata': article_metadata,
+        'sync_strategy': 'intelligent_article_driven'
+    }
+    
+    # Save enhanced differential sync manifest
+    try:
+        with open(differential_manifest_path, 'w', encoding='utf-8') as f:
+            json.dump(differential_sync, f, indent=2, ensure_ascii=False)
+        print(f"📊 Updated differential sync manifest with {len(files_to_sync)} files to sync")
+        return True
+    except Exception as e:
+        print(f"❌ Error updating differential sync manifest: {e}")
+        return False
+
+def get_intelligent_sync_decisions(article_changes=None):
+    """Get intelligent sync decisions based on article and file changes"""
+    sync_manifest_path = os.path.join(OUTPUT_DIR, '.sync_manifest.json')
+    baseline_path = os.path.join(OUTPUT_DIR, '.last_processed_articles.json')
+    
+    decisions = {
+        'sync_required': False,
+        'files_to_sync': set(),
+        'sync_reasons': [],
+        'estimated_files': 0
+    }
+    
+    # Check if we have article changes from differential generation
+    if article_changes:
+        changed_count = len(article_changes.get('changed', []))
+        new_count = len(article_changes.get('new', []))
+        
+        if changed_count > 0 or new_count > 0:
+            decisions['sync_required'] = True
+            decisions['sync_reasons'].append(f"{changed_count} changed + {new_count} new articles")
+            
+            # Estimate files to sync
+            # Each article = 1 HTML file, affected categories, plus critical pages
+            affected_categories = set()
+            for article in article_changes.get('changed', []) + article_changes.get('new', []):
+                category = article.get('category', DEFAULT_CATEGORY)
+                affected_categories.add(category)
+            
+            estimated = changed_count + new_count + len(affected_categories) + 4  # +4 for critical pages
+            decisions['estimated_files'] = estimated
+    
+    # Check for file-level changes if no article changes detected
+    if not decisions['sync_required']:
+        if os.path.exists(sync_manifest_path):
+            try:
+                # Check file modification times
+                current_time = time.time()
+                manifest_mtime = os.path.getmtime(sync_manifest_path)
+                
+                # If manifest is very recent, assume sync might be needed
+                if current_time - manifest_mtime < 300:  # Within 5 minutes
+                    decisions['sync_required'] = True
+                    decisions['sync_reasons'].append("Recent manifest update detected")
+                    decisions['estimated_files'] = 10  # Conservative estimate
+                    
+            except Exception:
+                pass
+    
+    return decisions
+
+def generate_differential_site(articles_data, unique_categories, changes):
+    """Generate site with differential processing"""
+    print(f"🔄 Differential generation mode - processing {len(changes['changed'])} changed + {len(changes['new'])} new articles")
+    
+    # Always regenerate critical pages
+    print("📝 Regenerating critical pages...")
+    generate_advanced_homepage(articles_data, unique_categories)
+    generate_sitemap(articles_data)
+    generate_robots_txt()
+    generate_rss_feed(articles_data)
+    
+    # Generate static pages (these rarely change)
+    if not os.path.exists(os.path.join(OUTPUT_DIR, 'about-us.html')):
+        generate_static_pages(unique_categories)
+    
+    # Process changed and new articles only
+    articles_to_process = changes['changed'] + changes['new']
+    if articles_to_process:
+        print(f"📄 Processing {len(articles_to_process)} changed/new articles...")
+        
+        # Create articles directory
+        articles_dir = os.path.join(OUTPUT_DIR, 'articles')
+        os.makedirs(articles_dir, exist_ok=True)
+        
+        # Precompute related articles for all articles (needed for context)
+        related_map = compute_related_articles_map(articles_data)
+        
+        for i, article in enumerate(articles_to_process):
+            generate_single_advanced_article(article, unique_categories, related_map.get(article.get('slug', ''), []))
+            if (i + 1) % 10 == 0:
+                print(f"   ✅ Processed {i + 1}/{len(articles_to_process)} articles")
+    
+    # Regenerate category pages if we have changes
+    if articles_to_process:
+        # Check which categories are affected
+        affected_categories = set()
+        for article in articles_to_process:
+            affected_categories.add(article.get('category', DEFAULT_CATEGORY))
+        
+        print(f"📂 Regenerating {len(affected_categories)} affected category pages...")
+        for category in affected_categories:
+            category_articles = [a for a in articles_data if a.get('category', DEFAULT_CATEGORY) == category]
+            category_articles.sort(key=lambda x: x.get('publishDate', ''), reverse=True)
+            generate_single_category_page(category, category_articles, unique_categories)
+        
+        # If homepage categories changed, regenerate all category pages
+        if len(affected_categories) > 5:  # Many categories affected
+            print("📂 Many categories affected - regenerating all category pages...")
+            generate_advanced_category_pages(articles_data, unique_categories)
+    
+    # Update sync manifest with intelligent article metadata
+    update_sync_manifest_with_articles(articles_data, changes)
+    
+    print(f"✅ Differential generation completed")
+
+def generate_full_site(articles_data, unique_categories):
+    """Generate complete site (full regeneration mode)"""
+    print("🔄 Full regeneration mode - processing all articles and pages")
+    
+    # Generate all pages with advanced features
+    generate_advanced_homepage(articles_data, unique_categories)
+    generate_advanced_article_pages(articles_data, unique_categories)
+    generate_advanced_category_pages(articles_data, unique_categories)
+    generate_static_pages(unique_categories)
+    generate_sitemap(articles_data)
+    generate_robots_txt()
+    generate_rss_feed(articles_data)
+    
+    # For full regeneration, mark all articles as "changed" for sync purposes
+    full_changes = {
+        'changed': articles_data,  # All articles considered changed
+        'new': [],
+        'removed': []
+    }
+    
+    # Update sync manifest with all articles
+    update_sync_manifest_with_articles(articles_data, full_changes)
+    
+    print("✅ Full site generation completed")
+
+def generate_advanced_site_with_mode(enhance_articles=False, mode="differential"):
+    """Generate advanced website with differential or full mode"""
+    
+    print("🚀 Generating Advanced E-E-A-T Compliant Website...")
+    print("=" * 60)
+    print(f"📊 Generation Mode: {mode.upper()}")
+    
+    # Optionally enhance articles first
+    if enhance_articles:
+        if not enhance_existing_articles():
+            print("⚠️  Article enhancement failed, continuing with existing articles...")
+        else:
+            print("✅ Articles enhanced successfully!")
+    
+    # CRITICAL: Pre-flight validation checks
+    if not perform_preflight_checks():
+        print("❌ CRITICAL ERROR: Pre-flight checks failed. Aborting generation.")
+        return False
+    
+    # Create output directory
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    
+    # Ensure placeholder image exists
+    ensure_placeholder_image()
+    
+    # Copy static assets
+    copy_static_assets()
+    
+    # Load articles
+    articles_data = load_articles()
+    if not articles_data:
+        print("❌ No articles found!")
+        return False
+    
+    print(f"✅ Loaded {len(articles_data)} articles")
+    
+    # Get unique categories
+    unique_categories = get_unique_categories(articles_data)
+    print(f"✅ Found {len(unique_categories)} categories")
+    
+    # Define baseline path
+    baseline_path = os.path.join(OUTPUT_DIR, '.last_processed_articles.json')
+    
+    if mode == "differential":
+        # Compare with baseline to find changes
+        changes = compare_articles_differential(articles_data, baseline_path)
+        
+        print(f"📊 Differential Analysis Results:")
+        print(f"   • Changed articles: {len(changes['changed'])}")
+        print(f"   • New articles: {len(changes['new'])}")
+        print(f"   • Removed articles: {len(changes['removed'])}")
+        print(f"   • Total current: {changes['stats']['total_current']}")
+        print(f"   • Total baseline: {changes['stats']['total_baseline']}")
+        
+        if not changes['changed'] and not changes['new'] and not changes['removed']:
+            print("✅ No changes detected - site is already up to date!")
+            return True
+        
+        # Generate differentially
+        generate_differential_site(articles_data, unique_categories, changes)
+        
+    elif mode == "full":
+        print("🔄 Full regeneration requested - processing all content")
+        generate_full_site(articles_data, unique_categories)
+        
+    else:
+        print(f"❌ Unknown generation mode: {mode}")
+        return False
+    
+    # Save new baseline after successful generation
+    if not save_articles_baseline(articles_data, baseline_path):
+        print("⚠️  Warning: Could not save baseline - next run will reprocess all articles")
+    
+    # CRITICAL: Validate sitemap to prevent Google Search Console errors
+    sitemap_valid = validate_and_fix_sitemap()
+    if not sitemap_valid:
+        print("❌ CRITICAL ERROR: Sitemap validation failed!")
+        print("🚨 THIS WILL CAUSE GOOGLE SEARCH CONSOLE ERRORS!")
+        print("🚨 GENERATION CANNOT CONTINUE SAFELY!")
+        return False
+    
+    # Final validation checks
+    if not perform_final_validation():
+        print("❌ CRITICAL ERROR: Final validation failed!")
+        return False
+    
+    print("\n🎉 Advanced E-E-A-T Website Generation Complete!")
+    print(f"📁 Website files generated in: {OUTPUT_DIR}/")
+    print("🌟 Features included: Ads, Lazy Loading, Social Media, SEO, E-E-A-T Compliance!")
+    if mode == "differential":
+        print(f"⚡ Differential mode: Processed {len(changes.get('changed', []))} changed + {len(changes.get('new', []))} new articles")
+    print("✅ All critical validations passed - safe for deployment!")
+    return True
+
 if __name__ == "__main__":
-    # Parse command line arguments
+    import argparse
+    
     parser = argparse.ArgumentParser(description='Generate advanced E-E-A-T compliant website')
-    parser.add_argument('--enhance-articles', action='store_true',
-                       help='Enhance existing articles with latest features before generating site')
+    parser.add_argument('action', nargs='?', default='generate', choices=['generate', 'enhance'], 
+                       help='Action to perform (default: generate)')
+    parser.add_argument('target', nargs='?', default='site', choices=['site'], 
+                       help='Generation target (default: site)')
+    parser.add_argument('--differential', action='store_true', default=True,
+                       help='Use differential generation (default)')
+    parser.add_argument('--full', action='store_false', dest='differential',
+                       help='Force full regeneration of all files')
+    parser.add_argument('--enhance', action='store_true', default=False,
+                       help='Enhance articles before generation')
     
     args = parser.parse_args()
     
-    # Generate site with optional article enhancement
-    generate_advanced_site(enhance_articles=args.enhance_articles)
+    if args.action == "enhance":
+        print("🚀 Starting Article Enhancement...")
+        result = enhance_existing_articles()
+        sys.exit(0 if result else 1)
+    else:
+        mode = "differential" if args.differential else "full"
+        result = generate_advanced_site_with_mode(enhance_articles=args.enhance, mode=mode)
+        sys.exit(0 if result else 1)
