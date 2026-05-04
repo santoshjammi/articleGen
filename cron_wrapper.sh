@@ -39,3 +39,16 @@ else
 fi
 echo "=================================================" >> "$CRON_LOG"
 echo "" >> "$CRON_LOG"
+
+# Write machine-readable status file for webapp monitoring
+STATUS_FILE="$SCRIPT_DIR/logs/scheduler_status.json"
+LAST_STATUS="success"
+[ $EXIT_CODE -ne 0 ] && LAST_STATUS="failed"
+mkdir -p "$SCRIPT_DIR/logs"
+cat > "$STATUS_FILE" << STATUSEOF
+{
+  "last_run": "$(date '+%Y-%m-%dT%H:%M:%S')",
+  "exit_code": $EXIT_CODE,
+  "status": "$LAST_STATUS"
+}
+STATUSEOF

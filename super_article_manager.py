@@ -395,6 +395,9 @@ IMAGES_BACKUP_DIR = "images_backup"  # Local backup directory outside dist/
 # API Configuration
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
+LLM_MODEL = os.getenv("LLM_MODEL")  # e.g. "google/gemma-4-26b-a4b-it"
 
 # === UTILITY FUNCTIONS ===
 
@@ -1361,9 +1364,15 @@ class ArticleGenerator:
     
     def __init__(self, manager: SuperArticleManager):
         self.manager = manager
-        self.api_key = GEMINI_API_KEY
-        if not self.api_key:
-            raise ValueError("GEMINI_API_KEY environment variable not set")
+        if LLM_MODEL and OPENROUTER_API_KEY:
+            self.api_key = OPENROUTER_API_KEY
+            self.use_openrouter = True
+            print(f"🤖 Using OpenRouter model: {LLM_MODEL}")
+        else:
+            self.api_key = GEMINI_API_KEY
+            self.use_openrouter = False
+            if not self.api_key:
+                raise ValueError("GEMINI_API_KEY environment variable not set")
     
     def _parse_content_sections(self, content: str) -> List[Dict]:
         """Parse content into sections based on headings"""
@@ -1572,7 +1581,7 @@ class ArticleGenerator:
 
         headers = {'Content-Type': 'application/json'}
         
-        # Response schema
+        # Response schema (used by Gemini native; embedded in prompt for OpenRouter)
         response_schema = {
             "type": "OBJECT",
             "properties": {
@@ -1617,34 +1626,59 @@ class ArticleGenerator:
             ]
         }
 
-        payload = {
-            "contents": [{"role": "user", "parts": [{"text": base_prompt}]}],
-            "generationConfig": {
-                "responseMimeType": "application/json",
-                "responseSchema": response_schema,
+        if self.use_openrouter:
+            json_schema_hint = (
+                "\n\nRespond with ONLY a valid JSON object (no markdown, no code fences) "
+                "with these exact fields: title (string), excerpt (string), content (string, full HTML), "
+                "metaDescription (string), keywords (array of strings), ogTitle (string), "
+                "imageAltText (string), socialShareText (string), category (string), subCategory (string), "
+                "contentType (string), difficultyLevel (string), targetAudience (array of strings), "
+                "inlineImageDescriptions (array of objects with description, caption, placementHint), "
+                "keyTakeaways (array of strings), socialMediaHashtags (array of strings), "
+                "callToActionText (string), structuredData (string), relatedTopics (array of strings)."
+            )
+            payload = {
+                "model": LLM_MODEL,
+                "messages": [{"role": "user", "content": base_prompt + json_schema_hint}],
                 "temperature": 0.7,
-                "maxOutputTokens": 8192
+                "max_tokens": 8192,
             }
-        }
+            headers['Authorization'] = f'Bearer {self.api_key}'
+            url = OPENROUTER_API_URL
+        else:
+            payload = {
+                "contents": [{"role": "user", "parts": [{"text": base_prompt}]}],
+                "generationConfig": {
+                    "responseMimeType": "application/json",
+                    "responseSchema": response_schema,
+                    "temperature": 0.7,
+                    "maxOutputTokens": 8192
+                }
+            }
+            url = f"{GEMINI_API_URL}?key={self.api_key}"
 
-        url = f"{GEMINI_API_URL}?key={self.api_key}"
-        
         try:
             async with session.post(url, headers=headers, data=json.dumps(payload)) as resp:
                 if resp.status != 200:
                     error_text = await resp.text()
                     print(f"❌ API error {resp.status} for '{keyword}': {error_text}")
                     return None
-                    
-                result = await resp.json()
-                
-                if not (result.get("candidates") and 
-                       result["candidates"][0].get("content") and 
-                       result["candidates"][0]["content"].get("parts")):
-                    print(f"❌ Invalid API response structure for '{keyword}'")
-                    return None
 
-                gen_str = result["candidates"][0]["content"]["parts"][0]["text"]
+                result = await resp.json()
+
+                if self.use_openrouter:
+                    if not (result.get("choices") and result["choices"][0].get("message")):
+                        print(f"❌ Invalid OpenRouter response structure for '{keyword}'")
+                        return None
+                    gen_str = result["choices"][0]["message"]["content"]
+                else:
+                    if not (result.get("candidates") and
+                           result["candidates"][0].get("content") and
+                           result["candidates"][0]["content"].get("parts")):
+                        print(f"❌ Invalid API response structure for '{keyword}'")
+                        return None
+                    gen_str = result["candidates"][0]["content"]["parts"][0]["text"]
+
                 data = json.loads(gen_str)
                 
                 # Generate article metadata

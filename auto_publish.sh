@@ -67,21 +67,13 @@ generate_trend_articles() {
     activate_venv
     
     cd "$SCRIPT_DIR"
-    # Generate 5 articles specifically for India region
-    if python3 super_article_manager.py generate trends --count 5 --per-region --regions India >> "$LOG_FILE" 2>&1; then
-        log_success "Generated 5 trend-based articles for India region"
-    else
-        log_error "Failed to generate India region articles"
-        return 1
-    fi
-    
-    # Generate 5 articles for worldwide trends (no region restriction)
-    log "Generating 5 worldwide trend-based articles..."
-    if python3 super_article_manager.py generate trends --count 5 >> "$LOG_FILE" 2>&1; then
-        log_success "Generated 5 worldwide trend-based articles"
+    # Generate top 10 articles from highest-traffic global trends
+    log "Generating 10 comprehensive AEO/SEO articles from top 10 global trends..."
+    if python3 super_article_manager.py generate trends --count 10 >> "$LOG_FILE" 2>&1; then
+        log_success "Generated 10 comprehensive AEO/SEO trend-based articles"
         return 0
     else
-        log_error "Failed to generate worldwide trend-based articles"
+        log_error "Failed to generate trend-based articles"
         return 1
     fi
 }

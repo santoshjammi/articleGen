@@ -24,6 +24,9 @@ import sqlite3
 from pathlib import Path
 import shutil
 from dotenv import load_dotenv
+import csv
+import re
+import glob
 
 # Load environment variables from .env file
 load_dotenv()
@@ -90,6 +93,9 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 # Global job tracking
 active_jobs: Dict[str, Dict] = {}
+
+# Trend refresh / manual pipeline job tracking
+trend_refresh_jobs: Dict[str, Dict] = {}
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -660,6 +666,216 @@ async def health_check():
         "active_jobs": len(active_jobs),
         "system": "SEO Article Generator"
     }
+
+# ============================================================
+# Trends & Scheduler API Routes
+# ============================================================
+
+@app.get("/api/trends")
+async def get_current_trends(username: str = Depends(get_user_from_token)):
+    """Get current cached trending keywords from output CSVs"""
+    try:
+        output_dir = BASE_DIR / "output"
+        if not output_dir.exists():
+            return {"trends": [], "total": 0, "last_updated": None, "source_files": []}
+
+        # Priority: all_seo_filtered_trends.csv > master_seo_keywords.csv > *_filtered.csv > any csv
+        csv_files = []
+        for preferred in [output_dir / "all_seo_filtered_trends.csv",
+                          output_dir / "master_seo_keywords.csv"]:
+            if preferred.exists():
+                csv_files = [preferred]
+                break
+        if not csv_files:
+            csv_files = list(output_dir.glob("*_daily_trends_filtered.csv"))
+        if not csv_files:
+            csv_files = list(output_dir.glob("*.csv"))
+
+        seen: dict = {}
+        for csv_file in csv_files:
+            try:
+                with open(csv_file, newline='', encoding='utf-8') as f:
+                    reader = csv.reader(f)
+                    header = next(reader, None)
+                    if not header:
+                        continue
+                    if 'formatted' in header or (len(header) >= 3 and header[0].lower() in ('country', 'region')):
+                        for row in reader:
+                            if len(row) >= 3:
+                                try:
+                                    region = row[0].strip()
+                                    keyword = row[1].strip()
+                                    searches = int(row[2])
+                                    key = (region, keyword)
+                                    if key not in seen or seen[key] < searches:
+                                        seen[key] = searches
+                                except (ValueError, IndexError):
+                                    continue
+                    else:
+                        f.seek(0)
+                        next(reader, None)  # skip header
+                        for row in reader:
+                            if not row:
+                                continue
+                            line = row[0]
+                            m = re.match(r'\[([A-Z]{2})\]\s*(.*?):\s*([\d,]+)\s*searches', line)
+                            if m:
+                                region = m.group(1)
+                                keyword = m.group(2).strip()
+                                searches = int(m.group(3).replace(',', ''))
+                                key = (region, keyword)
+                                if key not in seen or seen[key] < searches:
+                                    seen[key] = searches
+            except Exception as e:
+                logger.warning(f"Error reading {csv_file.name}: {e}")
+                continue
+
+        trends = [
+            {"region": k[0], "keyword": k[1], "searches": v}
+            for k, v in sorted(seen.items(), key=lambda x: x[1], reverse=True)
+        ]
+
+        last_updated = None
+        for f in csv_files:
+            mt = f.stat().st_mtime if f.exists() else None
+            if mt and (last_updated is None or mt > last_updated):
+                last_updated = mt
+
+        return {
+            "trends": trends[:50],
+            "total": len(trends),
+            "last_updated": datetime.fromtimestamp(last_updated).isoformat() if last_updated else None,
+            "source_files": [f.name for f in csv_files]
+        }
+    except Exception as e:
+        logger.error(f"Error fetching trends: {e}")
+        return {"trends": [], "total": 0, "last_updated": None, "source_files": [], "error": str(e)}
+
+
+async def _run_background_command(job_id: str, label: str, *cmd: str):
+    """Generic helper to run a subprocess and track it in trend_refresh_jobs."""
+    trend_refresh_jobs[job_id]["status"] = "running"
+    trend_refresh_jobs[job_id]["message"] = f"{label} running..."
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            cwd=str(BASE_DIR),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT
+        )
+        stdout, _ = await proc.communicate()
+        output = stdout.decode(errors="replace") if stdout else ""
+        status = "completed" if proc.returncode == 0 else "failed"
+        trend_refresh_jobs[job_id].update({
+            "status": status,
+            "completed_at": datetime.now().isoformat(),
+            "message": f"{label} {'completed successfully' if status == 'completed' else f'failed (exit {proc.returncode})'}",
+            "output": output[-2000:]
+        })
+    except Exception as e:
+        trend_refresh_jobs[job_id].update({
+            "status": "failed",
+            "completed_at": datetime.now().isoformat(),
+            "message": f"{label} error: {e}",
+            "output": ""
+        })
+
+
+@app.post("/api/trends/refresh")
+async def refresh_trends(background_tasks: BackgroundTasks,
+                         username: str = Depends(get_user_from_token)):
+    """Fetch fresh trending data from Google Trends in the background."""
+    job_id = str(uuid.uuid4())
+    trend_refresh_jobs[job_id] = {
+        "job_id": job_id,
+        "type": "trends_refresh",
+        "status": "pending",
+        "started_at": datetime.now().isoformat(),
+        "completed_at": None,
+        "message": "Queued – connecting to Google Trends...",
+        "output": ""
+    }
+    background_tasks.add_task(
+        _run_background_command, job_id, "Trends refresh",
+        "python3", str(BASE_DIR / "fetch_fresh_trends.py")
+    )
+    return {"job_id": job_id, "message": "Trends refresh started"}
+
+
+@app.get("/api/trends/refresh-status/{job_id}")
+async def get_trends_refresh_status(job_id: str,
+                                    username: str = Depends(get_user_from_token)):
+    """Poll the status of a trends refresh (or pipeline) job."""
+    if job_id not in trend_refresh_jobs:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return trend_refresh_jobs[job_id]
+
+
+@app.get("/api/scheduler/status")
+async def get_scheduler_status(username: str = Depends(get_user_from_token)):
+    """Return cron schedule, next run time, last run outcome, and recent log lines."""
+    now = datetime.now()
+    today_6pm = now.replace(hour=18, minute=0, second=0, microsecond=0)
+    next_run = today_6pm if now < today_6pm else today_6pm + timedelta(days=1)
+
+    status = {
+        "cron_expression": "0 18 * * *",
+        "schedule_description": "Daily at 6:00 PM IST",
+        "next_run": next_run.strftime("%Y-%m-%dT%H:%M:%S"),
+        "last_run": None,
+        "exit_code": None,
+        "last_status": "unknown",
+        "recent_log": []
+    }
+
+    # Prefer the machine-readable status file written by cron_wrapper.sh
+    status_file = BASE_DIR / "logs" / "scheduler_status.json"
+    if status_file.exists():
+        try:
+            with open(status_file) as f:
+                saved = json.load(f)
+            status["last_run"] = saved.get("last_run")
+            status["exit_code"] = saved.get("exit_code")
+            status["last_status"] = saved.get("status", "unknown")
+        except Exception as e:
+            logger.warning(f"Could not read scheduler_status.json: {e}")
+
+    # Append the last 30 lines of the most recent daily log
+    try:
+        log_dir = BASE_DIR / "logs"
+        log_files = sorted(log_dir.glob("auto_publish_*.log"), reverse=True)
+        if log_files:
+            lines = log_files[0].read_text(errors="replace").splitlines()
+            status["recent_log"] = lines[-30:]
+            # Fall back for last_run if status file missing
+            if not status["last_run"] and lines:
+                status["last_run"] = lines[0][:19]  # first 19 chars = timestamp
+    except Exception as e:
+        logger.warning(f"Could not read auto_publish log: {e}")
+
+    return status
+
+
+@app.post("/api/scheduler/run-now")
+async def run_pipeline_now(background_tasks: BackgroundTasks,
+                           username: str = Depends(get_user_from_token)):
+    """Manually trigger the full auto_publish.sh pipeline."""
+    job_id = str(uuid.uuid4())
+    trend_refresh_jobs[job_id] = {
+        "job_id": job_id,
+        "type": "pipeline",
+        "status": "pending",
+        "started_at": datetime.now().isoformat(),
+        "completed_at": None,
+        "message": "Pipeline queued – this may take several minutes...",
+        "output": ""
+    }
+    background_tasks.add_task(
+        _run_background_command, job_id, "Pipeline",
+        "/bin/bash", str(BASE_DIR / "auto_publish.sh")
+    )
+    return {"job_id": job_id, "message": "Pipeline started"}
+
 
 if __name__ == "__main__":
     import uvicorn

@@ -192,7 +192,11 @@ def generate_advanced_site(enhance_articles=False):
 
 def ensure_placeholder_image():
     """Ensure placeholder image exists"""
-    placeholder_path = os.path.join('images', 'placeholder.jpg')
+    placeholder_path = os.path.join('images', 'placeholder.webp')
+    # Also remove legacy .jpg placeholder if it exists
+    legacy_path = os.path.join('images', 'placeholder.jpg')
+    if os.path.exists(legacy_path):
+        os.remove(legacy_path)
     if not os.path.exists(placeholder_path):
         try:
             from PIL import Image, ImageDraw, ImageFont
@@ -223,8 +227,8 @@ def ensure_placeholder_image():
                 y = (600 - text_height) // 2
                 draw.text((x, y), text, fill='#666666', font=font)
             
-            # Save the image
-            img.save(placeholder_path)
+            # Save as WebP
+            img.save(placeholder_path, 'WEBP', quality=85)
             print(f"📁 Created placeholder image: {placeholder_path}")
             
         except ImportError:
@@ -985,7 +989,7 @@ def generate_advanced_homepage(articles_data, unique_categories):
             
             function generateArticleCardHTML(article) {{
                 // Remove 'dist/' prefix from thumbnailImageUrl if present
-                let thumbnailUrl = article.thumbnailImageUrl || article.thumbnail || article.imageUrl || 'images/placeholder.jpg';
+                let thumbnailUrl = article.thumbnailImageUrl || article.thumbnail || article.imageUrl || 'images/placeholder.webp';
                 if (thumbnailUrl && thumbnailUrl.startsWith('dist/')) {{
                     thumbnailUrl = thumbnailUrl.substring(5); // Remove 'dist/' prefix
                 }}
@@ -999,7 +1003,7 @@ def generate_advanced_homepage(articles_data, unique_categories):
                                      alt="${{article.imageAltText}}"
                                      class="w-full h-48 object-cover" 
                                      loading="lazy"
-                                     onerror="this.src='images/placeholder.jpg'">
+                                     onerror="this.src='images/placeholder.webp'">
                                 <div class="absolute top-3 left-3">
                                     <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
                                         ${{article.category}}
@@ -1361,7 +1365,7 @@ def generate_single_category_page(category, category_articles, unique_categories
             
             function generateArticleCardHTML(article) {{
                 // Remove 'dist/' prefix from thumbnailImageUrl if present
-                let thumbnailUrl = article.thumbnailImageUrl || article.thumbnail || article.imageUrl || '../images/placeholder.jpg';
+                let thumbnailUrl = article.thumbnailImageUrl || article.thumbnail || article.imageUrl || '../images/placeholder.webp';
                 if (thumbnailUrl && thumbnailUrl.startsWith('dist/')) {{
                     thumbnailUrl = '../' + thumbnailUrl.substring(5); // Remove 'dist/' and add '../'
                 }}
@@ -1375,7 +1379,7 @@ def generate_single_category_page(category, category_articles, unique_categories
                                      alt="${{article.imageAltText}}"
                                      class="w-full h-48 object-cover" 
                                      loading="lazy"
-                                     onerror="this.src='../images/placeholder.jpg'">
+                                     onerror="this.src='../images/placeholder.webp'">
                                 <div class="absolute top-3 left-3">
                                     <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
                                         ${{article.category}}
@@ -2639,13 +2643,13 @@ def generate_related_articles(current_article, related_list):
         if img and not img.startswith('http'):
             img = img.replace('dist/', '../') if img.startswith('dist/') else f"../{img}"
         if not img:
-            img = '../images/placeholder.jpg'
+            img = '../images/placeholder.webp'
         rel_url = f"../articles/{slug}.html"
         when = humanize_time_ago(rel.get('publishDate', ''))
         cards.append(f'''
             <a href="{rel_url}" class="block group">
                 <div class="flex space-x-3">
-                    <img src="{img}" alt="{rel.get('imageAltText', title)}" class="w-16 h-12 object-cover rounded flex-shrink-0" onerror="this.src='../images/placeholder.jpg'">
+                    <img src="{img}" alt="{rel.get('imageAltText', title)}" class="w-16 h-12 object-cover rounded flex-shrink-0" onerror="this.src='../images/placeholder.webp'">
                     <div class="flex-1">
                         <h4 class="text-sm font-semibold text-gray-900 group-hover:text-blue-600 line-clamp-2">{title}</h4>
                         <p class="text-xs text-gray-500 mt-1">{when}</p>

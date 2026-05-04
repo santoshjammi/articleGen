@@ -1,77 +1,108 @@
-from google import genai
-from google.genai import types
 from PIL import Image
 from io import BytesIO
 import base64
 import os
+import requests
 from dotenv import load_dotenv
-import json
 
 load_dotenv('./.env')
-api_key=os.environ.get('GEM_API_KEY')
-client = genai.Client(api_key=api_key)
+
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+IMAGE_MODEL = os.getenv("IMAGE_MODEL")
+GEM_API_KEY = os.getenv("GEM_API_KEY")
+
+# Only import Gemini SDK when OpenRouter is not configured
+_gemini_client = None
+def _get_gemini_client():
+    global _gemini_client
+    if _gemini_client is None:
+        from google import genai
+        _gemini_client = genai.Client(api_key=GEM_API_KEY)
+    return _gemini_client
+
+
+def _save_pil_image(image, filename):
+    if image.mode in ('RGBA', 'LA', 'P'):
+        background = Image.new('RGB', image.size, (255, 255, 255))
+        if image.mode == 'P':
+            image = image.convert('RGBA')
+        background.paste(image, mask=image.split()[-1] if image.mode in ('RGBA', 'LA') else None)
+        image = background
+    elif image.mode != 'RGB':
+        image = image.convert('RGB')
+    image.save(filename, 'WEBP', quality=85, optimize=True, method=6)
+    print(f"Saved WebP image: {filename} (optimized for web)")
+
+
+def _generate_via_openrouter(prompt, filename):
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": IMAGE_MODEL,
+        "prompt": prompt,
+        "n": 1,
+        "size": "1024x1024",
+    }
+    resp = requests.post(
+        "https://openrouter.ai/api/v1/images/generations",
+        headers=headers,
+        json=payload,
+        timeout=120,
+    )
+    resp.raise_for_status()
+    item = resp.json()["data"][0]
+
+    if item.get("b64_json"):
+        image_bytes = base64.b64decode(item["b64_json"])
+    elif item.get("url"):
+        img_resp = requests.get(item["url"], timeout=60)
+        img_resp.raise_for_status()
+        image_bytes = img_resp.content
+    else:
+        raise ValueError("OpenRouter image response has neither url nor b64_json")
+
+    image = Image.open(BytesIO(image_bytes))
+    _save_pil_image(image, filename)
+
+
+def _generate_via_gemini(prompt, filename):
+    from google.genai import types
+    client = _get_gemini_client()
+    response = client.models.generate_content(
+        model="gemini-2.0-flash-exp-image-generation",
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            response_modalities=['Text', 'Image']
+        )
+    )
+    for part in response.candidates[0].content.parts:
+        if part.text is not None:
+            print(part.text)
+        elif part.inline_data is not None:
+            image = Image.open(BytesIO(part.inline_data.data))
+            _save_pil_image(image, filename)
+
 
 def generateImage(prompt, filename):
-    """
-    /*************  ✨ Windsurf Command ⭐  *************/
-
-    Generate an image based on the given prompt using the Gemini 2.0 model.
-
-    Args:
-        prompt (str): The text prompt to generate an image from.
-        filename (str): The filename to save the generated image as.
-
-    Returns:
-        str: The filename of the generated image.
-        /*******  7162e5fa-9b53-415a-993f-b714458d2a7b  *******/
-
-    """
-    contents=prompt
-    # print(contents)
-
     print(filename)
 
-    if not os.path.exists(filename):
-        response = client.models.generate_content(
-            # model="gemini-2.5-flash-image-preview",
-            model="gemini-2.0-flash-exp-image-generation",
-            contents=contents,
-            config=types.GenerateContentConfig(
-            response_modalities=['Text', 'Image']
-            )
-        )
-
-        try:
-            for part in response.candidates[0].content.parts:
-                if part.text is not None:
-                    print(part.text)
-                elif part.inline_data is not None:
-                    image = Image.open(BytesIO((part.inline_data.data)))
-                    
-                    # Convert to RGB if necessary (WebP doesn't support RGBA with certain settings)
-                    if image.mode in ('RGBA', 'LA', 'P'):
-                        # Create a white background for transparent images
-                        background = Image.new('RGB', image.size, (255, 255, 255))
-                        if image.mode == 'P':
-                            image = image.convert('RGBA')
-                        background.paste(image, mask=image.split()[-1] if image.mode in ('RGBA', 'LA') else None)
-                        image = background
-                    elif image.mode != 'RGB':
-                        image = image.convert('RGB')
-                    
-                    # Save as WebP with high quality and optimization
-                    image.save(filename, 
-                              'WEBP', 
-                              quality=85,  # High quality but still compressed
-                              optimize=True,  # Enable optimization
-                              method=6)  # Best compression method (0-6, 6 is slowest but best compression)
-                    print(f"Saved WebP image: {filename} (optimized for web)")
-        except Exception as e:
-            print(f'Error in generating the Image: {e}')
-        return filename
-    else:
+    if os.path.exists(filename):
         print(f"Image {filename} already exists, skipping generation.")
         return filename
+
+    try:
+        if OPENROUTER_API_KEY and IMAGE_MODEL:
+            print(f"🎨 Generating image via OpenRouter ({IMAGE_MODEL})...")
+            _generate_via_openrouter(prompt, filename)
+        else:
+            print("🎨 Generating image via Gemini...")
+            _generate_via_gemini(prompt, filename)
+    except Exception as e:
+        print(f'Error in generating the Image: {e}')
+
+    return filename
 
 def convert_to_webp(input_path, output_path=None, quality=85):
     """
