@@ -40,11 +40,12 @@ def generate_local_manifest():
             # Use forward slashes for cross-platform compatibility
             remote_path_key = relative_path.replace("\\", "/")
             
-            # Get the file size
+            # Get the file size and modification time
             local_size = os.path.getsize(local_path)
+            local_mtime = os.path.getmtime(local_path)
             
-            # Add the file path and size to the manifest
-            manifest[remote_path_key] = local_size
+            # Add the file path, size and mtime to the manifest
+            manifest[remote_path_key] = {"size": local_size, "mtime": local_mtime}
 
     # Save the manifest to a JSON file
     with open(MANIFEST_FILE_PATH, 'w') as f:

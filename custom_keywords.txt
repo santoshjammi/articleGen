@@ -1,0 +1,37 @@
+# Custom Keywords for Article Generation
+# ==========================================
+# Add one keyword per line. Lines starting with # are comments.
+# These keywords will be processed by the daily cron job in addition to trending keywords.
+# The region used is "India" by default (edit DEFAULT_CUSTOM_REGION in auto_publish.sh to change).
+#
+# After adding keywords here, they will be picked up automatically at 6PM IST.
+# You can also run them immediately with:
+#   python3 super_article_manager.py generate keywords "keyword1" "keyword2" --region India
+#
+# Examples (uncomment to activate):
+# artificial intelligence in healthcare
+# electric vehicles india 2025
+# cricket ipl 2025
+# real estate market india
+# python programming tutorial
+
+AI INferences
+Huggingface
+
+
+# Auto-fetched AI keywords — 2026-05-05 02:22 UTC
+machine learning
+artificial intelligence
+apple machine learning research
+large language models
+ai tools
+reinforcement learning
+generative ai
+ai models
+best ai
+natural language
+agentic ai
+ai agents
+deep learning
+llm agents
+sagemaker ai

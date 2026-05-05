@@ -59,6 +59,58 @@ activate_venv() {
     fi
 }
 
+# Default region for custom keywords (change here if needed)
+DEFAULT_CUSTOM_REGION="US"
+
+# Function to generate articles from custom_keywords.txt (if it exists and has keywords)
+generate_custom_keyword_articles() {
+    local keywords_file="$SCRIPT_DIR/custom_keywords.txt"
+    
+    if [[ ! -f "$keywords_file" ]]; then
+        log "No custom_keywords.txt found, skipping custom keyword generation"
+        return 0
+    fi
+    
+    # Read non-empty, non-comment lines
+    local keywords=()
+    while IFS= read -r line; do
+        # Strip leading/trailing whitespace
+        line="${line#"${line%%[![:space:]]*}"}"
+        line="${line%"${line##*[![:space:]]}"}"
+        # Skip empty lines and comments
+        [[ -z "$line" || "$line" == \#* ]] && continue
+        keywords+=("$line")
+    done < "$keywords_file"
+    
+    if [[ ${#keywords[@]} -eq 0 ]]; then
+        log "custom_keywords.txt is empty or has only comments, skipping"
+        return 0
+    fi
+    
+    log "Found ${#keywords[@]} custom keyword(s) in custom_keywords.txt"
+    for kw in "${keywords[@]}"; do
+        log "  • $kw"
+    done
+    
+    activate_venv
+    cd "$SCRIPT_DIR"
+    
+    # Build the keywords argument (each keyword as a separate arg)
+    local kw_args=()
+    for kw in "${keywords[@]}"; do
+        kw_args+=("$kw")
+    done
+    
+    log "Generating articles for custom keywords (region: $DEFAULT_CUSTOM_REGION)..."
+    if python3 super_article_manager.py generate keywords "${kw_args[@]}" --region "$DEFAULT_CUSTOM_REGION" >> "$LOG_FILE" 2>&1; then
+        log_success "Custom keyword articles generated successfully"
+        return 0
+    else
+        log_warning "Custom keyword article generation failed (non-blocking)"
+        return 1
+    fi
+}
+
 # Function to generate trend-based articles
 generate_trend_articles() {
     log "Generating 5 trend-based articles for India region..."
@@ -376,8 +428,22 @@ main() {
         return 1
     fi
     
-    # Step 1.5: Generate missing images (after trend articles)
-    log "Step 1.5: Generating missing images after trend articles..."
+    # Step 1.5a: Auto-fetch fresh AI keywords from the internet into custom_keywords.txt
+    log "Step 1.5a: Fetching trending AI keywords from the internet..."
+    activate_venv
+    cd "$SCRIPT_DIR"
+    if python3 fetch_ai_keywords.py --max=10 >> "$LOG_FILE" 2>&1; then
+        log_success "AI keyword fetch completed"
+    else
+        log_warning "AI keyword fetch had errors (non-blocking), continuing with existing keywords..."
+    fi
+
+    # Step 1.5b: Generate articles from custom_keywords.txt (trends + auto-fetched AI keywords)
+    log "Step 1.5b: Generating articles from custom keywords (if any)..."
+    generate_custom_keyword_articles || log_warning "Custom keyword generation had errors, continuing..."
+
+    # Step 1.6: Generate missing images (after trend + custom articles)
+    log "Step 1.6: Generating missing images after article generation..."
     generate_missing_images "trend articles"
     
     # Step 2: Refresh trends data for next run (optional, non-blocking)

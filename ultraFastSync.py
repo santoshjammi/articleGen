@@ -164,8 +164,15 @@ def update_manifest(uploaded_files):
     logger.info(f"Updating manifest with {len(uploaded_files)} files...")
     manifest = load_manifest()
     
-    # Batch update for better performance
-    manifest.update({remote_path: file_size for remote_path, file_size in uploaded_files.items()})
+    # Batch update for better performance - store size AND mtime
+    for remote_path, file_size in uploaded_files.items():
+        # Find the local path to get mtime
+        local_path = os.path.join(LOCAL_DIRECTORY, remote_path.lstrip('/'))
+        try:
+            mtime = os.path.getmtime(local_path)
+        except OSError:
+            mtime = time.time()
+        manifest[remote_path] = {"size": file_size, "mtime": mtime}
     
     try:
         with open(MANIFEST_FILE_PATH, 'w') as f:

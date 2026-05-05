@@ -111,17 +111,24 @@ def compare_and_find_changes(original_manifest, current_state, current_directori
             })
         else:
             original_info = original_files[remote_path]
-            
-            # Only check for size changes (no time comparison since remote doesn't have mtime)
+
             size_changed = current_info['size'] != original_info.get('size', 0)
-            
-            # Only mark as changed if size actually changed
-            if size_changed:
+
+            # Compare mtime: if current file is newer than what was last recorded, it was rebuilt
+            orig_mtime = original_info.get('mtime') or 0
+            mtime_changed = orig_mtime and current_info['mtime'] > orig_mtime
+
+            if size_changed or mtime_changed:
+                reason = []
+                if size_changed:
+                    reason.append(f"size: {original_info.get('size', 0)} → {current_info['size']}")
+                if mtime_changed:
+                    reason.append(f"modified: {orig_mtime:.0f} → {current_info['mtime']:.0f}")
                 changes['changed_files'].append({
                     'remote_path': remote_path,
                     'local_path': current_info['path'],
                     'size': current_info['size'],
-                    'reason': f"size: {original_info.get('size', 0)} → {current_info['size']}"
+                    'reason': ', '.join(reason)
                 })
             else:
                 changes['unchanged_files'].append(remote_path)
