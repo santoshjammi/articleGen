@@ -34,6 +34,32 @@ def _save_pil_image(image, filename):
     print(f"Saved WebP image: {filename} (optimized for web)")
 
 
+def _generate_via_pollinations(prompt, filename):
+    """
+    Generate image via Pollinations.ai — completely free, no API key.
+    Retries with exponential backoff on 429 rate-limit responses.
+    """
+    import urllib.parse, time
+    encoded = urllib.parse.quote(prompt[:300])
+    url = (
+        f"https://image.pollinations.ai/prompt/{encoded}"
+        "?width=1024&height=1024&model=flux&nologo=true&enhance=true"
+    )
+    for attempt in range(5):
+        if attempt > 0:
+            wait = 15 * attempt
+            print(f"  Pollinations rate-limited, retrying in {wait}s...")
+            time.sleep(wait)
+        img_resp = requests.get(url, timeout=180)
+        if img_resp.status_code == 429:
+            continue
+        img_resp.raise_for_status()
+        image = Image.open(BytesIO(img_resp.content))
+        _save_pil_image(image, filename)
+        return
+    raise RuntimeError("Pollinations rate-limit exceeded after 5 retries")
+
+
 def _generate_via_openrouter(prompt, filename):
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
@@ -52,7 +78,11 @@ def _generate_via_openrouter(prompt, filename):
         timeout=120,
     )
     resp.raise_for_status()
-    item = resp.json()["data"][0]
+    body = resp.text
+    if not body.strip():
+        raise ValueError("OpenRouter images endpoint returned empty response")
+    data = resp.json()
+    item = data["data"][0]
 
     if item.get("b64_json"):
         image_bytes = base64.b64decode(item["b64_json"])
@@ -93,14 +123,14 @@ def generateImage(prompt, filename):
         return filename
 
     try:
-        if OPENROUTER_API_KEY and IMAGE_MODEL:
-            print(f"🎨 Generating image via OpenRouter ({IMAGE_MODEL})...")
-            _generate_via_openrouter(prompt, filename)
-        else:
-            print("🎨 Generating image via Gemini...")
-            _generate_via_gemini(prompt, filename)
+        print(f"🎨 Generating image via Pollinations.ai (free, no key)...")
+        _generate_via_pollinations(prompt, filename)
     except Exception as e:
-        print(f'Error in generating the Image: {e}')
+        print(f"⚠️  Pollinations failed ({e}), trying Gemini fallback...")
+        try:
+            _generate_via_gemini(prompt, filename)
+        except Exception as e2:
+            print(f'Error in generating the Image: {e2}')
 
     return filename
 
