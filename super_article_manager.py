@@ -1001,7 +1001,9 @@ class SuperArticleManager:
     def create_backup(self, suffix: str = "backup") -> Optional[str]:
         """Create timestamped backup"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_file = f"perplexityArticles_{suffix}_{timestamp}.json"
+        backup_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "perplexityArticles")
+        os.makedirs(backup_dir, exist_ok=True)
+        backup_file = os.path.join(backup_dir, f"perplexityArticles_{suffix}_{timestamp}.json")
         
         try:
             if os.path.exists(self.articles_file):
