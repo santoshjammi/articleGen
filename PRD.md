@@ -469,7 +469,7 @@ articleGen/
 
 ---
 
-## 6. External Dependencies & APIs
+## 10. External Dependencies & APIs
 
 | Dependency | Purpose | Key Env Var |
 |---|---|---|
@@ -488,7 +488,392 @@ Python libraries (webapp only): `fastapi`, `uvicorn`, `pydantic`, `jinja2`, `PyJ
 
 ---
 
-## 7. Known Weaknesses / Areas for Improvement
+## 7. SEO & AEO Strategy
+
+### 7.1 Search Engine Optimisation (SEO)
+
+SEO is baked into every layer — from how trends are selected through to what lands in the HTML `<head>`.
+
+#### Trend-to-Keyword SEO Filter
+
+The very first gate is the trend filter in `trends.py`:
+- Global trends must have **>100,000 searches** to qualify (noise removal)
+- India's **top 15** trends are always included regardless of volume (local authority)
+- Output is written to SEO-labelled CSVs (`all_seo_filtered_trends.csv`)
+
+This ensures only high-demand keywords enter the pipeline, which is the foundation of traffic-driven SEO.
+
+#### Keyword Density in Content (LLM Prompt Engineering)
+
+The LLM prompt in `super_article_manager.py` (`generate_article_from_keyword()`) directly encodes SEO rules:
+
+| Rule | Detail |
+|---|---|
+| **Keyword in every H2/H3** | Prompt mandates exact keyword phrase in every major heading |
+| **Keyword density 15–20×** | "Achieve HIGH DENSITY: Mention '{keyword}' at least 15-20 times" |
+| **Minimum 1,500 words** | Long-form content signals depth to search crawlers |
+| **Question-based headings** | "What is X?", "How Does X Work?", "X vs Alternatives" — matches natural search queries |
+| **Bold in first paragraph** | Keyword bolded on first use for on-page prominence |
+| **Comparison tables** | Added where relevant for featured snippet candidacy |
+| **Logical content architecture** | Foundation → Application → Optimization → Strategy layers |
+| **Year in content** | Prompts include "current 2025 trends" for freshness signals |
+
+Keyword expansion also happens at the article object level (`expand_keywords()`), generating variants like `"{keyword} in {region}"`, `"{keyword} news"`, `"{keyword} trends 2025"`, and these are stored in the article's `keywords` array.
+
+#### On-Page HTML SEO (per article page)
+
+Every generated `dist/articles/{slug}.html` contains:
+
+```html
+<title>{Article Title} | Country's News</title>
+<meta name="description" content="{excerpt, 160 chars max}">
+<meta name="keywords" content="{comma-separated keywords array}">
+<meta name="author" content="...">
+<meta name="article:published_time" content="YYYY-MM-DD">
+<meta name="article:modified_time" content="YYYY-MM-DD">
+<meta name="article:section" content="{category}">
+<link rel="canonical" href="https://countrysnews.com/articles/{slug}.html">
+```
+
+#### Open Graph & Twitter Cards
+
+Every page (homepage, article, category) includes full OG and Twitter card tags:
+
+```html
+<meta property="og:title" content="...">
+<meta property="og:description" content="...">
+<meta property="og:type" content="article">  <!-- or "website" for homepage -->
+<meta property="og:url" content="...">
+<meta property="og:image" content="{absolute public image URL}">
+<meta property="og:site_name" content="Country's News">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="...">
+<meta name="twitter:description" content="...">
+<meta name="twitter:image" content="...">
+```
+
+Image URLs in OG/Twitter tags are always converted to absolute public URLs (`https://countrysnews.com/...`) even if the local path starts with `dist/` or a relative prefix.
+
+#### Structured Data / Schema.org (JSON-LD)
+
+Three different structured data blocks are generated depending on page type:
+
+| Page | Schema Type | Key Fields |
+|---|---|---|
+| **Homepage** | `NewsMediaOrganization` + `ItemList` of `NewsArticle` | name, url, logo, sameAs (Twitter), top-10 recent articles |
+| **Article** | `NewsArticle` | headline, description, datePublished, dateModified, author (Person), publisher (Organization + logo), mainEntityOfPage, image (ImageObject with absolute URL) |
+| **Category** | `CollectionPage` + `ItemList` of `NewsArticle` | name, description, url, itemListElement (top-10 articles in category) |
+
+All are embedded as `<script type="application/ld+json">` in the `<head>`.
+
+#### E-E-A-T Signals (Experience, Expertise, Authoritativeness, Trustworthiness)
+
+Google's E-E-A-T guidelines are addressed at multiple levels:
+
+| Signal | Implementation |
+|---|---|
+| **Author** | Every article has a named author field; rendered on-page with bio and placeholder avatar |
+| **Fact-checked by** | `factCheckedBy: "AI Content Review"` stored in article JSON, displayed in article meta |
+| **Editor reviewed by** | `editorReviewedBy: "AI Editor"` stored in JSON |
+| **Publisher schema** | Organisation + logo in every `NewsArticle` structured data block |
+| **E-E-A-T meta tags** | `<meta name="author">`, `<meta name="publisher">`, `<meta name="copyright">` on every page |
+| **Schema type** | `NewsArticle` (not just `Article`) signals news authority to Google |
+| **Tagline** | "Trusted. Verified. Expert." in site header |
+| **Footer copy** | "Verified Journalism | Expert Analysis | Fact-Checked Content" |
+
+#### Technical SEO
+
+- **Sitemap** (`dist/sitemap.xml`): Generated for all article and category URLs. Date format is validated post-generation — invalid dates abort the build to prevent Google Search Console errors.
+- **Robots.txt** (`dist/robots.txt`): Generated to allow all crawlers.
+- **RSS feed** (`dist/rss.xml`): Top 20 articles with full metadata. Auto-linked from every page `<head>`.
+- **Canonical URLs**: Every page declares its canonical to prevent duplicate content issues.
+- **Breadcrumbs**: Rendered on every article page (`Home > Category > Article Title`) for crawl path clarity.
+- **Slug generation**: Clean URL slugs (`re.sub` to strip non-word characters, lowercase, hyphen-join).
+- **Date sanitisation**: `sanitize_date_format()` ensures dates are always `YYYY-MM-DD` — malformed dates are replaced with today's date before sitemap inclusion.
+- **Differential sync**: Only changed files are uploaded, so crawlers see incremental updates, not full re-serves, which preserves crawl budget.
+
+#### Performance (Core Web Vitals)
+
+- `<link rel="preconnect">` for Google Fonts and `fonts.gstatic.com`
+- Images use `loading="lazy"` on cards; `IntersectionObserver`-based lazy loading for below-fold images
+- Images saved as **WebP** (quality 85) — typically 25–35% smaller than JPEG at equivalent quality
+- Tailwind CSS from CDN (no unused CSS problem at current scale)
+- `onerror` fallback on every image to prevent layout shifts from broken images
+
+---
+
+### 7.2 Answer Engine Optimisation (AEO)
+
+AEO targets AI-powered answer surfaces: Google AI Overviews, Perplexity, ChatGPT browsing, Bing Copilot, etc. The system explicitly names Perplexity as a target in its LLM prompts.
+
+#### AEO-Oriented Content Structure
+
+The LLM prompt enforces a **question-based article structure** which is the primary AEO technique:
+
+```
+Foundational Questions:
+  "What is {keyword}?"         ← Direct definitional answer → triggers knowledge panel / AI overview
+  "Why Do You Need {keyword}?" ← Intent clarification
+  "How Does {keyword} Work?"   ← Process answer → answer box candidate
+
+Practical Questions:
+  "Best {keyword} Examples"    ← List-based answer → ordered list AI response
+  "How to Create/Use {keyword}" ← Numbered steps → step-by-step AI answer
+  "Common {keyword} Mistakes"  ← Negative framing for contrast answers
+
+Advanced Questions:
+  "Advanced {keyword} Techniques"
+  "Tools for {keyword}"        ← Comparison → tool comparison AI answer
+  "{keyword} Best Practices in {region}" ← Localised answer
+
+Future Questions:
+  "Future of {keyword}"
+  "{keyword} vs Alternatives"  ← Versus framing → comparative AI answer
+```
+
+This mirrors the structure that answer engines decompose a topic into, making the articles directly citable.
+
+#### Explicit AEO Prompt Instruction
+
+The LLM prompt literally states:
+
+> *"This article must be strategically structured with high keyword density and optimized to be easily summarized and cited by AI answer engines like Perplexity."*
+
+This affects how the model writes the content — shorter definitive sentences for each section opener, clear topic sentences, structured lists — all of which are patterns answer engines extract from.
+
+#### Formatting for Extractability
+
+The prompt also mandates:
+- **Bold text** for key concepts (AI crawlers weight bolded text as summaries)
+- **Bullet points** for benefits/features (extracted as list answers)
+- **Numbered steps** for processes (extracted as step-by-step answers)
+- **Comparison tables** where relevant (extracted as structured data by some engines)
+- **Hypothetical statistics** framed as `"Recent studies show..."`, `"Industry surveys indicate..."` — mimics the citation-heavy style that answer engines prefer
+
+#### Table of Contents with Anchor IDs
+
+Every article page auto-generates a Table of Contents from H2/H3 headings, with `id` attributes injected into each heading. The TOC is:
+- Shown in a sticky sidebar on desktop
+- Shown inline above content on mobile
+
+This creates fragment-addressable sections (`#what-is-ai-healthcare`) which answer engines can link to directly, and improves dwell time by making navigation fast.
+
+#### Markdown → HTML conversion
+
+Article content from the LLM sometimes arrives as Markdown, sometimes HTML. The site generator detects which and converts Markdown using the `markdown` library with extensions: `extra`, `sane_lists`, `smarty`, `tables`, `fenced_code`. This ensures lists, tables, and code blocks survive the conversion with proper HTML semantics, which are more parseable by answer engines than raw text.
+
+#### Internal Linking
+
+`add_internal_links()` scans article content and adds `<a href="...">` links when other article titles appear as text (up to 3 links per article). This builds a topical cluster structure — a strong AEO and SEO signal that the site has deep coverage of related topics.
+
+#### Related Articles (Topical Authority)
+
+`compute_related_articles_map()` scores article similarity using:
+- Shared keywords (weighted 3.0 per shared keyword)
+- Shared social hashtags (1.0 per shared tag)
+- Title word overlap (1.5 per shared significant word)
+- Recency boost (up to +2.0 for articles published within 30 days)
+
+Up to 5 related articles are shown in a sticky sidebar on every article page with thumbnail, title, and relative time (`"2 hours ago"`). This reduces bounce rate and signals topical depth.
+
+---
+
+## 8. UI / UX Design
+
+### 8.1 Design Language
+
+The site uses a consistent **navy/blue editorial** aesthetic throughout.
+
+| Token | Value |
+|---|---|
+| Primary blue | `#2563eb` (Tailwind `blue-600`) |
+| Header gradient | `from-blue-900 via-blue-700 to-blue-800` |
+| Heading colour | `#1e3a8a` (Tailwind `blue-900`) — article content headings |
+| Page background | `#f3f4f6` (Tailwind `gray-100`) |
+| Card background | `#ffffff` |
+| Footer background | `#111827` (Tailwind `gray-900`) |
+| Body font | Inter (Google Fonts), weights 400/500/600/700 |
+| Border radius (cards) | `rounded-xl` (12px) |
+| Card shadow | `shadow-lg` + `border border-gray-100` |
+
+### 8.2 Page Layouts
+
+#### Homepage (`dist/index.html`)
+
+```
+┌─────────────────────────────────────────────────┐
+│  STICKY HEADER (logo + nav + mobile hamburger)  │
+├─────────────────────────────────────────────────┤
+│  TOP BANNER AD SLOT                             │
+├─────────────────────────────────────────────────┤
+│  HERO SECTION                                   │
+│  ┌──────────────────────────┐  ┌─────────────┐ │
+│  │  Featured articles grid  │  │ Sidebar ad  │ │
+│  │  (3 cards, top articles) │  │             │ │
+│  │                          │  │ Categories  │ │
+│  │                          │  │ list        │ │
+│  └──────────────────────────┘  └─────────────┘ │
+├─────────────────────────────────────────────────┤
+│  RECENT ARTICLES                                │
+│  3-column responsive card grid                  │
+│  [card][card][card]                             │
+│  [card][card][card]                             │
+│            [Load More Articles]                 │
+├─────────────────────────────────────────────────┤
+│  FOOTER (4-column: logo/desc, cats, links, RSS) │
+├─────────────────────────────────────────────────┤
+│  MOBILE BOTTOM STICKY AD (hidden on desktop)    │
+└─────────────────────────────────────────────────┘
+```
+
+- First N articles rendered server-side (static HTML)
+- Remaining articles injected client-side via "Load More" button (vanilla JS, 6 per page)
+- Loading state: spinner animation + "Loading..." text on button
+- Load More button disappears when all articles exhausted
+
+#### Article Page (`dist/articles/{slug}.html`)
+
+```
+┌─────────────────────────────────────────────────┐
+│  STICKY HEADER                                  │
+├─────────────────────────────────────────────────┤
+│  ARTICLE BODY (max-w-4xl)                       │
+│  ┌───────────────────────────┐  ┌─────────────┐│
+│  │  Breadcrumb nav           │  │             ││
+│  │  Category badge           │  │ Sidebar ad  ││
+│  │  H1 Title                 │  │             ││
+│  │  Author / Date / Mins     │  │ Table of    ││
+│  │  Featured image           │  │ Contents    ││
+│  │  Twitter + Facebook share │  │ (sticky)    ││
+│  │  ─────────────────────    │  │             ││
+│  │  [Mobile TOC on small]    │  │ Related     ││
+│  │  Article HTML content     │  │ Articles    ││
+│  │  In-content ad slot       │  │ (5 max)     ││
+│  │  Social hashtags          │  │             ││
+│  │  Author bio card          │  │ Sidebar     ││
+│  │  Second in-content ad     │  │ ad          ││
+│  └───────────────────────────┘  └─────────────┘│
+├─────────────────────────────────────────────────┤
+│  FOOTER                                         │
+└─────────────────────────────────────────────────┘
+```
+
+#### Category Page (`dist/categories/{slug}.html`)
+
+Header + banner ad, then a 3-column article card grid filtered to that category, then footer.
+
+### 8.3 Components
+
+#### Article Card
+
+```
+┌────────────────────────────────┐
+│  [Thumbnail 16:9, h-48]        │
+│  [Category badge top-left]     │
+├────────────────────────────────┤
+│  Title (2-line clamp, bold)    │
+│  Excerpt (3-line clamp, gray)  │
+│                                │
+│  [Author] [Reading time]  Date │
+└────────────────────────────────┘
+```
+
+- `onerror` image fallback to `images/placeholder.webp`
+- Card hover: `translateY(-5px)` + deeper shadow (CSS transition 200ms)
+- Category badge: `bg-blue-600 text-white rounded-full text-xs`
+
+#### Navigation Header
+
+- **Desktop**: Sticky, gradient background. Logo left. Nav links right with "More" dropdown (categories 6+). Glassmorphism dropdown (`backdrop-filter: blur(10px)`).
+- **Mobile**: Hamburger button. Slide-down menu with all categories + About/Contact links.
+
+#### Author Profile Card
+
+Blue-left-border card (`border-left: 4px solid #0ea5e9`), gradient background (`#f0f9ff → #e0f2fe`), author avatar (placeholder SVG), name, bio paragraph.
+
+#### Social Sharing Bar
+
+Inline row above article content: "Share:" label + Twitter (blue-500) + Facebook (blue-600) icon buttons. URLs use native share intents.
+
+#### Hashtag Chips
+
+Pill-shaped tags with blue gradient background, hover `scale(1.05)`. Shown below article content. Maximum 5 per article.
+
+#### Table of Contents
+
+- **Desktop**: Sticky right sidebar `<nav>`, anchored links to H2/H3 headings (auto-generated `id` attributes).
+- **Mobile**: Collapsed block above article content with blue border styling.
+- H3 headings indented with `ml-4` vs H2's `ml-0`.
+
+#### Load More Button
+
+```css
+background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.4);
+/* hover: translateY(-2px) + larger shadow */
+```
+
+#### Ad Containers
+
+5 ad zones per article page, all using empty `data-ad-slot` divs (populated by AdSense JS at runtime):
+- `banner-top` — below header on every page
+- `article-sidebar-1` / `article-sidebar-2` — in sticky sidebar
+- `article-content-1` / `article-content-2` — inline within article body
+- `banner-footer` — above footer on every page
+- `mobile-bottom` — fixed bottom bar, hidden on desktop (`lg:hidden`)
+
+#### Lazy Loading Image Skeleton
+
+```css
+.lazy-image {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite; /* shimmer */
+  min-height: 200px;
+}
+```
+
+Images with `data-src` are observed via `IntersectionObserver`; the real `src` is swapped in when the image enters the viewport.
+
+### 8.4 Web App Dashboard (Admin UI)
+
+The operator-facing dashboard (`webapp_templates/dashboard.html`) uses a different visual language from the public site:
+
+| Token | Value |
+|---|---|
+| App background | `bg-gray-50` |
+| Nav background | `gradient-bg` = `linear-gradient(135deg, #667eea 0%, #764ba2 100%)` (purple/blue) |
+| Stat cards | white, `shadow`, `rounded-lg` |
+| Accent colours | blue-500 (generate), green-500 (register), yellow (pending), purple (deployed) |
+| Icons | Font Awesome 6 (CDN) |
+
+#### Sections (single-page, tab-switched)
+
+1. **Login / Register modals** — centred modal overlays with JWT auth
+2. **Quick Stats row** — 4 metric cards: Articles Generated, Deployed, Active Jobs, Last Run
+3. **Generate** — keyword textarea, settings accordion, progress bar (0-100%), live status messages
+4. **Trends** — reads cached CSV, shows current trending keywords with search volumes, Refresh button
+5. **Scheduler** — shows last cron run time + exit status from `logs/scheduler_status.json`, manual trigger button
+6. **History** — table of past jobs from SQLite `generation_history`
+
+Progress bar updates via polling the `/api/jobs/{job_id}` endpoint every 2 seconds during active generation.
+
+### 8.5 Responsive Breakpoints
+
+Tailwind's standard breakpoints are used throughout:
+
+| Breakpoint | Width | Key changes |
+|---|---|---|
+| Default (mobile) | < 640px | Single column, hamburger nav, mobile TOC inline |
+| `sm` | 640px | Logo text visible in header |
+| `lg` | 1024px | Desktop nav shown, sidebar shown, mobile menu hidden |
+
+Article body max-width: `max-w-4xl` (~56rem). Homepage article grid: `grid-cols-1 md:grid-cols-2 lg:grid-cols-3`.
+
+---
+
+## 9. Known Weaknesses / Areas for Improvement
 
 | Area | Current State | Gap |
 |---|---|---|
@@ -506,7 +891,7 @@ Python libraries (webapp only): `fastapi`, `uvicorn`, `pydantic`, `jinja2`, `PyJ
 
 ---
 
-## 8. Environment Variables Reference
+## 11. Environment Variables Reference
 
 ```
 # Required
