@@ -799,34 +799,32 @@ def generate_advanced_homepage(articles_data, unique_categories):
     
     # Sort articles by date (newest first)
     sorted_articles = sorted(articles_data, key=lambda x: x.get('publishDate', ''), reverse=True)
-    
-    # Get featured articles (top 6)
-    featured_articles = sorted_articles[:6]
-    
-    # Get recent articles (next 12 for initial load)
-    recent_articles = sorted_articles[6:18]
-    
-    # Get remaining articles for load more functionality
-    remaining_articles = sorted_articles[18:]
-    
-    # Build article cards HTML
-    featured_cards_html = ""
-    for i, article in enumerate(featured_articles):
-        featured_cards_html += generate_article_card(article, "home")
-        # Add ad after every 2 articles
-        if (i + 1) % 2 == 0 and i < len(featured_articles) - 1:
-            featured_cards_html += '''
-            <div class="col-span-full">
-                <div class="ad-container">
-                    <div data-ad-slot="in-content-featured" aria-hidden="true"></div>
-                </div>
-            </div>
-            '''
-    
+
+    # Hero: single most recent article with a full-bleed card
+    hero_article = sorted_articles[0] if sorted_articles else None
+
+    # Group by editorial pillar (top 3 per pillar for homepage sections)
+    from collections import defaultdict as _defaultdict
+    _pillar_buckets = _defaultdict(list)
+    for _a in sorted_articles[1:]:   # skip the hero
+        _cat = _a.get('category', 'India Digital Transformation')
+        _pillar_buckets[_cat].append(_a)
+
+    pillar_sections = {
+        'AI Infrastructure':            _pillar_buckets['AI Infrastructure'][:3],
+        'Enterprise Transformation':    _pillar_buckets['Enterprise Transformation'][:3],
+        'Smart Mobility':               _pillar_buckets['Smart Mobility'][:3],
+        'India Digital Transformation': _pillar_buckets['India Digital Transformation'][:3],
+    }
+
+    # Recent articles for the "Latest Intelligence" grid (initial load)
+    recent_articles = sorted_articles[1:13]
+    remaining_articles = sorted_articles[13:]
+
+    # Recent cards HTML
     recent_cards_html = ""
     for i, article in enumerate(recent_articles):
         recent_cards_html += generate_article_card(article, "home")
-        # Add ad after every 3 articles
         if (i + 1) % 3 == 0 and i < len(recent_articles) - 1:
             recent_cards_html += '''
             <div class="col-span-full">
@@ -835,17 +833,17 @@ def generate_advanced_homepage(articles_data, unique_categories):
                 </div>
             </div>
             '''
-    
+
     # Generate structured data for E-E-A-T
     structured_data = generate_homepage_structured_data(articles_data)
-    
-    # Generate remaining articles JSON data for Load More functionality
+
+    # Remaining articles JSON for Load More
     remaining_articles_json = json.dumps([{
         'title': article['title'],
         'slug': article['slug'],
         'author': article.get('author', 'Editorial Team'),
         'publishDate': article.get('publishDate', ''),
-        'category': article.get('category', 'News'),
+        'category': article.get('category', 'India Digital Transformation'),
         'excerpt': article.get('excerpt', ''),
         'imageUrl': article.get('imageUrl', ''),
         'thumbnail': article.get('thumbnail', ''),
@@ -855,153 +853,250 @@ def generate_advanced_homepage(articles_data, unique_categories):
         'readingTimeMinutes': article.get('readingTimeMinutes', 5),
         'socialMediaHashtags': article.get('socialMediaHashtags', [])
     } for article in remaining_articles] if remaining_articles else [])
-    
+
+    # ── Hero card helper ──────────────────────────────────────────────────
+    def hero_card_html(article):
+        if not article:
+            return ''
+        img = article.get('thumbnailImageUrl') or article.get('thumbnail') or article.get('imageUrl') or 'images/placeholder.webp'
+        if img.startswith('dist/'):
+            img = img[5:]
+        cat = article.get('category', 'Intelligence')
+        cat_slug = generate_slug(cat)
+        slug = article.get('slug', '')
+        content_type = article.get('contentType', 'strategic-analysis')
+        type_label = content_type.replace('-', ' ').title()
+        return f'''
+        <article class="relative bg-gray-900 rounded-2xl overflow-hidden shadow-2xl min-h-[400px] flex flex-col justify-end group">
+            <img src="{img}" alt="{article.get('imageAltText', article['title'])}"
+                 class="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-60 transition-opacity duration-300"
+                 onerror="this.src='images/placeholder.webp'">
+            <div class="relative z-10 p-8 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent">
+                <div class="flex items-center gap-3 mb-4">
+                    <a href="categories/{cat_slug}.html"
+                       class="bg-blue-600 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-blue-500 transition-colors">
+                        {cat}
+                    </a>
+                    <span class="text-blue-300 text-xs font-medium uppercase tracking-wider">{type_label}</span>
+                </div>
+                <a href="articles/{slug}.html" class="block">
+                    <h1 class="text-3xl md:text-4xl font-bold text-white mb-3 leading-tight hover:text-blue-200 transition-colors">
+                        {article['title']}
+                    </h1>
+                    <p class="text-gray-300 text-base mb-4 line-clamp-2">{article.get('excerpt', '')[:200]}</p>
+                </a>
+                <div class="flex items-center gap-4 text-sm text-gray-400">
+                    <span>By <span class="text-white font-medium">{article.get('author', 'Editorial Team')}</span></span>
+                    <span>{article.get('publishDate', '')}</span>
+                    <span>{article.get('readingTimeMinutes', 5)} min read</span>
+                </div>
+            </div>
+        </article>'''
+
+    # ── Pillar section helper ─────────────────────────────────────────────
+    def pillar_section_html(pillar_name, articles, pillar_slug, accent_color='blue'):
+        if not articles:
+            return ''
+        cards = ''.join(generate_article_card(a, "home") for a in articles)
+        return f'''
+        <section class="mb-16">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-1 h-8 bg-{accent_color}-600 rounded-full"></div>
+                    <h2 class="text-2xl font-bold text-gray-900">{pillar_name}</h2>
+                </div>
+                <a href="categories/{pillar_slug}.html"
+                   class="text-{accent_color}-600 hover:text-{accent_color}-700 text-sm font-semibold flex items-center gap-1">
+                    View all
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                </a>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {cards}
+            </div>
+        </section>'''
+
+    pillar_colors = {
+        'AI Infrastructure':            ('blue',   'ai-infrastructure'),
+        'Enterprise Transformation':    ('indigo', 'enterprise-transformation'),
+        'Smart Mobility':               ('emerald','smart-mobility'),
+        'India Digital Transformation': ('orange', 'india-digital-transformation'),
+    }
+
+    pillar_sections_html = ''
+    for pillar_name, articles in pillar_sections.items():
+        color, slug = pillar_colors[pillar_name]
+        pillar_sections_html += pillar_section_html(pillar_name, articles, slug, color)
+
     homepage_html = f'''
     <!DOCTYPE html>
     <html lang="en">
     <head>
-        <title>Country's News - Professional Journalism</title>
-        <meta name="description" content="Country's News delivers comprehensive coverage and professional journalism with fact-checked content from authoritative reporters.">
-        <meta name="keywords" content="news, professional journalism, fact-checked, current events, comprehensive coverage">
-        
+        <title>Country's News — Technology Intelligence Platform</title>
+        <meta name="description" content="Technology intelligence for the AI transformation era. Covering AI infrastructure, enterprise transformation, smart mobility, and India's digital economy.">
+        <meta name="keywords" content="AI infrastructure, enterprise AI, smart mobility, India digital transformation, technology intelligence, EV, LLM, enterprise SaaS">
+
         <!-- E-E-A-T Meta Tags -->
-        <meta name="author" content="Country's News Editorial Team">
+        <meta name="author" content="Country's News Intelligence Team">
         <meta name="publisher" content="Country's News">
         <meta name="copyright" content="© {datetime.now().year} Country's News">
-        
+
         <!-- Open Graph -->
-        <meta property="og:title" content="Country's News - Professional Journalism">
-        <meta property="og:description" content="Country's News delivers comprehensive coverage and professional journalism with fact-checked content.">
+        <meta property="og:title" content="Country's News — Technology Intelligence Platform">
+        <meta property="og:description" content="Technology intelligence for the AI transformation era.">
         <meta property="og:type" content="website">
         <meta property="og:url" content="https://countrysnews.com/">
         <meta property="og:site_name" content="Country's News">
-        
+
         <!-- Twitter Card -->
         <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:title" content="Country's News - Professional Journalism">
-        <meta name="twitter:description" content="Professional journalism with comprehensive coverage and fact-checked content.">
-        
+        <meta name="twitter:title" content="Country's News — Technology Intelligence Platform">
+        <meta name="twitter:description" content="Technology intelligence for the AI transformation era.">
+
         <!-- Canonical URL -->
         <link rel="canonical" href="https://countrysnews.com/">
-        
+
         {get_base_html_head()}
-        
+
         <!-- Structured Data for E-E-A-T -->
         {structured_data}
     </head>
     <body>
         {generate_header_html(unique_categories, "home")}
-        
+
         <main class="min-h-screen">
-            <!-- Hero Section with Sidebar Ad -->
-            <section class="container mx-auto px-4 py-8">
+
+            <!-- ─── HERO ─────────────────────────────────────────────── -->
+            <section class="container mx-auto px-4 py-10">
                 <div class="flex flex-col lg:flex-row gap-8">
-                    <div class="flex-1">
-                        <div class="text-center mb-8">
-                            <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
-                                Verified News & 
-                                <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                                    Expert Analysis
-                                </span>
-                            </h1>
-                        </div>
-                        
-                        <!-- Featured Articles -->
-                        <section class="mb-12">
-                            <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">Featured Stories</h2>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {featured_cards_html}
-                            </div>
-                        </section>
+                    <!-- Hero card (full-bleed featured article) -->
+                    <div class="lg:w-2/3">
+                        {hero_card_html(hero_article)}
                     </div>
-                    
-                    <!-- Sidebar with Ads -->
-                    <aside class="lg:w-80 space-y-6">
-                        <!-- Sidebar Ad 1 -->
+
+                    <!-- Sidebar: positioning + quick pillars + ad -->
+                    <aside class="lg:w-1/3 space-y-6">
+                        <!-- Positioning statement -->
+                        <div class="bg-gradient-to-br from-blue-900 to-blue-700 rounded-2xl p-6 text-white">
+                            <p class="text-xs font-bold uppercase tracking-widest text-blue-300 mb-2">Country's News</p>
+                            <h2 class="text-xl font-bold leading-snug mb-3">
+                                Technology intelligence for the AI transformation era.
+                            </h2>
+                            <p class="text-blue-200 text-sm leading-relaxed">
+                                We analyse how AI, enterprise software, and smart infrastructure are reshaping industries — covering AI Infrastructure, Enterprise Transformation, Smart Mobility, and India's Digital Economy.
+                            </p>
+                        </div>
+
+                        <!-- Pillar quick links -->
+                        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                            <h3 class="text-sm font-bold uppercase tracking-wider text-gray-500 mb-4">Editorial Pillars</h3>
+                            <div class="space-y-2">
+                                <a href="categories/ai-infrastructure.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50 group transition-colors">
+                                    <div class="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0"></div>
+                                    <span class="text-sm font-semibold text-gray-800 group-hover:text-blue-700">AI Infrastructure</span>
+                                </a>
+                                <a href="categories/enterprise-transformation.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-indigo-50 group transition-colors">
+                                    <div class="w-2 h-2 bg-indigo-600 rounded-full flex-shrink-0"></div>
+                                    <span class="text-sm font-semibold text-gray-800 group-hover:text-indigo-700">Enterprise Transformation</span>
+                                </a>
+                                <a href="categories/smart-mobility.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-emerald-50 group transition-colors">
+                                    <div class="w-2 h-2 bg-emerald-600 rounded-full flex-shrink-0"></div>
+                                    <span class="text-sm font-semibold text-gray-800 group-hover:text-emerald-700">Smart Mobility</span>
+                                </a>
+                                <a href="categories/india-digital-transformation.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-orange-50 group transition-colors">
+                                    <div class="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0"></div>
+                                    <span class="text-sm font-semibold text-gray-800 group-hover:text-orange-700">India Digital Transformation</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Sidebar ad -->
                         <div class="ad-container sidebar">
                             <div data-ad-slot="sidebar-1" aria-hidden="true"></div>
-                        </div>
-                        
-                        <!-- Newsletter Signup -->
-                        <div class="bg-gradient-to-br from-blue-50 to-indigo-100 p-6 rounded-xl border border-blue-200">
-                            <h3 class="text-xl font-bold text-gray-900 mb-3">Stay Informed</h3>
-                            <p class="text-gray-600 text-sm mb-4">Get verified news updates from our expert team.</p>
-                            <div class="space-y-3">
-                                <input type="email" placeholder="Your email address" 
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                <button class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium">
-                                    Subscribe Now
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Sidebar Ad 2 -->
-                        <div class="ad-container sidebar">
-                            <div data-ad-slot="sidebar-2" aria-hidden="true"></div>
-                        </div>
-                        
-                        <!-- Trending Categories -->
-                        <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-                            <h3 class="text-xl font-bold text-gray-900 mb-4">Trending Topics</h3>
-                            <div class="space-y-3">
-                                {generate_trending_categories_html(unique_categories[:6])}
-                            </div>
-                        </div>
-                        
-                        <!-- Sidebar Ad 3 -->
-                        <div class="ad-container sidebar">
-                            <div data-ad-slot="sidebar-3" aria-hidden="true"></div>
                         </div>
                     </aside>
                 </div>
             </section>
-            
-            <!-- Recent Articles Section -->
+
+            <!-- ─── BANNER AD ─────────────────────────────────────────── -->
+            <div class="container mx-auto px-4">
+                <div class="ad-container my-4">
+                    <div data-ad-slot="banner-top" aria-hidden="true"></div>
+                </div>
+            </div>
+
+            <!-- ─── PILLAR SECTIONS ───────────────────────────────────── -->
+            <div class="container mx-auto px-4 py-8">
+                {pillar_sections_html}
+            </div>
+
+            <!-- ─── LATEST INTELLIGENCE GRID ─────────────────────────── -->
             <section class="bg-gray-50 py-12">
                 <div class="container mx-auto px-4">
-                    <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">Latest News</h2>
+                    <div class="flex items-center gap-3 mb-8">
+                        <div class="w-1 h-8 bg-gray-400 rounded-full"></div>
+                        <h2 class="text-2xl font-bold text-gray-900">Latest Intelligence</h2>
+                    </div>
                     <div id="recent-articles-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {recent_cards_html}
                     </div>
-                    
-                    <!-- Load More Button -->
                     <div class="text-center mt-12">
                         <button id="load-more-btn" class="load-more-btn">
-                            Load More Articles
+                            Load More
                         </button>
                     </div>
                 </div>
             </section>
+
+            <!-- ─── NEWSLETTER CAPTURE ────────────────────────────────── -->
+            <section class="py-16 bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900">
+                <div class="container mx-auto px-4 max-w-2xl text-center">
+                    <p class="text-blue-300 text-xs font-bold uppercase tracking-widest mb-3">Intelligence Brief</p>
+                    <h2 class="text-3xl font-bold text-white mb-4">
+                        Stay ahead of the AI transformation.
+                    </h2>
+                    <p class="text-blue-200 mb-8 leading-relaxed">
+                        Weekly analysis of AI infrastructure, enterprise transformation, smart mobility, and India's digital economy — delivered to your inbox.
+                    </p>
+                    <form class="flex flex-col sm:flex-row gap-3 justify-center" onsubmit="return false;">
+                        <input type="email" placeholder="your@email.com"
+                               class="flex-1 max-w-sm px-5 py-3 rounded-xl text-gray-900 focus:ring-2 focus:ring-blue-300 focus:outline-none text-sm"
+                               aria-label="Email address">
+                        <button type="submit"
+                                class="bg-white text-blue-900 font-bold px-6 py-3 rounded-xl hover:bg-blue-50 transition-colors text-sm whitespace-nowrap">
+                            Subscribe Free
+                        </button>
+                    </form>
+                    <p class="text-blue-400 text-xs mt-4">No spam. Unsubscribe anytime.</p>
+                </div>
+            </section>
+
         </main>
-        
+
         {generate_footer_html("home")}
-        
-        <!-- Homepage Load More JavaScript -->
+
+        <!-- Load More JavaScript -->
         <script>
-        // Homepage specific load more functionality
         (function() {{
             const remainingArticles = {remaining_articles_json};
-            
             let currentPage = 0;
             const articlesPerPage = 6;
             const loadMoreBtn = document.getElementById('load-more-btn');
             const articlesGrid = document.getElementById('recent-articles-grid');
-            
+
             function generateArticleCardHTML(article) {{
-                // Remove 'dist/' prefix from thumbnailImageUrl if present
                 let thumbnailUrl = article.thumbnailImageUrl || article.thumbnail || article.imageUrl || 'images/placeholder.webp';
-                if (thumbnailUrl && thumbnailUrl.startsWith('dist/')) {{
-                    thumbnailUrl = thumbnailUrl.substring(5); // Remove 'dist/' prefix
-                }}
+                if (thumbnailUrl && thumbnailUrl.startsWith('dist/')) thumbnailUrl = thumbnailUrl.substring(5);
                 const articleUrl = `articles/${{article.slug}}.html`;
-                
                 return `
                     <article class="article-card bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
                         <a href="${{articleUrl}}" class="block">
                             <div class="relative">
-                                <img src="${{thumbnailUrl}}" 
+                                <img src="${{thumbnailUrl}}"
                                      alt="${{article.imageAltText}}"
-                                     class="w-full h-48 object-cover" 
+                                     class="w-full h-48 object-cover"
                                      loading="lazy"
                                      onerror="this.src='images/placeholder.webp'">
                                 <div class="absolute top-3 left-3">
@@ -1014,11 +1109,9 @@ def generate_advanced_homepage(articles_data, unique_categories):
                                 <h2 class="text-xl font-bold text-gray-900 mb-3 hover:text-blue-600 transition-colors line-clamp-2">
                                     ${{article.title.length > 80 ? article.title.substring(0, 80) + '...' : article.title}}
                                 </h2>
-                                
                                 <p class="text-gray-600 text-sm mb-4 line-clamp-3">
                                     ${{article.excerpt.length > 150 ? article.excerpt.substring(0, 150) + '...' : article.excerpt}}
                                 </p>
-                                
                                 <div class="flex items-center justify-between text-sm text-gray-500 mt-4 pt-4 border-t border-gray-100">
                                     <div class="flex items-center space-x-3">
                                         <span class="flex items-center">
@@ -1038,10 +1131,9 @@ def generate_advanced_homepage(articles_data, unique_categories):
                                 </div>
                             </div>
                         </a>
-                    </article>
-                `;
+                    </article>`;
             }}
-            
+
             if (loadMoreBtn) {{
                 if (remainingArticles.length === 0) {{
                     loadMoreBtn.style.display = 'none';
@@ -1050,34 +1142,22 @@ def generate_advanced_homepage(articles_data, unique_categories):
                         const startIndex = currentPage * articlesPerPage;
                         const endIndex = Math.min(startIndex + articlesPerPage, remainingArticles.length);
                         const articlesToLoad = remainingArticles.slice(startIndex, endIndex);
-                        
-                        if (articlesToLoad.length === 0) {{
-                            this.style.display = 'none';
-                            return;
-                        }}
-                        
-                        // Show loading state
+                        if (articlesToLoad.length === 0) {{ this.style.display = 'none'; return; }}
                         const originalText = this.innerHTML;
                         this.innerHTML = '<div class="loading-spinner"></div>Loading...';
                         this.disabled = true;
-                        
                         setTimeout(() => {{
-                            // Add new articles to the grid
                             articlesToLoad.forEach(article => {{
-                                const articleHTML = generateArticleCardHTML(article);
-                                articlesGrid.insertAdjacentHTML('beforeend', articleHTML);
+                                articlesGrid.insertAdjacentHTML('beforeend', generateArticleCardHTML(article));
                             }});
-                            
                             currentPage++;
-                            
-                            // Check if there are more articles to load
                             if (endIndex >= remainingArticles.length) {{
                                 this.style.display = 'none';
                             }} else {{
                                 this.innerHTML = originalText;
                                 this.disabled = false;
                             }}
-                        }}, 1000);
+                        }}, 800);
                     }});
                 }}
             }}
@@ -1086,27 +1166,11 @@ def generate_advanced_homepage(articles_data, unique_categories):
     </body>
     </html>
     '''
-    
+
     with open(os.path.join(OUTPUT_DIR, 'index.html'), 'w', encoding='utf-8') as f:
         f.write(homepage_html)
-    
-    print(f"✅ Homepage generated with {len(featured_articles)} featured and {len(recent_articles)} recent articles")
 
-def generate_trending_categories_html(categories):
-    """Generate trending categories HTML"""
-    html = ""
-    for category in categories:
-        category_slug = generate_slug(category)
-        html += f'''
-        <a href="categories/{category_slug}.html" 
-           class="flex items-center justify-between p-3 bg-gray-50 hover:bg-blue-50 rounded-lg transition-colors group">
-            <span class="font-medium text-gray-700 group-hover:text-blue-600">{category}</span>
-            <svg class="w-4 h-4 text-gray-400 group-hover:text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-            </svg>
-        </a>
-        '''
-    return html
+    print(f"✅ Homepage generated: hero + 4 pillar sections + {len(recent_articles)} latest articles")
 
 def generate_homepage_structured_data(articles_data):
     """Generate structured data for homepage E-E-A-T"""

@@ -102,7 +102,7 @@ generate_custom_keyword_articles() {
     done
     
     log "Generating articles for custom keywords (region: $DEFAULT_CUSTOM_REGION)..."
-    if python3 super_article_manager.py generate keywords "${kw_args[@]}" --region "$DEFAULT_CUSTOM_REGION" >> "$LOG_FILE" 2>&1; then
+    if python3 super_article_manager.py generate keywords "${kw_args[@]}" --region "$DEFAULT_CUSTOM_REGION" --count 5 --no-skip >> "$LOG_FILE" 2>&1; then
         log_success "Custom keyword articles generated successfully"
         return 0
     else
@@ -368,11 +368,11 @@ except:
     activate_venv
     
     cd "$SCRIPT_DIR"
-    if python3 ultraFastSync.py >> "$LOG_FILE" 2>&1; then
-        log_success "Intelligent FTP sync completed successfully"
+    if python3 customRSync.py >> "$LOG_FILE" 2>&1; then
+        log_success "FTP sync completed successfully"
         return 0
     else
-        log_error "Intelligent FTP sync failed"
+        log_error "FTP sync failed"
         return 1
     fi
 }
@@ -458,25 +458,12 @@ main() {
 
         # Step 2.4: Generate site with intelligent differential processing
         log "Step 2.4: Generating site with intelligent sync system..."
-        generate_intelligent_site() {
-            log "Using intelligent differential site generation with article enhancements..."
-
-            # Activate virtual environment
-            activate_venv
-            cd "$SCRIPT_DIR"
-
-            # Use the new intelligent differential mode with enhancement
-            if python3 generateSite_advanced.py generate site --differential --enhance >> "$LOG_FILE" 2>&1; then
-                log_success "Intelligent differential site generation completed successfully"
-                return 0
-            else
-                log_error "Intelligent site generation failed"
-                return 1
-            fi
-        }
-
-        if ! generate_intelligent_site; then
-            log_error "Failed to generate site with intelligent sync system"
+        activate_venv
+        cd "$SCRIPT_DIR"
+        if python3 generateSite_advanced.py >> "$LOG_FILE" 2>&1; then
+            log_success "Site generation completed successfully"
+        else
+            log_error "Failed to generate site"
             return 1
         fi
     

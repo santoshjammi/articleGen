@@ -53,6 +53,8 @@ MANIFEST_FILE_PATH = os.path.join(LOCAL_DIRECTORY, ".sync_manifest.json")
 DIFFERENTIAL_MANIFEST_PATH = os.path.join(LOCAL_DIRECTORY, ".differential_sync.json")
 
 # --- Helper Function to verify remote directory structure ---
+FTP_TIMEOUT = 30  # seconds
+
 def verify_remote_directory(remote_dir, ftp_credentials):
     """
     Connects to FTP server and verifies the remote directory structure.
@@ -60,7 +62,7 @@ def verify_remote_directory(remote_dir, ftp_credentials):
     """
     host, user, password = ftp_credentials
     try:
-        with ftplib.FTP(host) as ftp:
+        with ftplib.FTP(host, timeout=FTP_TIMEOUT) as ftp:
             ftp.login(user=user, passwd=password)
             ftp.cwd(remote_dir)
             
@@ -97,49 +99,35 @@ def load_manifest():
     return {}
 
 def create_directories_smart(directories_to_create, ftp_credentials):
-    """Smart directory creation - only create directories that don't exist"""
+    """Create directories that don't exist — uses mkd+ignore-error (no cwd check) for speed."""
     if not directories_to_create:
         return
-    
+
     host, user, password = ftp_credentials
     directories_created = 0
     directories_checked = len(directories_to_create)
-    
+
     logger.info("Smart directory creation starting...")
     start_time = time.time()
-    
+
     try:
-        with ftplib.FTP(host) as ftp:
+        with ftplib.FTP(host, timeout=FTP_TIMEOUT) as ftp:
             ftp.login(user=user, passwd=password)
-            
             for directory in sorted(directories_to_create):
                 try:
-                    # Try to change to the directory to check if it exists
-                    current_dir = ftp.pwd()
-                    ftp.cwd(directory)
-                    ftp.cwd(current_dir)  # Return to original directory
-                    # If we get here, directory exists - skip creation
-                    logger.debug(f"📂 Directory exists, skipped: {directory}")
+                    ftp.mkd(directory)
+                    directories_created += 1
+                    logger.info(f"✅ Created new directory: {directory}")
                 except ftplib.error_perm:
-                    # Directory doesn't exist, create it
-                    try:
-                        ftp.mkd(directory)
-                        directories_created += 1
-                        logger.info(f"✅ Created new directory: {directory}")
-                    except ftplib.error_perm:
-                        # Might be a permission issue or already created by another thread
-                        logger.debug(f"⚠️ Could not create directory: {directory}")
-                        pass
+                    # Already exists or permission denied — either way, skip
+                    logger.debug(f"📂 Directory exists or skipped: {directory}")
     except Exception as e:
         logger.warning(f"⚠️ Directory creation error: {e}")
-    
+
     creation_time = time.time() - start_time
-    directories_skipped = directories_checked - directories_created
-    
     logger.info(f"✅ Smart directory creation completed in {creation_time:.2f} seconds")
-    logger.info(f"   📂 Directories checked: {directories_checked}")
+    logger.info(f"   📂 Directories attempted: {directories_checked}")
     logger.info(f"   🆕 New directories created: {directories_created}")
-    logger.info(f"   ✅ Existing directories skipped: {directories_skipped}")
 
 # --- Helper Function for Uploading a Single File (Optimized) ---
 def upload_file(local_path, remote_path, ftp_credentials):
@@ -150,7 +138,7 @@ def upload_file(local_path, remote_path, ftp_credentials):
     host, user, password = ftp_credentials
     try:
         # Create a new FTP connection for this thread
-        with ftplib.FTP(host) as ftp:
+        with ftplib.FTP(host, timeout=FTP_TIMEOUT) as ftp:
             ftp.login(user=user, passwd=password)
             with open(local_path, 'rb') as file:
                 ftp.storbinary(f'STOR {remote_path}', file)
@@ -218,30 +206,45 @@ def upload_folder_parallel(local_dir, remote_dir, max_workers):
         logger.info("Proceeding with full upload...")
     
     files_to_upload = []
-    
-    # Collect all directories and files for processing
-    directories_to_create = set()
-    
-    # Walk through the local directory to find all files and folders
-    for root, dirs, files in os.walk(local_dir):
-        # Collect directories for batch creation
-        for dir_name in dirs:
-            local_subdir = os.path.join(root, dir_name)
-            remote_subdir = os.path.join(remote_dir, os.path.relpath(local_subdir, local_dir)).replace("\\", "/")
-            directories_to_create.add(remote_subdir)
 
-        # Determine which files need to be uploaded
-        for file_name in files:
-            local_path = os.path.join(root, file_name)
-            relative_path = os.path.relpath(local_path, local_dir)
-            remote_path = os.path.join(remote_dir, relative_path).replace("\\", "/")
-            local_size = os.path.getsize(local_path)
-            
-            # Check if the file exists in the manifest and if its size is different
-            if remote_path not in remote_files or remote_files[remote_path] != local_size:
-                files_to_upload.append((local_path, remote_path))
-    
-    # Create directories smartly (only those that don't exist)
+    # Prefer the differential sync manifest (exact list from site generator)
+    differential_manifest_path = os.path.join(local_dir, ".differential_sync.json")
+    if os.path.exists(differential_manifest_path):
+        try:
+            with open(differential_manifest_path) as f:
+                diff = json.load(f)
+            rel_paths = diff.get("files_to_sync", [])
+            logger.info(f"📋 Using differential manifest: {len(rel_paths)} files to sync")
+            for rel_path in rel_paths:
+                local_path = os.path.join(local_dir, rel_path.replace("/", os.sep))
+                remote_path = remote_dir.rstrip("/") + "/" + rel_path.lstrip("/")
+                if os.path.exists(local_path):
+                    files_to_upload.append((local_path, remote_path))
+                else:
+                    logger.warning(f"⚠️  File in differential manifest not found locally: {local_path}")
+        except Exception as e:
+            logger.warning(f"⚠️  Could not load differential manifest ({e}), falling back to full scan")
+            rel_paths = []
+
+    if not files_to_upload:
+        # Fallback: full manifest comparison scan
+        logger.info("📋 Using full manifest comparison scan...")
+        for root, dirs, files in os.walk(local_dir):
+            for file_name in files:
+                local_path = os.path.join(root, file_name)
+                relative_path = os.path.relpath(local_path, local_dir)
+                remote_path = os.path.join(remote_dir, relative_path).replace("\\", "/")
+                local_size = os.path.getsize(local_path)
+                if remote_path not in remote_files or remote_files[remote_path] != local_size:
+                    files_to_upload.append((local_path, remote_path))
+
+    # Only create directories that are actually needed for files being uploaded
+    directories_to_create = set()
+    for _, remote_path in files_to_upload:
+        parent = "/".join(remote_path.split("/")[:-1])
+        if parent and parent != remote_dir:
+            directories_to_create.add(parent)
+
     if directories_to_create:
         dir_start = time.time()
         logger.info(f"Checking {len(directories_to_create)} directories...")

@@ -45,19 +45,18 @@ def _generate_via_pollinations(prompt, filename):
         f"https://image.pollinations.ai/prompt/{encoded}"
         "?width=1024&height=1024&model=flux&nologo=true&enhance=true"
     )
-    for attempt in range(5):
+    for attempt in range(2):
         if attempt > 0:
-            wait = 15 * attempt
-            print(f"  Pollinations rate-limited, retrying in {wait}s...")
-            time.sleep(wait)
-        img_resp = requests.get(url, timeout=180)
+            print(f"  Pollinations rate-limited, retrying in 10s...")
+            time.sleep(10)
+        img_resp = requests.get(url, timeout=60)
         if img_resp.status_code == 429:
             continue
         img_resp.raise_for_status()
         image = Image.open(BytesIO(img_resp.content))
         _save_pil_image(image, filename)
         return
-    raise RuntimeError("Pollinations rate-limit exceeded after 5 retries")
+    raise RuntimeError("Pollinations rate-limit exceeded after 2 retries")
 
 
 def _generate_via_openrouter(prompt, filename):
@@ -98,42 +97,72 @@ def _generate_via_openrouter(prompt, filename):
 
 
 def _generate_via_gemini(prompt, filename):
+    """Generate image via Gemini Imagen (stable fallback)."""
     from google.genai import types
     client = _get_gemini_client()
-    response = client.models.generate_content(
-        model="gemini-2.0-flash-exp-image-generation",
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            response_modalities=['Text', 'Image']
+
+    # Try Imagen 4 fast (predict API)
+    try:
+        response = client.models.generate_images(
+            model="imagen-4.0-fast-generate-001",
+            prompt=prompt,
+            config=types.GenerateImagesConfig(number_of_images=1),
         )
+        image_bytes = response.generated_images[0].image.image_bytes
+        image = Image.open(BytesIO(image_bytes))
+        _save_pil_image(image, filename)
+        return
+    except Exception as e:
+        print(f"  Gemini Imagen-4 failed ({e}), trying gemini-2.5-flash-image...")
+
+    # Fallback: gemini-2.5-flash-image (multimodal generateContent)
+    response = client.models.generate_content(
+        model="gemini-2.5-flash-image",
+        contents=prompt,
+        config=types.GenerateContentConfig(response_modalities=["Text", "Image"]),
     )
     for part in response.candidates[0].content.parts:
-        if part.text is not None:
-            print(part.text)
-        elif part.inline_data is not None:
+        if part.inline_data is not None:
             image = Image.open(BytesIO(part.inline_data.data))
             _save_pil_image(image, filename)
+            return
+    raise RuntimeError("Gemini returned no image data")
 
 
 def generateImage(prompt, filename):
+    """
+    Generate an image and save it to filename.
+    Tries (in order): Pollinations → OpenRouter → Gemini.
+    Returns filename on success, None on total failure
+    (so callers can fall back to a placeholder URL).
+    """
     print(filename)
 
     if os.path.exists(filename):
         print(f"Image {filename} already exists, skipping generation.")
         return filename
 
+    # 1. Pollinations (free, no key required)
     try:
-        print(f"🎨 Generating image via Pollinations.ai (free, no key)...")
+        print(f"🎨 Generating image via Pollinations.ai...")
         _generate_via_pollinations(prompt, filename)
+        if os.path.exists(filename):
+            return filename
     except Exception as e:
-        print(f"⚠️  Pollinations failed ({e}), trying Gemini fallback...")
+        print(f"⚠️  Pollinations failed: {e}")
+
+    # 2. Gemini (Imagen-4 fast → gemini-2.5-flash-image fallback)
+    if GEM_API_KEY:
         try:
+            print(f"🎨 Trying Gemini image generation...")
             _generate_via_gemini(prompt, filename)
-        except Exception as e2:
-            print(f'Error in generating the Image: {e2}')
+            if os.path.exists(filename):
+                return filename
+        except Exception as e:
+            print(f"⚠️  Gemini image generation failed: {e}")
 
-    return filename
-
+    print(f"❌ All image generation methods failed for: {filename}")
+    return None
 def convert_to_webp(input_path, output_path=None, quality=85):
     """
     Convert an existing image to WebP format

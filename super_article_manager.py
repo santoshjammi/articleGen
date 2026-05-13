@@ -44,89 +44,102 @@ DEFAULT_EDITOR_REVIEWED_BY = "AI Editor"
 
 # === AI CATEGORIZATION CLASSES ===
 
+# The four editorial pillars of Country's News intelligence platform
+EDITORIAL_PILLARS = [
+    'AI Infrastructure',
+    'Enterprise Transformation',
+    'Smart Mobility',
+    'India Digital Transformation',
+]
+
 class AICategorizer:
-    """Simple AI-powered categorization using content analysis"""
-    
+    """Keyword-based categoriser aligned to the four editorial pillars"""
+
     def __init__(self):
-        # Standard categories - simple and clean
-        self.categories = [
-            'Technology', 'Business', 'Health', 'Sports', 
-            'Entertainment', 'Lifestyle', 'Environment', 'World'
-        ]
-        
-        # Simple keyword patterns for basic categorization
+        self.categories = EDITORIAL_PILLARS
+
         self.keyword_patterns = {
-            'Technology': ['technology', 'tech', 'ai', 'artificial intelligence', 'software', 'app', 
-                          'digital', 'computer', 'internet', 'cyber', 'data', 'algorithm', 'coding',
-                          'programming', 'development', 'innovation', 'startup tech'],
-            
-            'Business': ['business', 'finance', 'financial', 'economy', 'economic', 'market',
-                        'investment', 'banking', 'trade', 'commerce', 'corporate', 'company',
-                        'industry', 'profit', 'revenue', 'startup', 'entrepreneur'],
-            
-            'Health': ['health', 'medical', 'medicine', 'doctor', 'hospital', 'healthcare',
-                      'wellness', 'fitness', 'diet', 'nutrition', 'therapy', 'treatment',
-                      'disease', 'mental health', 'vaccine'],
-            
-            'Sports': ['sports', 'sport', 'game', 'match', 'tournament', 'player', 'team',
-                      'football', 'cricket', 'basketball', 'tennis', 'olympic', 'championship'],
-            
-            'Entertainment': ['movie', 'film', 'music', 'celebrity', 'entertainment', 'show',
-                             'actor', 'actress', 'singer', 'concert', 'album', 'streaming'],
-            
-            'Lifestyle': ['lifestyle', 'fashion', 'food', 'travel', 'recipe', 'cooking',
-                         'beauty', 'style', 'home', 'decoration', 'relationship'],
-            
-            'Environment': ['environment', 'climate', 'green', 'eco', 'sustainability',
-                           'pollution', 'renewable', 'conservation', 'carbon', 'emission'],
-            
-            'World': ['news', 'politics', 'political', 'government', 'international',
-                     'global', 'country', 'nation', 'war', 'peace', 'election', 'policy']
+            'AI Infrastructure': [
+                'local llm', 'inference', 'ai agent', 'gpu', 'llm', 'language model',
+                'nvidia', 'ai chip', 'ai hardware', 'model training', 'fine-tuning',
+                'quantization', 'ollama', 'vllm', 'hugging face', 'ai workflow',
+                'coding automation', 'cursor', 'github copilot', 'ai coding',
+                'orchestration', 'langchain', 'rag', 'retrieval augmented',
+                'vector database', 'embedding', 'ai infrastructure', 'compute',
+                'model deployment', 'ai ops', 'mlops', 'foundation model', 'gemini',
+                'claude', 'openai', 'mistral', 'llama', 'ai stack', 'ai tooling',
+            ],
+
+            'Enterprise Transformation': [
+                'enterprise ai', 'ai adoption', 'erp', 'sap', 'salesforce', 'workday',
+                'ai copilot', 'enterprise software', 'saas', 'automation', 'workflow',
+                'productivity', 'digital transformation', 'ai strategy', 'ai-native',
+                'b2b', 'enterprise', 'business automation', 'rpa', 'process automation',
+                'microsoft 365', 'slack ai', 'notion ai', 'zapier', 'make.com',
+                'ai integration', 'enterprise adoption', 'cost reduction', 'operational',
+                'ai roi', 'workforce automation', 'knowledge management', 'ai tool',
+                'business intelligence', 'data analytics', 'cloud migration',
+            ],
+
+            'Smart Mobility': [
+                'ev', 'electric vehicle', 'electric car', 'battery', 'charging station',
+                'charging network', 'tata ev', 'ola electric', 'ather', 'hyundai ev',
+                'tesla', 'byd', 'ev fleet', 'fleet intelligence', 'autonomous vehicle',
+                'self-driving', 'ai driving', 'logistics automation', 'smart logistics',
+                'supply chain', 'ev infrastructure', 'mobility', 'transport tech',
+                'manufacturing automation', 'robotics', 'industrial ai', 'smart factory',
+                'industry 4.0', 'ev adoption', 'range anxiety', 'battery swap',
+                'green mobility', 'sustainable transport', 'lidar', 'v2g',
+            ],
+
+            'India Digital Transformation': [
+                'india', 'indian', 'ondc', 'upi', 'aadhaar', 'digiyatra', 'niti aayog',
+                'india stack', 'bharat net', 'digital india', 'startup india',
+                'make in india', 'india ai mission', 'reliance jio', 'tata', 'infosys',
+                'wipro', 'hcl', 'tech mahindra', 'indian startup', 'bangalore',
+                'hyderabad', 'smart city', 'government ai', 'india fintech',
+                'rupee digital', 'cbdc india', 'india ecommerce', 'meesho', 'flipkart',
+                'india cloud', 'aws india', 'azure india', 'india manufacturing',
+                'pli scheme', 'semiconductor india', 'india gig economy',
+            ],
         }
-    
+
     def categorize_article(self, article: Dict, use_ai: bool = True) -> Dict:
-        """Categorize article based on content"""
+        """Categorize article into one of the four editorial pillars"""
         title = article.get('title', '').lower()
-        content = article.get('content', '').lower()
+        content = article.get('content', '').lower()[:2000]  # cap for speed
         keywords = [k.lower() for k in article.get('keywords', [])]
-        
-        # Combine all text for analysis
-        text = f"{title} {content} {' '.join(keywords)}"
-        
-        # Score each category
+        text = f"{title} {title} {' '.join(keywords)} {content}"  # title weighted ×2
+
         category_scores = {}
         for category, patterns in self.keyword_patterns.items():
             score = 0
             for pattern in patterns:
-                # Count occurrences of each pattern
                 count = text.count(pattern.lower())
-                # Weight by pattern importance (longer patterns = more specific)
                 weight = len(pattern.split())
                 score += count * weight
-            
             category_scores[category] = score
-        
-        # Find best category
+
         if category_scores and max(category_scores.values()) > 0:
             best_category = max(category_scores, key=category_scores.get)
             max_score = category_scores[best_category]
             total_score = sum(category_scores.values())
             confidence = min(max_score / total_score if total_score > 0 else 0, 1.0)
         else:
-            best_category = 'World'  # Default fallback
+            best_category = 'India Digital Transformation'  # default fallback
             confidence = 0.3
-        
+
         return {
             'category': best_category,
             'confidence': confidence,
-            'method': 'ai_keyword_analysis',
+            'method': 'pillar_keyword_analysis',
             'scores': category_scores
         }
-    
+
     def batch_categorize(self, articles: List[Dict], use_ai: bool = True, max_ai_calls: int = 10) -> List[Dict]:
         """Categorize multiple articles efficiently"""
         results = []
-        
+
         for i, article in enumerate(articles[:max_ai_calls]):
             try:
                 result = self.categorize_article(article, use_ai)
@@ -138,31 +151,27 @@ class AICategorizer:
                     'changed': article.get('category') != result['category'],
                     'scores': result.get('scores', {})
                 })
-                
+
                 print(f"   [{i+1}/{min(len(articles), max_ai_calls)}] {article.get('title', 'Untitled')[:50]}...")
-                print(f"       Original: {article.get('category', 'None')} → AI: {result['category']} (confidence: {result['confidence']:.2f})")
-                
+                print(f"       Original: {article.get('category', 'None')} → Pillar: {result['category']} (confidence: {result['confidence']:.2f})")
+
             except Exception as e:
                 print(f"   ❌ Failed to categorize article {i+1}: {e}")
                 results.append({
                     'article': article,
                     'original_category': article.get('category'),
-                    'ai_category': article.get('category', 'World'),
+                    'ai_category': article.get('category', 'India Digital Transformation'),
                     'confidence': 0.0,
                     'changed': False,
                     'error': str(e)
                 })
-        
+
         return results
 
 def simple_ai_categorize(title: str, content: str, keywords: List[str] = None) -> str:
-    """Simple function for quick categorization"""
+    """Quick categorization into one of the four editorial pillars"""
     categorizer = AICategorizer()
-    article = {
-        'title': title,
-        'content': content,
-        'keywords': keywords or []
-    }
+    article = {'title': title, 'content': content, 'keywords': keywords or []}
     result = categorizer.categorize_article(article)
     return result['category']
 
@@ -173,91 +182,118 @@ def categorize_with_confidence(article: Dict) -> Tuple[str, float]:
     return result['category'], result['confidence']
 
 # === CATEGORY NORMALIZATION ===
+# Maps any legacy or LLM-produced category string to one of the four editorial pillars
 CATEGORY_MAPPING = {
-    # Business consolidation
-    'Business': 'Business',
-    'Finance': 'Business', 
-    'Economy': 'Business',
-    'Business & Finance': 'Business',
-    'Business & Economy': 'Business',
-    'Business & International Relations': 'Business',
-    'Business and Technology': 'Business',
-    
-    # Health consolidation
-    'Health': 'Health',
-    'Health & Wellness': 'Health',
-    'Health & Safety': 'Health',
-    
-    # World/News consolidation
-    'News': 'World',
-    'World Affairs': 'World',
-    'Defence': 'World',
-    'Defense': 'World',
-    'Energy': 'World',
-    
-    # Lifestyle consolidation
-    'Travel': 'Lifestyle',
-    'Travel News': 'Lifestyle', 
-    'Food & Drink': 'Lifestyle',
-    'Career Development': 'Lifestyle',
-    
-    # Keep as-is
-    'Sports': 'Sports',
-    'Technology': 'Technology',
-    'Entertainment': 'Entertainment',
-    'Environment': 'Environment',
+    # Direct pillar names — pass through
+    'AI Infrastructure': 'AI Infrastructure',
+    'Enterprise Transformation': 'Enterprise Transformation',
+    'Smart Mobility': 'Smart Mobility',
+    'India Digital Transformation': 'India Digital Transformation',
+
+    # Technology → AI Infrastructure (primary mapping for tech content)
+    'Technology': 'AI Infrastructure',
+    'Tech': 'AI Infrastructure',
+    'Artificial Intelligence': 'AI Infrastructure',
+    'Machine Learning': 'AI Infrastructure',
+    'Data Science': 'AI Infrastructure',
+    'Cloud Computing': 'AI Infrastructure',
+    'Cybersecurity': 'Enterprise Transformation',
+    'Software Development': 'AI Infrastructure',
+    'Emerging Technologies': 'AI Infrastructure',
+
+    # Business / Finance → Enterprise Transformation
+    'Business': 'Enterprise Transformation',
+    'Finance': 'Enterprise Transformation',
+    'Economy': 'Enterprise Transformation',
+    'Business & Finance': 'Enterprise Transformation',
+    'Business & Economy': 'Enterprise Transformation',
+    'Business and Technology': 'Enterprise Transformation',
+    'Business & International Relations': 'Enterprise Transformation',
+    'Startup': 'Enterprise Transformation',
+    'Fintech': 'Enterprise Transformation',
+    'E-commerce': 'Enterprise Transformation',
+    'SaaS': 'Enterprise Transformation',
+    'Digital Marketing': 'Enterprise Transformation',
+
+    # Environment / Energy / Manufacturing → Smart Mobility
+    'Environment': 'Smart Mobility',
+    'Energy': 'Smart Mobility',
+    'Manufacturing': 'Smart Mobility',
+    'Automotive': 'Smart Mobility',
+    'EV': 'Smart Mobility',
+    'Logistics': 'Smart Mobility',
+    'Supply Chain': 'Smart Mobility',
+    'Robotics': 'Smart Mobility',
+
+    # World / India / Government → India Digital Transformation
+    'World': 'India Digital Transformation',
+    'News': 'India Digital Transformation',
+    'World Affairs': 'India Digital Transformation',
+    'Defence': 'India Digital Transformation',
+    'Defense': 'India Digital Transformation',
+    'Politics': 'India Digital Transformation',
+    'Government': 'India Digital Transformation',
+
+    # Out-of-scope legacy categories → nearest pillar
+    'Health': 'Enterprise Transformation',
+    'Health & Wellness': 'Enterprise Transformation',
+    'Sports': 'India Digital Transformation',
+    'Entertainment': 'India Digital Transformation',
+    'Lifestyle': 'India Digital Transformation',
+    'Travel': 'India Digital Transformation',
+    'Food & Drink': 'India Digital Transformation',
+    'Career Development': 'Enterprise Transformation',
 }
 
-# === ENHANCED SUBCATEGORY-TO-CATEGORY MAPPING ===
+# === SUBCATEGORY-TO-PILLAR MAPPING ===
 SUBCATEGORY_MAPPING = {
-    # Technology subcategories
-    'Agile Certifications': 'Technology',
-    'Agile Project Management': 'Technology',
-    'Agile Methodologies': 'Technology',
-    'Product Management': 'Technology',
-    'Emerging Technologies': 'Technology',
-    'Web Development': 'Technology',
-    'Digital Economy': 'Technology',
-    'Artificial Intelligence': 'Technology',
-    'Software Development': 'Technology',
-    'Programming': 'Technology',
-    'DevOps': 'Technology',
-    'Cloud Computing': 'Technology',
-    'Cybersecurity': 'Technology',
-    'Data Science': 'Technology',
-    'Machine Learning': 'Technology',
-    'Tech News': 'Technology',
-    'Mobile Development': 'Technology',
-    'API Development': 'Technology',
-    'Database Management': 'Technology',
-    'System Administration': 'Technology',
-    'IT Management': 'Technology',
-    
-    # Business subcategories
-    'Digital Strategy': 'Business',
-    'Marketing Strategy': 'Business',
-    'Business Strategy': 'Business',
-    'Digital Marketing': 'Business',
-    'International Business': 'Business',
-    'Banking': 'Business',
-    'Recruitment': 'Business',
-    'Stock Market': 'Business',
-    'Stock Analysis': 'Business',
-    'Personal Finance': 'Business',
-    'Retail': 'Business',
-    'Fast Food': 'Business',
-    'Semiconductors': 'Business',
-    'Project Management': 'Business',
-    'Business Analytics': 'Business',
-    'E-commerce': 'Business',
-    'Fintech': 'Business',
-    'Startup': 'Business',
-    'Entrepreneurship': 'Business',
-    'Corporate Strategy': 'Business',
-    'Business Development': 'Business',
-    'Sales': 'Business',
-    'Customer Service': 'Business',
-    'Banking News': 'Business',
+    # AI Infrastructure
+    'Agile Certifications': 'Enterprise Transformation',
+    'Agile Project Management': 'Enterprise Transformation',
+    'Agile Methodologies': 'Enterprise Transformation',
+    'Product Management': 'Enterprise Transformation',
+    'Emerging Technologies': 'AI Infrastructure',
+    'Web Development': 'AI Infrastructure',
+    'Artificial Intelligence': 'AI Infrastructure',
+    'Software Development': 'AI Infrastructure',
+    'Programming': 'AI Infrastructure',
+    'DevOps': 'AI Infrastructure',
+    'Cloud Computing': 'AI Infrastructure',
+    'Cybersecurity': 'Enterprise Transformation',
+    'Data Science': 'AI Infrastructure',
+    'Machine Learning': 'AI Infrastructure',
+    'Tech News': 'AI Infrastructure',
+    'Mobile Development': 'AI Infrastructure',
+    'API Development': 'AI Infrastructure',
+    'Database Management': 'AI Infrastructure',
+    'System Administration': 'AI Infrastructure',
+    'IT Management': 'Enterprise Transformation',
+    'Digital Economy': 'India Digital Transformation',
+
+    # Enterprise Transformation
+    'Digital Strategy': 'Enterprise Transformation',
+    'Marketing Strategy': 'Enterprise Transformation',
+    'Business Strategy': 'Enterprise Transformation',
+    'Digital Marketing': 'Enterprise Transformation',
+    'International Business': 'Enterprise Transformation',
+    'Banking': 'Enterprise Transformation',
+    'Recruitment': 'Enterprise Transformation',
+    'Stock Market': 'Enterprise Transformation',
+    'Stock Analysis': 'Enterprise Transformation',
+    'Personal Finance': 'Enterprise Transformation',
+    'Retail': 'Enterprise Transformation',
+    'Semiconductors': 'AI Infrastructure',
+    'Project Management': 'Enterprise Transformation',
+    'Business Analytics': 'Enterprise Transformation',
+    'E-commerce': 'Enterprise Transformation',
+    'Fintech': 'Enterprise Transformation',
+    'Entrepreneurship': 'India Digital Transformation',
+    'Corporate Strategy': 'Enterprise Transformation',
+    'Business Development': 'Enterprise Transformation',
+    'Sales': 'Enterprise Transformation',
+    'Customer Service': 'Enterprise Transformation',
+    'Banking News': 'Enterprise Transformation',
+    'Fast Food': 'India Digital Transformation',
 }
 
 def categorize_by_subcategory(subcategory: str, current_category: str = None) -> str:
@@ -273,7 +309,7 @@ def categorize_by_subcategory(subcategory: str, current_category: str = None) ->
         str: The correct main category based on subcategory mapping
     """
     if not subcategory:
-        return current_category or 'World'
+        return current_category or 'India Digital Transformation'
     
     # Check if subcategory has a specific mapping
     mapped_category = SUBCATEGORY_MAPPING.get(subcategory)
@@ -291,7 +327,7 @@ def categorize_by_subcategory(subcategory: str, current_category: str = None) ->
         return mapped_category
     
     # No specific mapping found, return current category or default
-    return current_category or 'World'
+    return current_category or 'India Digital Transformation'
 
 def normalize_category_enhanced(category: str, subcategory: str = None) -> str:
     """
@@ -560,16 +596,24 @@ def add_internal_links(content_html: str, all_titles_map: Dict[str, str],
                 links_added += 1
     return linked_content
 
+# Differentiated content angles — each drives a genuinely different article
+_CONTENT_ANGLES = [
+    ("regional",      "{kw} in {region}: market dynamics, adoption barriers, and local investment signals"),
+    ("economic",      "{kw}: cost structure, ROI calculus, and the economic winners of this shift"),
+    ("enterprise",    "{kw} inside the enterprise: integration challenges, vendor landscape, and build-vs-buy decisions"),
+    ("future",        "{kw} in 2025–2026: what the next 18 months look like and which signals to watch"),
+    ("workforce",     "{kw} and the workforce: job displacement, new roles, reskilling priorities, and human-AI collaboration"),
+    ("infrastructure","{kw} infrastructure: the underlying stack, bottlenecks, and platform dependencies"),
+    ("policy",        "{kw} policy and regulation: government response, compliance obligations, and geopolitical implications"),
+    ("startup",       "{kw} startup ecosystem: who is building, who is funding, and which bets are likely to pay off"),
+]
+
 def expand_keywords(base_keyword: str, region: str) -> List[str]:
-    """Expand keywords for better SEO"""
-    expanded = [
-        f"{base_keyword} in {region}",
-        f"{base_keyword} news",
-        f"{base_keyword} trends 2025",
-        f"what is {base_keyword}",
-        f"{base_keyword} analysis"
+    """Generate differentiated content angles — each produces a substantively different article."""
+    return [
+        angle.format(kw=base_keyword, region=region)
+        for _, angle in _CONTENT_ANGLES
     ]
-    return [kw for kw in expanded if kw not in [base_keyword]]
 
 def validate_keyword_input(keywords: List[str]) -> List[str]:
     """Validate and clean keyword input"""
@@ -1364,8 +1408,9 @@ class SuperArticleManager:
 class ArticleGenerator:
     """Core article generation engine"""
     
-    def __init__(self, manager: SuperArticleManager):
+    def __init__(self, manager: SuperArticleManager, skip_images: bool = False):
         self.manager = manager
+        self.skip_images = skip_images
         if LLM_MODEL and OPENROUTER_API_KEY:
             self.api_key = OPENROUTER_API_KEY
             self.use_openrouter = True
@@ -1375,6 +1420,8 @@ class ArticleGenerator:
             self.use_openrouter = False
             if not self.api_key:
                 raise ValueError("GEMINI_API_KEY environment variable not set")
+        if skip_images:
+            print("🖼️  Image generation disabled — articles will use placeholder images")
     
     def _parse_content_sections(self, content: str) -> List[Dict]:
         """Parse content into sections based on headings"""
@@ -1437,7 +1484,8 @@ class ArticleGenerator:
                                           keyword: str, region: str,
                                           article_id_counter: int,
                                           custom_prompt_additions: str = "",
-                                          searches: Optional[int] = None) -> Optional[Dict]:
+                                          searches: Optional[int] = None,
+                                          existing_titles: Optional[List[str]] = None) -> Optional[Dict]:
         """Generate a single article from a keyword"""
         
         # Create enhanced prompt
@@ -1469,117 +1517,111 @@ class ArticleGenerator:
             
         #     {custom_prompt_additions}"""
 
-        # Update the base_prompt section in the generate_article_from_keyword method
-        if searches:
-            base_prompt = f"""You are a content strategist and AI search optimization expert. Your goal is to generate a comprehensive, keyword-optimized article about "{keyword}" for readers in {region}. This article must be strategically structured with high keyword density and optimized to be easily summarized and cited by AI answer engines like Perplexity.
+        # Intelligence-focused prompt — Country's News transformation (Phase 1)
+        trend_context = f"This topic is currently trending with {searches:,} searches." if searches else ""
 
-            This keyword is trending with {searches} searches.
+        # Build an exclusion block so the LLM avoids repeating covered angles
+        if existing_titles:
+            titles_list = "\n".join(f"  - {t}" for t in existing_titles[:10])
+            avoid_block = f"""
+---
 
-            **CRITICAL KEYWORD INTEGRATION REQUIREMENTS:**
-            - The EXACT phrase "{keyword}" MUST appear in EVERY major heading (H2/H3)
-            - Use creative variations like: "What is {keyword}?", "{keyword} - Complete Guide", "How {keyword} Works", "Best {keyword} Practices"
-            - Achieve HIGH DENSITY: Mention "{keyword}" at least 15-20 times throughout the article
-            - Never miss including the keyword in header sections - this is mandatory
+**ORIGINALITY REQUIREMENT — CRITICAL**
+The following articles about this topic ALREADY EXIST on the platform. Your article MUST cover a meaningfully different angle, argument, or lens. Do NOT reuse the same framing, thesis, or section structure as any of these:
 
-            **COMPREHENSIVE QUESTION-BASED STRUCTURE:**
-            You must address ALL of these question categories with keyword-optimized headings:
+{titles_list}
 
-            **FOUNDATIONAL QUESTIONS (Search Intent Analysis):**
-            1. "What is {keyword}?" - Define and explain the core concept
-            2. "Why Do You Need {keyword}?" - Address the problem it solves
-            3. "How Does {keyword} Work?" - Explain the process/methodology
-            
-            **PRACTICAL APPLICATION QUESTIONS (Related Queries):**
-            4. "Best {keyword} Examples" - Show real-world applications
-            5. "How to Create/Use {keyword}" - Step-by-step implementation
-            6. "Common {keyword} Mistakes to Avoid" - Troubleshooting and pitfalls
-            
-            **ADVANCED QUESTIONS (Industry Standards):**
-            7. "Advanced {keyword} Techniques" - Expert-level insights
-            8. "Tools for {keyword}" - Software, resources, platforms
-            9. "{keyword} Best Practices in {region}" - Regional/contextual considerations
-            
-            **FUTURE-FOCUSED QUESTIONS:**
-            10. "Future of {keyword}" - Trends and evolution
-            11. "{keyword} vs Alternatives" - Competitive analysis
-
-            **LOGICAL INFORMATION ARCHITECTURE:**
-            - **Foundation Layer**: What → Why (Problem/Solution fit)
-            - **Application Layer**: How → Examples (Implementation)
-            - **Optimization Layer**: Best Practices → Advanced Techniques
-            - **Strategic Layer**: Tools → Future Trends → Regional Context
-
-            **CONTENT REQUIREMENTS:**
-            - Article must be over 1500 words (increased from 1200)
-            - Each section minimum 100-150 words
-            - Include bullet points, numbered lists, and bold text
-            - Add hypothetical data: "Recent studies show...", "Industry surveys indicate..."
-            - Use conversational but authoritative tone
-            - Include current 2025 trends and developments
-            - End with engagement question for comments
-
-            **SCANNABLE FORMATTING:**
-            - Bold the keyword phrase in the first paragraph
-            - Use bullet points for benefits/features
-            - Include numbered steps for processes
-            - Add comparison tables where relevant
-            - Use subheadings for better readability
-
-            {custom_prompt_additions}"""
+Choose a perspective that is not represented above. If the existing articles cover the "what" and "why", cover the "how" or "who". If they are strategic, be operational. If they are high-level, be specific with numbers and named examples.
+"""
         else:
-            base_prompt = f"""You are a content strategist and AI search optimization expert. Your goal is to generate a comprehensive, keyword-optimized article about "{keyword}" specifically for readers in {region}. This article must be strategically structured with high keyword density and optimized to be easily summarized and cited by AI answer engines like Perplexity.
+            avoid_block = ""
 
-            **CRITICAL KEYWORD INTEGRATION REQUIREMENTS:**
-            - The EXACT phrase "{keyword}" MUST appear in EVERY major heading (H2/H3)
-            - Use creative variations like: "What is {keyword}?", "{keyword} - Complete Guide", "How {keyword} Works", "Best {keyword} Practices"
-            - Achieve HIGH DENSITY: Mention "{keyword}" at least 15-20 times throughout the article
-            - Never miss including the keyword in header sections - this is mandatory
+        base_prompt = f"""You are a senior technology intelligence analyst writing for Country's News — a platform covering how AI, enterprise software, and smart infrastructure are reshaping industries for readers in {region}.
 
-            **COMPREHENSIVE QUESTION-BASED STRUCTURE:**
-            You must address ALL of these question categories with keyword-optimized headings:
+Your mission is to produce a focused intelligence piece about: "{keyword}"
+{trend_context}
 
-            **FOUNDATIONAL QUESTIONS (Search Intent Analysis):**
-            1. "What is {keyword}?" - Define and explain the core concept
-            2. "Why Do You Need {keyword}?" - Address the problem it solves
-            3. "How Does {keyword} Work?" - Explain the process/methodology
-            
-            **PRACTICAL APPLICATION QUESTIONS (Related Queries):**
-            4. "Best {keyword} Examples" - Show real-world applications
-            5. "How to Create/Use {keyword}" - Step-by-step implementation
-            6. "Common {keyword} Mistakes to Avoid" - Troubleshooting and pitfalls
-            
-            **ADVANCED QUESTIONS (Industry Standards):**
-            7. "Advanced {keyword} Techniques" - Expert-level insights
-            8. "Tools for {keyword}" - Software, resources, platforms
-            9. "{keyword} Best Practices in {region}" - Regional/contextual considerations
-            
-            **FUTURE-FOCUSED QUESTIONS:**
-            10. "Future of {keyword}" - Trends and evolution
-            11. "{keyword} vs Alternatives" - Competitive analysis
+---
 
-            **LOGICAL INFORMATION ARCHITECTURE:**
-            - **Foundation Layer**: What → Why (Problem/Solution fit)
-            - **Application Layer**: How → Examples (Implementation)
-            - **Optimization Layer**: Best Practices → Advanced Techniques
-            - **Strategic Layer**: Tools → Future Trends → Regional Context
+**PLATFORM IDENTITY**
+Country's News is NOT a news wire. It is a technology intelligence platform.
+- Write with the authority of someone who has thought deeply about the topic
+- Take positions. Have opinions. Reach conclusions.
+- Explain why things matter, not just what happened
+- Connect this topic to broader industry transformation patterns
 
-            **CONTENT REQUIREMENTS:**
-            - Article must be over 1500 words (increased from 1200)
-            - Each section minimum 100-150 words
-            - Include bullet points, numbered lists, and bold text
-            - Add hypothetical data: "Recent studies show...", "Industry surveys indicate..."
-            - Use conversational but authoritative tone
-            - Include current 2025 trends and developments
-            - End with engagement question for comments
+---
 
-            **SCANNABLE FORMATTING:**
-            - Bold the keyword phrase in the first paragraph
-            - Use bullet points for benefits/features
-            - Include numbered steps for processes
-            - Add comparison tables where relevant
-            - Use subheadings for better readability
+**MANDATORY 7-PART ARTICLE STRUCTURE**
+Use these exact H2 sections in this order:
 
-            {custom_prompt_additions}"""
+1. **Context** — What is happening and why it is significant right now. One or two sharp paragraphs. No "In today's world..." openings.
+
+2. **Why This Matters** — The strategic stakes. Who cares and why. Frame the consequence, not the definition.
+
+3. **Operational Implications** — How does this change day-to-day workflows, systems, or processes for businesses or practitioners?
+
+4. **Economic Implications** — Cost impact, market size shifts, revenue opportunities, or financial pressures this creates.
+
+5. **Winners and Losers** — Be specific. Name categories of companies, roles, or geographies that benefit or lose out. Avoid vague hedging.
+
+6. **Future Outlook** — Where this goes in the next 12–36 months. What signals to watch. Be specific about timelines and conditions.
+
+7. **Strategic Takeaway** — One clear, actionable insight for a decision-maker, operator, or builder. End with a genuine question or observation that invites reflection.
+
+---
+
+**CONTENT REQUIREMENTS**
+- Minimum 1,400 words
+- Each section minimum 150 words
+- Use data, named examples, and real-world context wherever possible
+- Cite specific companies, tools, or initiatives by name
+- Include comparison tables or structured lists where analysis benefits from them
+- Write for a technically literate audience — no hand-holding on basic concepts
+- Regional context for {region}: weave in India-specific data, government initiatives, or local market dynamics where relevant
+
+---
+
+**STRICTLY PROHIBITED — DO NOT DO ANY OF THE FOLLOWING:**
+- Fake or vague statistics ("Recent studies show..." / "Industry surveys indicate..." / "According to experts...")
+- Keyword stuffing or repeating "{keyword}" excessively in headings
+- Generic "What is X?" intros or encyclopedia-style definitions as openers
+- Repetitive SEO heading patterns ("{keyword} Guide", "{keyword} Tips", "{keyword} Best Practices")
+- Hype language ("revolutionary", "game-changing", "groundbreaking", "unprecedented")
+- Filler sentences that restate the obvious
+- Hedging every claim into meaninglessness
+
+---
+
+**TONE**
+- Analytical and direct
+- Opinionated where evidence supports it
+- Operator-focused: what does this mean for someone running a business or building a product?
+- Confident but intellectually honest about uncertainty
+- Concise — cut every sentence that doesn't add information
+
+---
+
+**CATEGORY ASSIGNMENT**
+Assign the article to exactly ONE of these four editorial pillars:
+- "AI Infrastructure" — local LLMs, inference, AI agents, GPU economics, AI workflows, coding automation
+- "Enterprise Transformation" — AI-native SaaS, enterprise automation, ERP evolution, AI copilots, productivity systems
+- "Smart Mobility" — EV infrastructure, battery ecosystems, AI fleet intelligence, charging networks, mobility systems
+- "India Digital Transformation" — ONDC, UPI, smart cities, government AI, manufacturing digitization, startup ecosystem
+
+---
+
+**CONTENT TYPE**
+Assign the article to exactly ONE of these types:
+- "strategic-analysis" — why a shift matters, consequences, industry implications
+- "deep-dive" — comprehensive operational or technical guide
+- "comparison" — structured evaluation of tools, platforms, or approaches
+- "intelligence-brief" — concise synthesis of a fast-moving development
+- "data-story" — analysis built around numbers, growth charts, or market data
+
+{avoid_block}
+
+        {custom_prompt_additions}"""
 
         headers = {'Content-Type': 'application/json'}
         
@@ -1587,18 +1629,18 @@ class ArticleGenerator:
         response_schema = {
             "type": "OBJECT",
             "properties": {
-                "title": {"type": "STRING", "description": "Compelling, SEO-optimized title (60 chars max)"},
-                "excerpt": {"type": "STRING", "description": "Engaging summary (150-160 chars)"},
-                "content": {"type": "STRING", "description": "Full HTML article content (1200+ words)"},
-                "metaDescription": {"type": "STRING", "description": "SEO meta description (150-160 chars)"},
-                "keywords": {"type": "ARRAY", "items": {"type": "STRING"}, "description": "10-15 relevant SEO keywords"},
-                "ogTitle": {"type": "STRING", "description": "Social media optimized title"},
+                "title": {"type": "STRING", "description": "Sharp, intelligent title that conveys insight — not a generic SEO headline (70 chars max)"},
+                "excerpt": {"type": "STRING", "description": "One punchy sentence capturing the article's key finding or argument (150-160 chars)"},
+                "content": {"type": "STRING", "description": "Full HTML article using the mandatory 7-part structure (1400+ words)"},
+                "metaDescription": {"type": "STRING", "description": "Meta description conveying intelligence value, not keyword stuffing (150-160 chars)"},
+                "keywords": {"type": "ARRAY", "items": {"type": "STRING"}, "description": "10-15 semantically relevant keywords — no generic filler"},
+                "ogTitle": {"type": "STRING", "description": "LinkedIn/Twitter title optimised for decision-maker audiences"},
                 "imageAltText": {"type": "STRING", "description": "Descriptive alt text for main image"},
-                "socialShareText": {"type": "STRING", "description": "Compelling social media share text"},
-                "category": {"type": "STRING", "description": "Main article category"},
-                "subCategory": {"type": "STRING", "description": "Specific subcategory"},
-                "contentType": {"type": "STRING", "description": "Content type (news, analysis, guide, etc.)"},
-                "difficultyLevel": {"type": "STRING", "description": "Reading difficulty (beginner, intermediate, advanced)"},
+                "socialShareText": {"type": "STRING", "description": "LinkedIn post hook — 1-2 sentences that make someone want to read the analysis"},
+                "category": {"type": "STRING", "description": "One of: AI Infrastructure, Enterprise Transformation, Smart Mobility, India Digital Transformation"},
+                "subCategory": {"type": "STRING", "description": "Specific sub-topic within the editorial pillar"},
+                "contentType": {"type": "STRING", "description": "One of: strategic-analysis, deep-dive, comparison, intelligence-brief, data-story"},
+                "difficultyLevel": {"type": "STRING", "description": "Target reader: operator, builder, executive"},
                 "targetAudience": {"type": "ARRAY", "items": {"type": "STRING"}, "description": "Target audience segments"},
                 "inlineImageDescriptions": {
                     "type": "ARRAY",
@@ -1613,9 +1655,9 @@ class ArticleGenerator:
                     },
                     "description": "2-4 inline images for the article"
                 },
-                "keyTakeaways": {"type": "ARRAY", "items": {"type": "STRING"}, "description": "3-5 key points"},
-                "socialMediaHashtags": {"type": "ARRAY", "items": {"type": "STRING"}, "description": "Relevant hashtags"},
-                "callToActionText": {"type": "STRING", "description": "Engaging CTA for readers"},
+                "keyTakeaways": {"type": "ARRAY", "items": {"type": "STRING"}, "description": "3-5 specific, opinionated insights — not generic observations"},
+                "socialMediaHashtags": {"type": "ARRAY", "items": {"type": "STRING"}, "description": "Relevant hashtags for LinkedIn and X"},
+                "callToActionText": {"type": "STRING", "description": "Invitation to think, discuss, or subscribe — not a generic 'click here'"},
                 "structuredData": {"type": "STRING", "description": "JSON-LD structured data for SEO"},
                 "relatedTopics": {"type": "ARRAY", "items": {"type": "STRING"}, "description": "Related topics for further reading"}
             },
@@ -1631,18 +1673,21 @@ class ArticleGenerator:
         if self.use_openrouter:
             json_schema_hint = (
                 "\n\nRespond with ONLY a valid JSON object (no markdown, no code fences) "
-                "with these exact fields: title (string), excerpt (string), content (string, full HTML), "
+                "with these exact fields: title (string), excerpt (string), content (string, full HTML using the 7-part structure), "
                 "metaDescription (string), keywords (array of strings), ogTitle (string), "
-                "imageAltText (string), socialShareText (string), category (string), subCategory (string), "
-                "contentType (string), difficultyLevel (string), targetAudience (array of strings), "
+                "imageAltText (string), socialShareText (string), "
+                "category (one of: AI Infrastructure, Enterprise Transformation, Smart Mobility, India Digital Transformation), "
+                "subCategory (string), "
+                "contentType (one of: strategic-analysis, deep-dive, comparison, intelligence-brief, data-story), "
+                "difficultyLevel (one of: operator, builder, executive), targetAudience (array of strings), "
                 "inlineImageDescriptions (array of objects with description, caption, placementHint), "
-                "keyTakeaways (array of strings), socialMediaHashtags (array of strings), "
+                "keyTakeaways (array of 3-5 specific opinionated insights), socialMediaHashtags (array of strings), "
                 "callToActionText (string), structuredData (string), relatedTopics (array of strings)."
             )
             payload = {
                 "model": LLM_MODEL,
                 "messages": [{"role": "user", "content": base_prompt + json_schema_hint}],
-                "temperature": 0.7,
+                "temperature": 0.5,
                 "max_tokens": 8192,
             }
             headers['Authorization'] = f'Bearer {self.api_key}'
@@ -1653,7 +1698,7 @@ class ArticleGenerator:
                 "generationConfig": {
                     "responseMimeType": "application/json",
                     "responseSchema": response_schema,
-                    "temperature": 0.7,
+                    "temperature": 0.5,
                     "maxOutputTokens": 8192
                 }
             }
@@ -1690,72 +1735,72 @@ class ArticleGenerator:
                 
                 # Create images directory
                 os.makedirs(os.path.join(IMAGES_BASE_DIR, slug), exist_ok=True)
-                
-                # Generate main image
-                og_image_prompt = f"Professional news article image for: {data['ogTitle']}. Visual style: {data['imageAltText']}. High quality, news-appropriate. It is very important not to have any garbled text in the images."
-                og_img_fp = os.path.join(IMAGES_BASE_DIR, slug, "main.webp")
-                og_image_url = generateImage(og_image_prompt, og_img_fp) or generate_placeholder_image_url(data['ogTitle'])
-                
-                # Generate thumbnail image
-                thumb_image_prompt = f"Thumbnail for news article: {data['ogTitle']}. Compact, visually appealing, news-style thumbnail. High quality. It is very important not to have any garbled text in the images."
-                thumb_img_fp = os.path.join(IMAGES_BASE_DIR, slug, "thumb.webp")
-                thumbnail_url = generateImage(thumb_image_prompt, thumb_img_fp) or generate_placeholder_image_url(data['ogTitle'], 400, 200)
-                
-                # Generate inline images with intelligent infographics
-                inline_images_list = []
-                inline_image_descs = data.get("inlineImageDescriptions", [])
-                
-                # Initialize infographic analyzer
-                infographic_analyzer = InfographicAnalyzer()
-                
-                # Parse content into sections for infographic analysis
-                content_sections = self._parse_content_sections(data['content'])
-                infographic_count = 0
-                
-                for i, img_desc in enumerate(inline_image_descs):
-                    # Standard inline image generation
-                    inline_prompt = f"Supporting image for article section: {img_desc['description']}. Caption context: {img_desc['caption']}. Professional, high-quality. It is very important not to have any garbled text in the images."
-                    inline_fp = os.path.join(IMAGES_BASE_DIR, slug, f"inline_{i+1}.webp")
-                    inline_url = generateImage(inline_prompt, inline_fp) or generate_placeholder_image_url(
-                        img_desc.get("description", f"Article Image {i+1}")
-                    )
-                    
-                    if inline_url:
-                        inline_images_list.append({
-                            "url": inline_url,
-                            "alt": img_desc.get('description', f'Article illustration {i+1}'),
-                            "caption": img_desc.get('caption', ''),
-                            "placementHint": img_desc.get('placementHint', f'after paragraph {i+2}')
-                        })
-                
-                # Generate intelligent infographics for key sections
-                for section_idx, section in enumerate(content_sections):
-                    if section['heading'] and len(section['content']) > 100:  # Only for substantial sections
-                        analysis = infographic_analyzer.analyze_section(section['heading'], section['content'])
-                        
-                        # Determine if this section warrants an infographic
-                        if self._should_generate_infographic(analysis, section['heading']):
-                            infographic_count += 1
-                            infographic_prompt = generate_infographic_prompt(
-                                keyword, 
-                                section['heading'], 
-                                analysis['infographic_type'], 
-                                analysis['content_elements'],
-                                section['content']
-                            )
-                            
-                            infographic_fp = os.path.join(IMAGES_BASE_DIR, slug, f"infographic_{infographic_count}.webp")
-                            infographic_url = generateImage(infographic_prompt, infographic_fp)
-                            
-                            if infographic_url:
-                                inline_images_list.append({
-                                    "url": infographic_url,
-                                    "alt": f"Infographic: {section['heading']} - {keyword}",
-                                    "caption": f"Visual guide: {section['heading']}",
-                                    "placementHint": f"infographic for section: {section['heading']}",
-                                    "type": "infographic"
-                                })
-                
+
+                if self.skip_images:
+                    og_image_url = generate_placeholder_image_url(data['ogTitle'])
+                    thumbnail_url = generate_placeholder_image_url(data['ogTitle'], 400, 200)
+                    inline_images_list = []
+                    infographic_count = 0
+                else:
+                    # Generate main image
+                    og_image_prompt = f"Professional news article image for: {data['ogTitle']}. Visual style: {data['imageAltText']}. High quality, news-appropriate. It is very important not to have any garbled text in the images."
+                    og_img_fp = os.path.join(IMAGES_BASE_DIR, slug, "main.webp")
+                    og_image_url = await asyncio.to_thread(generateImage, og_image_prompt, og_img_fp) or generate_placeholder_image_url(data['ogTitle'])
+
+                    # Generate thumbnail image
+                    thumb_image_prompt = f"Thumbnail for news article: {data['ogTitle']}. Compact, visually appealing, news-style thumbnail. High quality. It is very important not to have any garbled text in the images."
+                    thumb_img_fp = os.path.join(IMAGES_BASE_DIR, slug, "thumb.webp")
+                    thumbnail_url = await asyncio.to_thread(generateImage, thumb_image_prompt, thumb_img_fp) or generate_placeholder_image_url(data['ogTitle'], 400, 200)
+
+                    # Generate inline images with intelligent infographics
+                    inline_images_list = []
+                    inline_image_descs = data.get("inlineImageDescriptions", [])
+
+                    # Initialize infographic analyzer
+                    infographic_analyzer = InfographicAnalyzer()
+
+                    # Parse content into sections for infographic analysis
+                    content_sections = self._parse_content_sections(data['content'])
+                    infographic_count = 0
+
+                    for i, img_desc in enumerate(inline_image_descs):
+                        inline_prompt = f"Supporting image for article section: {img_desc['description']}. Caption context: {img_desc['caption']}. Professional, high-quality. It is very important not to have any garbled text in the images."
+                        inline_fp = os.path.join(IMAGES_BASE_DIR, slug, f"inline_{i+1}.webp")
+                        inline_url = await asyncio.to_thread(generateImage, inline_prompt, inline_fp) or generate_placeholder_image_url(
+                            img_desc.get("description", f"Article Image {i+1}")
+                        )
+                        if inline_url:
+                            inline_images_list.append({
+                                "url": inline_url,
+                                "alt": img_desc.get('description', f'Article illustration {i+1}'),
+                                "caption": img_desc.get('caption', ''),
+                                "placementHint": img_desc.get('placementHint', f'after paragraph {i+2}')
+                            })
+
+                    # Generate intelligent infographics for key sections
+                    for section_idx, section in enumerate(content_sections):
+                        if section['heading'] and len(section['content']) > 100:
+                            analysis = infographic_analyzer.analyze_section(section['heading'], section['content'])
+                            if self._should_generate_infographic(analysis, section['heading']):
+                                infographic_count += 1
+                                infographic_prompt = generate_infographic_prompt(
+                                    keyword,
+                                    section['heading'],
+                                    analysis['infographic_type'],
+                                    analysis['content_elements'],
+                                    section['content']
+                                )
+                                infographic_fp = os.path.join(IMAGES_BASE_DIR, slug, f"infographic_{infographic_count}.webp")
+                                infographic_url = await asyncio.to_thread(generateImage, infographic_prompt, infographic_fp)
+                                if infographic_url:
+                                    inline_images_list.append({
+                                        "url": infographic_url,
+                                        "alt": f"Infographic: {section['heading']} - {keyword}",
+                                        "caption": f"Visual guide: {section['heading']}",
+                                        "placementHint": f"infographic for section: {section['heading']}",
+                                        "type": "infographic"
+                                    })
+
                 print(f"📊 Generated {infographic_count} intelligent infographics for '{keyword}'")
                 
                 # Process content
@@ -1827,19 +1872,21 @@ class ArticleGenerator:
                     article['category'] = normalize_category(article['category'])
                     print(f"⚠️  Fell back to simple categorization: {e}")
                 
-                # Backup generated images immediately
-                image_files = []
-                if os.path.exists(og_img_fp):
-                    image_files.append(og_img_fp)
-                if os.path.exists(thumb_img_fp):
-                    image_files.append(thumb_img_fp)
-                for i in range(len(inline_image_descs)):
-                    inline_fp = os.path.join(IMAGES_BASE_DIR, slug, f"inline_{i+1}.webp")
-                    if os.path.exists(inline_fp):
-                        image_files.append(inline_fp)
-                
-                if image_files:
-                    backup_images(slug, image_files)
+                # Backup generated images immediately (only when images were generated)
+                if not self.skip_images:
+                    image_files = []
+                    og_img_fp_check = os.path.join(IMAGES_BASE_DIR, slug, "main.webp")
+                    thumb_img_fp_check = os.path.join(IMAGES_BASE_DIR, slug, "thumb.webp")
+                    if os.path.exists(og_img_fp_check):
+                        image_files.append(og_img_fp_check)
+                    if os.path.exists(thumb_img_fp_check):
+                        image_files.append(thumb_img_fp_check)
+                    for i in range(len(data.get("inlineImageDescriptions", []))):
+                        inline_fp = os.path.join(IMAGES_BASE_DIR, slug, f"inline_{i+1}.webp")
+                        if os.path.exists(inline_fp):
+                            image_files.append(inline_fp)
+                    if image_files:
+                        backup_images(slug, image_files)
                 
                 print(f"✅ Generated: '{data['title']}' ({word_count} words)")
                 return article
@@ -2078,41 +2125,61 @@ async def generate_articles_from_trends_multi_region(manager: SuperArticleManage
 
 async def generate_articles_from_keywords(manager: SuperArticleManager, keywords: List[str], 
                                         region: str = "India", custom_prompt: str = "", 
-                                        skip_existing: bool = True) -> None:
+                                        skip_existing: bool = True,
+                                        count_per_keyword: int = 1,
+                                        skip_images: bool = False) -> None:
     """Generate articles from specific keywords"""
     print(f"🎯 Starting keyword-based article generation...")
     print(f"📍 Target region: {region}")
     print(f"🎯 Keywords: {', '.join(keywords)}")
+    if count_per_keyword > 1:
+        print(f"📊 Generating {count_per_keyword} articles per keyword")
     
-    generator = ArticleGenerator(manager)
+    generator = ArticleGenerator(manager, skip_images=skip_images)
     article_id_counter = manager.get_next_article_id()
-    
-    # Filter keywords
-    keywords_to_process = []
+    full_region_name = map_region_code_to_full_name(region)
+
+    # Build a map of base_keyword → existing article titles so we can inject
+    # them into the prompt and prevent repetitive angles
+    def get_existing_titles_for_keyword(base_kw: str) -> List[str]:
+        base_kw_lower = base_kw.lower()
+        return [
+            a["title"] for a in manager.articles
+            if base_kw_lower in a.get("sourceKeyword", "").lower()
+            or base_kw_lower in a.get("title", "").lower()
+        ]
+
+    # Build expanded keyword list: base + differentiated content angles up to count_per_keyword
+    keywords_to_process = []  # list of (variant_keyword, base_keyword)
     for keyword in validate_keyword_input(keywords):
-        if skip_existing and keyword in manager.processed_keywords:
+        if skip_existing and keyword in manager.processed_keywords and count_per_keyword == 1:
             print(f"⏭️  SKIP: '{keyword}' already processed")
             continue
-        keywords_to_process.append(keyword)
-    
+        if count_per_keyword <= 1:
+            keywords_to_process.append((keyword, keyword))
+        else:
+            variants = [keyword] + expand_keywords(keyword, full_region_name)
+            for i in range(count_per_keyword):
+                keywords_to_process.append((variants[i % len(variants)], keyword))
+
     if not keywords_to_process:
         print("ℹ️  No new keywords to process!")
         return
-    
-    print(f"📝 Processing {len(keywords_to_process)} keywords...")
-    
-    # Generate articles
+
+    print(f"📝 Processing {len(keywords_to_process)} article tasks...")
+
+    # Generate articles — pass existing titles per base keyword to avoid repetition
     tasks = []
     async with aiohttp.ClientSession() as session:
-        for keyword in keywords_to_process:
-            # Ensure region is in full name format
-            full_region_name = map_region_code_to_full_name(region)
+        for variant_kw, base_kw in keywords_to_process:
+            existing_titles = get_existing_titles_for_keyword(base_kw)
             task = generator.generate_article_from_keyword(
-                session, keyword, full_region_name, article_id_counter, custom_prompt
+                session, variant_kw, full_region_name, article_id_counter,
+                custom_prompt, existing_titles=existing_titles
             )
             tasks.append(task)
             article_id_counter += 1
-        
+
         print("⏳ Generating articles... This may take a few minutes.")
         results = await asyncio.gather(*tasks, return_exceptions=True)
     
@@ -2122,18 +2189,25 @@ async def generate_articles_from_keywords(manager: SuperArticleManager, keywords
         if isinstance(result, Exception):
             print(f"❌ Task failed with exception: {result}")
             continue
-            
+
         if result:
             slug = result["slug"]
+            # If slug already exists, always create a new article with a unique suffix
+            # rather than overwriting — this ensures every generation run adds new content
             if slug in manager.articles_map:
-                manager.articles_map[slug].update(result)
-                print(f"🔄 Updated: {result['title']}")
-            else:
-                manager.articles_map[slug] = result
-                manager.articles.append(result)
-                print(f"✨ Added: {result['title']}")
+                counter = 2
+                new_slug = f"{slug}-{counter}"
+                while new_slug in manager.articles_map:
+                    counter += 1
+                    new_slug = f"{slug}-{counter}"
+                result["slug"] = new_slug
+                slug = new_slug
+                print(f"🔀 Slug collision resolved → '{slug}'")
+            manager.articles_map[slug] = result
+            manager.articles.append(result)
+            print(f"✨ Added: {result['title']}")
             successful_articles += 1
-    
+
     manager.stats['articles_generated'] += successful_articles
     print(f"🎉 Success! Generated {successful_articles} articles.")
 
@@ -2268,7 +2342,7 @@ async def generate_images_for_articles(manager: SuperArticleManager, specific_ar
                 image_alt = article.get('imageAltText', f'News image for {title}')
                 
                 main_prompt = f"Professional news article image for: {og_title}. Visual style: {image_alt}. High quality, news-appropriate. It is very important not to have any garbled text in the images. Only one image. No text overlays."
-                main_image_url = generateImage(main_prompt, main_img_path)
+                main_image_url = await asyncio.to_thread(generateImage, main_prompt, main_img_path)
                 
                 if main_image_url and os.path.exists(main_img_path):
                     # Update article with new image URL
@@ -2287,7 +2361,7 @@ async def generate_images_for_articles(manager: SuperArticleManager, specific_ar
                 og_title = article.get('ogTitle', title)
                 
                 thumb_prompt = f"Thumbnail for news article: {og_title}. Compact, visually appealing, news-style thumbnail. It is very important not to have any garbled text in the images. Only one image. No text overlays."
-                thumb_image_url = generateImage(thumb_prompt, thumb_img_path)
+                thumb_image_url = await asyncio.to_thread(generateImage, thumb_prompt, thumb_img_path)
                 
                 if thumb_image_url and os.path.exists(thumb_img_path):
                     # Update article with new thumbnail URL
@@ -2326,7 +2400,7 @@ async def generate_images_for_articles(manager: SuperArticleManager, specific_ar
                 inline_img_path = os.path.join(article_images_dir, f"inline_{j+1}.webp")
                 if regenerate or not os.path.exists(inline_img_path):
                     inline_prompt = f"Supporting image for article: {img_desc['description']}. Caption context: {img_desc['caption']}. Professional, high-quality news illustration. It is very important not to have any garbled text in the images. Only one image. No text overlays."
-                    inline_image_url = generateImage(inline_prompt, inline_img_path)
+                    inline_image_url = await asyncio.to_thread(generateImage, inline_prompt, inline_img_path)
                     
                     if inline_image_url and os.path.exists(inline_img_path):
                         # Update or add to inline images
@@ -2405,6 +2479,10 @@ Examples:
                                 help='Custom prompt additions')
     keywords_parser.add_argument('--no-skip', action='store_true',
                                 help='Generate even if keyword already processed')
+    keywords_parser.add_argument('--count', '-c', type=int, default=1,
+                                help='Number of articles to generate per keyword (default: 1)')
+    keywords_parser.add_argument('--skip-images', action='store_true',
+                                help='Skip image generation and use placeholders (much faster)')
     
     # Generate -> Batch
     batch_parser = gen_subparsers.add_parser('batch', help='Process keyword batches')
@@ -2523,7 +2601,9 @@ async def main():
                 
             elif args.gen_mode == 'keywords':
                 await generate_articles_from_keywords(
-                    manager, args.keywords, args.region, args.prompt, not args.no_skip
+                    manager, args.keywords, args.region, args.prompt, not args.no_skip,
+                    count_per_keyword=getattr(args, 'count', 1),
+                    skip_images=getattr(args, 'skip_images', False)
                 )
                 
             elif args.gen_mode == 'batch':
