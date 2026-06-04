@@ -534,15 +534,32 @@ async def generate_articles_background(job_id: str, request: ArticleGenerationRe
 async def startup_event():
     """Initialize database on startup"""
     logger.info("🚀 Starting SEO Article Generator WebApp...")
-    
+
     # Validate environment
     if not validate_environment():
         logger.warning("⚠️  Warning: Some environment variables are missing. Some features may not work.")
-    
+
     # Initialize database
     init_database()
     create_default_admin()
-    
+
+    # Security check: warn if default credentials are still in use
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT hashed_password FROM users WHERE username = 'admin' LIMIT 1")
+        row = cursor.fetchone()
+        conn.close()
+        if row and pwd_context.verify("admin123", row[0]):
+            logger.warning("=" * 60)
+            logger.warning("🔐 SECURITY WARNING: The admin account is still using")
+            logger.warning("   the default password 'admin123'.")
+            logger.warning("   Change it immediately via the webapp settings or")
+            logger.warning("   by re-creating the user in the database.")
+            logger.warning("=" * 60)
+    except Exception:
+        pass  # Non-blocking; don't prevent startup
+
     logger.info("✅ SEO Article Generator API started successfully")
 
 @app.get("/", response_class=HTMLResponse)

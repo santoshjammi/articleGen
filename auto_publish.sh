@@ -414,7 +414,17 @@ main() {
     log "🧠 New Feature: Unified intelligent sync with article-level change detection"
     log "🎯 SEO Strategy: Global trends >100K searches + India TOP 15"
     log "Timestamp: $(date '+%Y-%m-%d %H:%M:%S')"
-    
+
+    # Pre-flight: validate required environment variables before doing any work
+    activate_venv
+    cd "$SCRIPT_DIR"
+    if ! python3 check_env.py >> "$LOG_FILE" 2>&1; then
+        log_error "ABORTING: Environment configuration is incomplete. Check $LOG_FILE for details."
+        log_error "Run 'python3 check_env.py' manually to see which variables are missing."
+        exit 1
+    fi
+    log_success "Environment pre-flight check passed"
+
     # Cleanup old logs
     cleanup_logs
     
@@ -456,17 +466,35 @@ main() {
     log "Step 2.25: Generating missing images..."
     generate_missing_images "after trends refresh"
 
-        # Step 2.4: Generate site with intelligent differential processing
-        log "Step 2.4: Generating site with intelligent sync system..."
-        activate_venv
-        cd "$SCRIPT_DIR"
-        if python3 generateSite_advanced.py >> "$LOG_FILE" 2>&1; then
-            log_success "Site generation completed successfully"
-        else
-            log_error "Failed to generate site"
-            return 1
-        fi
-    
+    # Step 2.4: Generate site with intelligent differential processing
+    log "Step 2.4: Generating site with intelligent sync system..."
+    activate_venv
+    cd "$SCRIPT_DIR"
+    if python3 generateSite_advanced.py >> "$LOG_FILE" 2>&1; then
+        log_success "Site generation completed successfully"
+    else
+        log_error "Failed to generate site"
+        return 1
+    fi
+
+    # Step 2.45: Export JSON API for Next.js frontend consumption
+    log "Step 2.45: Exporting static JSON API for Next.js frontend..."
+    activate_venv
+    cd "$SCRIPT_DIR"
+    if python3 generateJsonApi.py >> "$LOG_FILE" 2>&1; then
+        log_success "JSON API exported successfully (dist/api/v1/)"
+    else
+        log_warning "JSON API export failed (non-blocking — HTML site is still valid)"
+    fi
+
+    # Step 2.46: Generate EEAT static pages (required for AdSense & E-E-A-T)
+    log "Step 2.46: Generating EEAT pages (about, editorial, privacy, contact…)..."
+    if python3 generate_eeat_pages.py >> "$LOG_FILE" 2>&1; then
+        log_success "EEAT pages generated (7 pages in dist/)"
+    else
+        log_warning "EEAT page generation failed (non-blocking)"
+    fi
+
     # Step 2.5: Generate enhanced differential manifest with article intelligence
     log "Step 2.5: Analyzing changes with intelligent sync system..."
     if ! generate_differential_manifest; then

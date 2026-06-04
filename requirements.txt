@@ -5,5 +5,7 @@ requests
 python-dotenv
 markdown
 Pillow
-google-generativeai
+google-genai
 aiohttp
+colorama
+tqdm

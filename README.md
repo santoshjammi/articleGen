@@ -1,652 +1,294 @@
-# Country's News - Article Generation & Website System
+# Country's News — Article Generation & Publishing System
 
 [![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen.svg)]()
 
-A comprehensive Python-based system for generating news articles and creating a fully functional, SEO-optimized news website with automated content management.
+An automated Python system that generates SEO-optimised news articles using LLMs, builds a static website, and syncs it to a production FTP server — all from a single daily script.
 
-## 🌟 Features
-
-### 📰 **Article Management**
-- **Dupl### 🔐 Security Features
-
-- **Contact Form Validation**: Server-side PHP validation
-- **XSS Protection**: Input sanitization
-- **CSRF Protection**: Form token validation
-- **Content Security**: No inline scripts
-- **Privacy Compliance**: GDPR-ready privacy policy
-- **Date Format Protection**: Automatic sanitization prevents sitemap XML errorsetection & Removal**: Advanced deduplication with smart quality scoring
-- **Content Enhancement**: Automatic metadata optimization and SEO improvements
-- **Quality Validation**: Comprehensive integrity checks for all articles
-- **Batch Processing**: Handle large volumes of articles efficiently
-- **🎯 Keyword-Based Generation**: Generate articles from specific keywords with full control
-- **📦 Batch Keyword Processing**: Process predefined keyword categories efficiently
-- **🔍 Smart SEO Optimization**: Automatic keyword expansion and integration
-
-### 🌐 **Website Generation**
-- **Static Site Generator**: Creates fast, SEO-optimized HTML pages
-- **Responsive Design**: Mobile-first design using Tailwind CSS
-- **Load More Functionality**: AJAX-based infinite scroll for articles
-- **Category Organization**: Automatic categorization with dedicated category pages
-- **Search Engine Optimization**: Built-in sitemap, robots.txt, and RSS feed generation
-
-### 📄 **Legal & Professional Pages**
-- **Contact Page**: Professional contact form with PHP handler
-- **Privacy Policy**: Comprehensive GDPR-compliant privacy policy
-- **Disclaimer**: Legal disclaimer covering content and liability
-- **About Us**: Professional company information page
-
-### 💰 **Advertisement Integration**
-- **Strategic Ad Placement**: Multiple ad zones throughout the site
-- **Responsive Ad Containers**: Mobile and desktop optimized placements
-- **Revenue Optimization**: Prime real estate ad positioning
-
-### 🔧 **Developer Tools**
-- **Analysis Scripts**: Comprehensive duplicate detection and quality analysis
-- **Enhancement Tools**: Automated content optimization and metadata generation
-- **Deployment Ready**: Hostinger-optimized deployment configuration
-- **Backup System**: Automatic backups with timestamp tracking
+---
 
 ## 📁 Project Structure
 
 ```
 articleGen/
-├── 📄 Core System
-│   ├── super_article_manager.py     # 🌟 UNIFIED ARTICLE SYSTEM (All Operations)
-│   ├── generateSite.py              # Website generator
-│   ├── perplexityArticles.json      # Article data source
-│   ├── contact-handler.php          # Contact form processor
-│   └── requirements.txt             # Python dependencies
+├── super_article_manager.py    # Core CLI — article generation, enhancement, categorisation
+├── generateSite_advanced.py    # Static site generator (differential mode)
+├── customRSync.py              # FTP sync (differential, fast)
+├── auto_publish.sh             # Daily automation script (runs everything)
+├── generateDifferentialManifest.py  # Computes files changed since last sync
+├── generateImage.py            # Image generation (Pollinations → Gemini fallback)
+├── fetch_ai_keywords.py        # Auto-fetches trending AI keywords from the web
+├── fetch_fresh_trends.py       # Refreshes Google Trends data for next run
+├── custom_keywords.txt         # Your custom keywords (edit this!)
+├── perplexityArticles_eeat_enhanced.json  # Master article store
+├── requirements.txt
+├── .env                        # API keys and FTP credentials
 │
-├── 🎯 Unified Article Operations (via super_article_manager.py)
-│   ├── 📰 Article Generation        # Autonomous & keyword-based generation
-│   ├── 🔧 Enhancement & Optimization # Content improvement & SEO
-│   ├── 🔍 Duplicate Management      # Detection & smart removal
-│   ├── 📊 Workflow Automation       # Complete processing pipelines
-│   ├── 📈 Analytics & Statistics    # Comprehensive reporting
-│   └── 💾 Backup Systems           # Article & image protection
+├── dist/                       # Generated static site (deployed to server)
+│   ├── index.html
+│   ├── articles/
+│   ├── categories/
+│   ├── images/
+│   ├── sitemap.xml
+│   ├── robots.txt
+│   └── rss.xml
 │
-├── 🗂️ Organized Archives
-│   └── jaffa/                       # Legacy files (31 files organized by category)
-│
-├── 📊 Generated Website (dist/)
-│   ├── index.html                   # Homepage with Load More
-│   ├── articles/                    # Individual article pages
-│   ├── categories/                  # Category listing pages
-│   ├── contact.html                 # Contact form page
-│   ├── privacy-policy.html          # Privacy policy page
-│   ├── disclaimer.html              # Legal disclaimer page
-│   ├── about-us.html                # About us page
-│   ├── sitemap.xml                  # SEO sitemap
-│   ├── robots.txt                   # Search engine directives
-│   └── rss.xml                      # RSS feed
-│
-├── 🖼️ Assets & Backups
-│   ├── images/                      # Article images and thumbnails
-│   ├── images_backup/               # 🔒 Local image backups (277 images)
-│   └── input/                       # Trend analysis data
-│
-├── 📋 Documentation
-│   ├── README.md                    # This file
-│   ├── HOSTINGER_DEPLOYMENT.md     # Deployment guide
-│   └── CTA_IMPLEMENTATION_SUMMARY.md # CTA implementation notes
-│
-└── 🗂️ Backup & Config
-    ├── .gitignore                   # Git ignore rules
-    ├── venv/                        # Python virtual environment
-    └── perplexityArticles_backup_*  # Automatic backups
+├── images/                     # Article images (WebP, generated locally)
+├── backups/                    # Automatic article JSON backups
+└── logs/                       # Daily run logs
 ```
 
-## 🚀 Quick Start
+---
+
+## ⚙️ Setup
 
 ### Prerequisites
 
 - Python 3.13+
-- Virtual environment (recommended)
-- Web server with PHP support (for contact forms)
+- FTP-accessible web host (e.g. Hostinger)
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/santoshjammi/articleGen.git
-   cd articleGen
-   ```
-
-2. **Set up virtual environment**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Generate articles using the unified system**
-   ```bash
-   # Option 1: Interactive mode (recommended)
-   python super_article_manager.py
-
-   # Option 2: Direct article generation
-   python super_article_manager.py generate --help
-   ```
-
-5. **Generate the website**
-   ```bash
-   python generateSite.py
-   ```
-
-6. **Open in browser**
-   ```bash
-   open dist/index.html  # On Windows: start dist/index.html
-   ```
-
-## 📖 Usage Guide
-
-### 🌟 **Unified Article Management System**
-
-All article operations are now consolidated into `super_article_manager.py` - your one-stop solution for all article generation and management needs.
-
-#### 🎯 **Interactive Mode (Recommended)**
 ```bash
-python super_article_manager.py
-```
-**Features**:
-- 🎬 Full interactive interface with all operations
-- 📊 Real-time statistics and analytics
-- ⚙️ Configuration management
-- 🔄 Workflow automation
-- 💾 Backup management
-
-#### 🚀 **Command Line Operations**
-
-##### Article Generation
-```bash
-# Trending topics generation
-python super_article_manager.py generate trends --count 5
-
-# Keyword-based generation
-python super_article_manager.py generate keywords "artificial intelligence" "machine learning" --region USA
-
-# Interactive keyword input
-python super_article_manager.py generate interactive
-
-# Batch keyword processing
-python super_article_manager.py generate batch technology health
+git clone https://github.com/santoshjammi/articleGen.git
+cd articleGen
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
-##### Article Enhancement & Optimization
-```bash
-# Enhance article metadata and SEO
-python super_article_manager.py enhance
+### Environment Variables
 
-# Comprehensive article fixing (deduplicate + fix + merge)
-python super_article_manager.py enhance --all
+Create a `.env` file in the project root with:
 
-# Individual enhancement operations
-python super_article_manager.py enhance --deduplicate
-python super_article_manager.py enhance --fix-issues
-python super_article_manager.py enhance --merge-legacy
+```env
+# LLM (required)
+OPENROUTER_API_KEY=your_key
+LLM_MODEL=google/gemma-4-26b-a4b-it
+
+# Image generation (optional — falls back to Pollinations.ai for free)
+GEM_API_KEY=your_gemini_key
+GEMINI_API_KEY=your_gemini_key
+
+# FTP deployment (required for auto_publish)
+FTP_HOST=your.ftp.host
+FTP_USER=your_ftp_user
+FTP_PASS=your_ftp_password
+FTP_PORT=21
+REMOTE_DIRECTORY=/public_html
+LOCAL_DIRECTORY=/path/to/articleGen/dist
 ```
-
-##### Workflow Management
-```bash
-# Complete workflow (generate first, then optimize)
-python super_article_manager.py workflow --generate-first
-
-# Complete optimization workflow
-python super_article_manager.py workflow --complete
-```
-
-##### Statistics & Analytics
-```bash
-# View comprehensive statistics
-python super_article_manager.py stats
-```
-
-##### Backup Management
-```bash
-# Backup all images to local directory
-python super_article_manager.py backup --images
-```
-
-### 🔍 **Available Generation Modes**
-
-#### 1. **Trending Topics Generation** 📈
-Generates articles based on trending topics and current events:
-```bash
-python super_article_manager.py generate trends --count 10
-```
-**Features**:
-- Real-time trend analysis
-- Automatic topic selection from trending keywords
-- SEO optimization
-- Image generation
-
-#### 2. **Keyword-Based Generation** 🎯
-Generate articles from specific keywords with full control:
-```bash
-python super_article_manager.py generate keywords "blockchain" "cryptocurrency" "defi" --region India
-```
-**Features**:
-- Custom keyword targeting
-- Smart keyword expansion
-- Category assignment
-- Regional customization
-- Individual keyword processing
-
-**Available Regions**:
-- 🇮🇳 **India** (default)
-- 🇺� **USA** 
-- 🇬🇧 **UK**
-- �🇦 **Canada**
-- �🇺 **Australia**
-
-#### 3. **Batch Processing** 📦
-Process predefined keyword categories efficiently:
-```bash
-python super_article_manager.py generate batch technology business health
-```
-
-#### 4. **Interactive Mode** 🎨
-Interactive keyword input with guided prompts:
-```bash
-python super_article_manager.py generate interactive
-```
-
-### 🔧 **Legacy Operations (For Reference)**
-
-The following individual scripts have been consolidated into `super_article_manager.py`:
-
-#### Old Analysis & Optimization Commands
-```bash
-# OLD METHOD - Now use: python super_article_manager.py workflow --complete
-python analyze_duplicates.py
-
-# OLD METHOD - Now use: python super_article_manager.py enhance --deduplicate
-python deduplicate_articles.py
-
-# OLD METHOD - Now use: python super_article_manager.py enhance
-python enhance_articles.py
-
-# OLD METHOD - Now use: python super_article_manager.py enhance --fix-issues
-python fix_articles.py
-
-# OLD METHOD - Now use: python super_article_manager.py stats
-python final_summary.py
-```
-
-#### Old Keyword Generation Commands
-```bash
-# OLD METHOD - Now use: python super_article_manager.py generate interactive
-python quickKeywordGen.py --interactive
-
-# OLD METHOD - Now use: python super_article_manager.py generate keywords "AI" "ML"
-python quickKeywordGen.py "artificial intelligence" "machine learning"
-
-# OLD METHOD - Now use: python super_article_manager.py generate batch
-python batchKeywordGen.py
-
-# OLD METHOD - Now use: python super_article_manager.py (interactive mode)
-python keywordArticleHub.py
-```
-
-### 🌐 **Website Generation**
-
-#### Generate Complete Website
-```bash
-python generateSite.py
-```
-
-**Generated Content**:
-- 📄 **51 Article Pages** - Individual SEO-optimized pages
-- 📂 **10 Category Pages** - Organized by topic
-- 🏠 **Homepage** - With Load More functionality
-- 📞 **Contact Page** - Professional contact form
-- ⚖️ **Legal Pages** - Privacy, Disclaimer, About Us
-- 🔍 **SEO Files** - Sitemap, robots.txt, RSS feed
-
-#### Complete Workflow (Recommended)
-```bash
-# 1. Generate articles using unified system
-python super_article_manager.py generate --mode keyword --keywords "your,keywords"
-
-# 2. Run complete workflow (deduplicate + enhance)
-python super_article_manager.py workflow --mode complete
-
-# 3. Generate website
-python generateSite.py
-
-# 4. View comprehensive statistics
-python super_article_manager.py stats
-```
-
-### 🎯 **Keyword-Based Article Generation**
-
-**🌟 All keyword operations are now unified in `super_article_manager.py`**
-
-#### Interactive Mode (Recommended)
-```bash
-python super_article_manager.py
-```
-**Features**:
-- 🎬 Full interactive interface with all options
-- 📊 Article statistics and analytics  
-- ⚙️ Configuration management
-- 🔄 Integration tools
-
-#### Quick Keyword Generation
-```bash
-# Interactive keyword input
-python super_article_manager.py generate --mode keyword --interactive
-
-# Direct command line
-python super_article_manager.py generate --mode keyword --keywords "artificial intelligence,machine learning"
-
-# Custom region targeting
-python super_article_manager.py generate --mode keyword --keywords "stock market,cryptocurrency" --region USA
-```
-
-#### Batch Processing
-```bash
-# Interactive batch mode
-python super_article_manager.py generate --mode batch --interactive
-
-# Process specific categories
-python super_article_manager.py generate --mode batch --categories "technology,business,health"
-```
-
-**Available Categories**:
-- 🔬 **Technology**: AI, blockchain, cybersecurity, 5G
-- 💼 **Business**: startups, e-commerce, digital marketing
-- 🏥 **Health**: wellness, fitness, nutrition, medical breakthroughs
-- ⚽ **Sports**: cricket, football, olympics, tennis
-- 🎬 **Entertainment**: Bollywood, streaming, music, celebrities
-- 🌱 **Science**: climate change, renewable energy, space exploration
-
-#### Complete Workflow
-```bash
-# Modern Unified Approach (Recommended)
-# 1. Generate keyword-based articles
-python super_article_manager.py generate --mode keyword --keywords "your,keywords"
-
-# 2. Run complete workflow (analyze + deduplicate + enhance)
-python super_article_manager.py workflow --mode complete
-
-# 3. Generate website
-python generateSite.py
-
-# 4. View comprehensive statistics
-python super_article_manager.py stats
-```
-
-### 🔒 **Backup & Safety Features**
-
-#### Automatic Backups
-The system automatically creates backups during all operations:
-- **Article Backups**: `perplexityArticles_backup_YYYYMMDD_HHMMSS.json`
-- **Image Backups**: Automatic backup to `images_backup/` directory
-- **Pre-operation Snapshots**: Before any destructive operations
-
-#### Manual Backup Commands
-```bash
-# Backup all articles
-python super_article_manager.py backup --type articles
-
-# Backup all images (277 images backed up)
-python super_article_manager.py backup --type images
-
-# Full system backup
-python super_article_manager.py backup --type full
-```
-
-### 📊 **Quality Metrics & Analytics**
-
-#### Real-time Statistics
-```bash
-# View comprehensive statistics
-python super_article_manager.py stats
-
-# Export detailed analytics
-python super_article_manager.py stats --export --format json
-
-# Category breakdown analysis
-python super_article_manager.py stats --categories
-```
-
-Current website statistics:
-- ✅ **51 unique articles** (100% duplicate-free)
-- ✅ **43,937 total words** (861 avg per article)
-- ✅ **10 diverse categories** (Sports, Technology, Economy, etc.)
-- ✅ **100% complete metadata** (all required fields present)
-- ✅ **SEO optimized** (proper titles, descriptions, sitemaps)
-- ✅ **277 images backed up** (automatic backup system)
-
-## 🎯 Article Categories
-
-| Category | Articles | Description |
-|----------|----------|-------------|
-| **Sports** | 35 | Boxing, MMA, Football, Cricket |
-| **Technology** | 3 | Streaming, Digital trends |
-| **Economy** | 3 | Financial analysis, markets |
-| **Business** | 2 | Corporate news, analysis |
-| **Environment** | 2 | Conservation, wildlife |
-| **Defence/Defense** | 2 | Military, security |
-| **Finance** | 1 | Banking, investments |
-| **News** | 2 | General news coverage |
-| **Business & International Relations** | 1 | Global business |
-
-## 🔧 Configuration
-
-### Article Data Structure
-```json
-{
-  "id": "unique-article-id",
-  "title": "SEO-Optimized Title (Under 60 chars)",
-  "slug": "url-friendly-slug",
-  "content": "Full article content",
-  "excerpt": "Brief description (160 chars max)",
-  "category": "Article Category",
-  "author": "Author Name",
-  "datePublished": "2025-08-05T12:00:00Z",
-  "dateModified": "2025-08-05T12:00:00Z",
-  "metaDescription": "SEO meta description",
-  "wordCount": 800,
-  "readingTimeMinutes": 4,
-  "tags": ["tag1", "tag2"],
-  "ogImage": "social-sharing-image.jpg"
-}
-```
-
-### Website Configuration
-Edit `generateSite.py` to customize:
-- **Site Title**: "Country's News"
-- **Domain**: "countrysnews.com"
-- **Contact Email**: Various department emails
-- **Advertisement Placements**: Strategic ad zones
-- **Color Scheme**: Blue/gray professional theme
-
-## 🚀 Deployment
-
-### Hostinger Deployment
-
-1. **Generate the website**
-   ```bash
-   python generateSite.py
-   ```
-
-2. **Upload files**
-   - Upload all files from `dist/` to your hosting root
-   - Upload `contact-handler.php` to the same directory
-   - Ensure PHP is enabled on your hosting
-
-3. **Configure domain**
-   - Point your domain to the hosting directory
-   - Update any hardcoded URLs if necessary
-
-4. **Test functionality**
-   - ✅ Homepage loads correctly
-   - ✅ Articles display properly
-   - ✅ Contact form works
-   - ✅ All internal links function
-   - ✅ Mobile responsiveness
-
-Detailed deployment instructions: [HOSTINGER_DEPLOYMENT.md](HOSTINGER_DEPLOYMENT.md)
-
-## 🛠️ Advanced Features
-
-### AJAX Load More System
-```javascript
-// Automatic infinite scroll implementation
-function loadMoreArticles() {
-    // Fetch additional articles from articles-data.json
-    // Append to existing article grid
-    // Update pagination controls
-}
-```
-
-### Advertisement Integration
-- **Top Banner**: 728x90 prime placement
-- **Sidebar Ads**: 160x600 sticky positioning  
-- **Content Ads**: 300x250 strategic placement
-- **Bottom Banners**: Additional revenue opportunities
-
-### SEO Optimization
-- **Structured Data**: JSON-LD schema markup
-- **Open Graph**: Social media optimization
-- **Meta Tags**: Comprehensive SEO metadata
-- **Sitemap**: Automatic XML sitemap generation
-- **RSS Feed**: Content syndication ready
-
-## 🔐 Security Features
-
-- **Contact Form Validation**: Server-side PHP validation
-- **XSS Protection**: Input sanitization
-- **CSRF Protection**: Form token validation
-- **Content Security**: No inline scripts
-- **Privacy Compliance**: GDPR-ready privacy policy
-
-## 📈 Performance Optimization
-
-- **Static Generation**: Fast-loading HTML pages
-- **Image Optimization**: Responsive image handling
-- **CDN Ready**: Tailwind CSS via CDN
-- **Minimal JavaScript**: Only essential interactive features
-- **Mobile First**: Responsive design prioritizing mobile
-
-## 🧪 Testing & Quality Assurance
-
-### Automated Checks
-```bash
-# Modern unified approach
-python super_article_manager.py workflow --mode analyze    # Check for duplicates
-python super_article_manager.py enhance                    # Validate article integrity  
-python super_article_manager.py stats                      # Generate quality report
-
-# Legacy commands (for reference only)
-# python analyze_duplicates.py
-# python enhance_articles.py  
-# python final_summary.py
-```
-
-### Manual Testing Checklist
-- [ ] All article pages load correctly
-- [ ] Category navigation works
-- [ ] Contact form submits properly
-- [ ] Mobile responsiveness verified
-- [ ] All internal links functional
-- [ ] SEO metadata present
-- [ ] Advertisement placeholders visible
-
-## 🗄️ Backup System
-
-### Automatic Backup Features
-The unified system provides comprehensive backup protection:
-
-**Article Backups**:
-- `perplexityArticles_backup_YYYYMMDD_HHMMSS.json`
-- `perplexityArticles_pre_enhancement_YYYYMMDD_HHMMSS.json`
-- `perplexityArticles_comprehensive_fix_YYYYMMDD_HHMMSS.json`
-
-**Image Backups**:
-- `images_backup/` directory with 277 images automatically backed up
-- Organized by article slug for easy identification
-- Automatic backup during article generation
-- Manual backup commands available
-
-### Manual Backup Commands
-```bash
-# Backup specific types
-python super_article_manager.py backup --type articles
-python super_article_manager.py backup --type images
-python super_article_manager.py backup --type full
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/new-feature`)
-3. Commit your changes (`git commit -am 'Add new feature'`)
-4. Push to the branch (`git push origin feature/new-feature`)
-5. Create a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support & Troubleshooting
-
-### Common Issues
-
-**Q: Articles not generating properly?**
-A: Run `python super_article_manager.py enhance` to fix metadata issues.
-
-**Q: Duplicate articles found?**
-A: Use `python super_article_manager.py workflow --mode deduplicate` to remove duplicates safely.
-
-**Q: Want to see comprehensive statistics?**
-A: Run `python super_article_manager.py stats` for detailed analytics.
-
-**Q: Need to backup your work?**
-A: Use `python super_article_manager.py backup --type full` for complete backup.
-
-**Q: Contact form not working?**
-A: Ensure PHP is enabled and `contact-handler.php` is uploaded correctly.
-
-**Q: Images not displaying?**
-A: Check that the `images/` directory is uploaded with correct paths.
-
-### Getting Help
-
-- 📧 **Email**: support@countrysnews.com
-- 🐛 **Bug Reports**: Create an issue on GitHub
-- 💡 **Feature Requests**: Open a discussion on GitHub
-- 📖 **Documentation**: Check the `docs/` directory
-
-## 🎉 Acknowledgments
-
-- **Tailwind CSS**: For the responsive design framework
-- **Python Community**: For excellent libraries and tools
-- **Open Source Contributors**: For inspiration and best practices
-
-## 📊 Project Statistics
-
-- **Total Lines of Code**: 51,844+ (super_article_manager.py)
-- **System Consolidation**: 89% file reduction (35+ → 4 core files)
-- **Articles Supported**: 51 (extensible)
-- **Images Backed Up**: 277 (automatic backup system)
-- **Categories**: 10 (customizable)
-- **Page Templates**: 8 (responsive)
-- **SEO Score**: A+ (optimized)
-- **Mobile Score**: 100% (responsive)
-- **Load Time**: <2s (static generation)
-- **Archive Organization**: 31 legacy files organized in jaffa/ folder
 
 ---
 
-**🌟 Star this repository if you find it useful!**
+## 🚀 Automated Publishing: `auto_publish.sh`
 
-*Last updated: August 5, 2025*
+This is the main production script. Run it daily (or via cron) to generate articles, build the site, and push everything to your server.
+
+```bash
+bash auto_publish.sh
+```
+
+### What It Does (in order)
+
+| Step | Action |
+|------|--------|
+| 1 | Generates 10 trend-based articles from today's top Google Trends |
+| 1.5a | Auto-fetches new AI keywords from the internet → `custom_keywords.txt` |
+| 1.5b | Generates 5 articles per keyword in `custom_keywords.txt` (with images) |
+| 1.6 | Fills any missing images (retries up to 3×) |
+| 2 | Refreshes trend data for tomorrow's run |
+| 2.4 | Rebuilds the static site (differential — only changed pages) |
+| 2.5 | Computes the differential sync manifest (which files changed) |
+| 3 | Uploads only changed files to the FTP server |
+
+Logs are written to `logs/auto_publish_YYYYMMDD.log`.
+
+### How to Provide Your Own Keywords
+
+Edit `custom_keywords.txt` in the project root. One keyword per line. Lines starting with `#` are ignored.
+
+```
+# custom_keywords.txt
+AI inference
+India digital transformation
+Battery Tech Evolution
+electric vehicles india 2026
+```
+
+These are picked up automatically on the next `auto_publish.sh` run. To run immediately:
+
+```bash
+python super_article_manager.py generate keywords "AI inference" "Battery Tech" \
+  --region India --count 5 --no-skip
+```
+
+### Configuration
+
+| Variable | Location | Default | Effect |
+|----------|----------|---------|--------|
+| `DEFAULT_CUSTOM_REGION` | `auto_publish.sh` line 63 | `US` | Region for keyword articles |
+| `--count 5` | `auto_publish.sh` line 105 | 5 | Articles generated per keyword |
+
+---
+
+## 🛠️ `super_article_manager.py` — CLI Reference
+
+All article operations go through this script.
+
+### Generate Articles
+
+```bash
+# From today's trending topics
+python super_article_manager.py generate trends --count 10
+
+# From specific keywords (5 distinct articles each, India focus, with images)
+python super_article_manager.py generate keywords "AI inference" "Smart Mobility" \
+  --region India --count 5 --no-skip
+
+# From keyword batches defined in keyword_config.json
+python super_article_manager.py generate batch technology health
+
+# Interactive prompt
+python super_article_manager.py generate interactive
+```
+
+**`generate keywords` flags:**
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--region` | `India` | Target region (India, USA, UK, Canada, Australia) |
+| `--count` | `1` | Number of differentiated articles per keyword |
+| `--no-skip` | off | Generate even if keyword was already processed |
+| `--skip-images` | off | Use placeholder images instead of generating real ones (faster for testing) |
+
+**`generate trends` flags:**
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--count` | `3` | Number of trending keywords to process |
+| `--regions` | auto | Filter to specific regions |
+| `--per-region` | off | Get top N from each region separately |
+
+### Enhance Articles
+
+```bash
+python super_article_manager.py enhance --all            # All operations
+python super_article_manager.py enhance --deduplicate    # Remove duplicates
+python super_article_manager.py enhance --fix-issues     # Fix IDs, titles, metadata
+python super_article_manager.py enhance --merge-legacy   # Import from legacy articles.json
+python super_article_manager.py enhance --headers-only   # Re-enhance headers only (fast)
+```
+
+### Generate / Fix Images
+
+```bash
+# Generate missing images for all articles
+python super_article_manager.py images
+
+# Regenerate images for a specific article
+python super_article_manager.py images --articles my-article-slug --regenerate
+
+# Only generate main + thumbnail (skip inline)
+python super_article_manager.py images --type main
+```
+
+### Statistics
+
+```bash
+python super_article_manager.py stats
+```
+
+### Backup Images
+
+```bash
+python super_article_manager.py backup --images
+```
+
+### Workflow Shortcuts
+
+```bash
+python super_article_manager.py workflow --complete        # Deduplicate + fix + enhance
+python super_article_manager.py workflow --generate-first  # Generate then run complete workflow
+```
+
+### AI Categorisation
+
+```bash
+python super_article_manager.py categorize test --count 10   # Test on 10 articles
+python super_article_manager.py categorize all               # Recategorise all
+python super_article_manager.py categorize stats             # Show category breakdown
+```
+
+---
+
+## 🌐 Site Generation
+
+The static site is built by `generateSite_advanced.py`. It runs in differential mode by default: only pages that changed since the last run are regenerated.
+
+```bash
+python generateSite_advanced.py
+```
+
+Output goes to `dist/`. Includes:
+- Article pages (`dist/articles/<slug>/index.html`)
+- Category pages (`dist/categories/`)
+- Tag pages (`dist/tags/`)
+- Homepage with lazy-loading article grid
+- `sitemap.xml`, `robots.txt`, `rss.xml`
+
+---
+
+## 📤 FTP Sync
+
+`customRSync.py` uploads only the files listed in `dist/.differential_sync.json` (generated by the previous step), skipping unchanged content.
+
+```bash
+python customRSync.py
+```
+
+Typical sync time: ~12 seconds for a batch of 30 changed files.
+
+---
+
+## 🖼️ Image Generation
+
+Images are generated in `generateImage.py` with this fallback chain:
+
+1. **Pollinations.ai** — free, no API key required
+2. **Gemini Imagen 4** — requires `GEM_API_KEY` (paid tier)
+3. **Gemini 2.5 Flash** — multimodal fallback
+4. **Placeholder URL** — if all fail, a placeholder is used and no article is blocked
+
+Images are saved as `.webp` in `images/<article-slug>/`.
+
+---
+
+## 🔒 Backup System
+
+Every operation that modifies articles automatically creates a timestamped backup:
+
+```
+backups/perplexityArticles_backup_YYYYMMDD_HHMMSS.json
+```
+
+Only the last 10 backups are kept. To restore, copy any backup file over `perplexityArticles_eeat_enhanced.json`.
+
+---
+
+## 🔐 Security
+
+- API keys and FTP credentials live in `.env` only (never committed)
+- Static site has no server-side execution surface
+- XSS: all article content is sanitised before rendering
+
+---
+
+## 📊 Live Site
+
+**[countrysnews.com](https://countrysnews.com)**
+
+---
+
+*Last updated: May 2026*

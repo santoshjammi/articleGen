@@ -1,0 +1,656 @@
+```yaml
+project:
+  name: CountrysNews Intelligence Platform
+  codename: CNIP
+  version: 2.0
+  owner: Sai Ameya Technologies LLP
+  primary_domain: countrysnews.com
+
+vision:
+  statement: >
+    Build an AI-native technology intelligence ecosystem that combines
+    publishing, semantic knowledge systems, tooling, research intelligence,
+    and authority engineering to create a long-term defensible media
+    and intelligence platform.
+
+  positioning:
+    primary: >
+      Technology intelligence for the AI transformation era.
+
+    secondary:
+      - AI infrastructure intelligence
+      - Enterprise transformation analysis
+      - DevOps and platform engineering intelligence
+      - India digital transformation analysis
+      - Operational intelligence publishing
+
+core_principles:
+  - insight_over_volume
+  - authority_over_traffic
+  - utility_over_content
+  - semantic_systems_over_keywords
+  - intelligence_over_news
+  - research_over_rewrites
+  - tools_over_articles
+  - audience_ownership_over_platform_dependence
+
+business_objectives:
+
+  year_1:
+    traffic:
+      organic_sessions_monthly: 250000
+
+    audience:
+      newsletter_subscribers: 25000
+
+    authority:
+      topic_clusters_dominated: 3
+      adsense_approval: true
+      branded_search_growth: true
+
+    monetization:
+      affiliate_revenue_active: true
+      sponsorship_pipeline_active: true
+
+  year_2:
+    traffic:
+      organic_sessions_monthly: 1000000
+
+    audience:
+      newsletter_subscribers: 100000
+
+    monetization:
+      premium_reports: true
+      intelligence_dashboards: true
+      SaaS_products: true
+
+target_audiences:
+
+  ai_native_builders:
+    users:
+      - founders
+      - engineers
+      - AI developers
+      - automation specialists
+      - technical architects
+
+    interests:
+      - local_llms
+      - ai_agents
+      - ai_workflows
+      - coding_automation
+      - infrastructure_scaling
+
+  enterprise_operators:
+    users:
+      - CIOs
+      - CTOs
+      - SaaS_operators
+      - enterprise_architects
+      - transformation_consultants
+
+    interests:
+      - AI_adoption
+      - workflow_modernization
+      - operational_efficiency
+      - enterprise_automation
+      - transformation_strategy
+
+  india_technology_ecosystem:
+    users:
+      - startup_founders
+      - digital_businesses
+      - EV_ecosystem_players
+      - infrastructure_operators
+
+    interests:
+      - ONDC
+      - UPI
+      - smart_cities
+      - EV_infrastructure
+      - manufacturing_digitization
+
+strategic_verticals:
+
+  primary:
+    - AI Engineering
+    - AI Infrastructure
+    - DevOps
+    - Platform Engineering
+    - Enterprise Transformation
+    - Operational Intelligence
+
+  secondary:
+    - Smart Mobility
+    - EV Ecosystems
+    - India Digital Transformation
+
+  future:
+    - Mental Health Systems
+    - AI-assisted assessments
+    - Human productivity systems
+
+topic_cluster_architecture:
+
+  ai_engineering:
+    hubs:
+      - ai_agents
+      - local_llms
+      - inference_systems
+      - orchestration
+      - prompt_engineering
+      - rag_systems
+      - coding_automation
+
+  devops:
+    hubs:
+      - kubernetes
+      - docker
+      - cicd
+      - observability
+      - platform_engineering
+      - infrastructure_automation
+
+  enterprise_ai:
+    hubs:
+      - AI_native_SaaS
+      - workflow_automation
+      - ERP_modernization
+      - operational_intelligence
+
+  india_digital:
+    hubs:
+      - ONDC
+      - UPI
+      - digital_governance
+      - smart_infrastructure
+      - EV_growth
+
+content_strategy:
+
+  content_types:
+    - strategic_analysis
+    - deep_dives
+    - technical_guides
+    - implementation_playbooks
+    - research_reports
+    - intelligence_briefs
+    - benchmark_reports
+    - comparison_pages
+    - tutorials
+    - tools
+    - calculators
+    - cheat_sheets
+    - glossaries
+
+  mandatory_article_structure:
+    - context
+    - why_it_matters
+    - operational_implications
+    - economic_implications
+    - strategic_implications
+    - future_outlook
+    - actionable_takeaways
+
+  prohibited_patterns:
+    - generic_ai_intros
+    - shallow_rewrites
+    - keyword_stuffing
+    - fake_statistics
+    - filler_content
+    - repetitive_structures
+    - unsupported_claims
+
+  tone:
+    - analytical
+    - concise
+    - operator_focused
+    - insight_heavy
+    - implementation_oriented
+    - opinionated
+
+publishing_engine:
+
+  workflow:
+    - signal_detection
+    - topic_classification
+    - strategic_relevance_scoring
+    - SERP_analysis
+    - research_expansion
+    - outline_generation
+    - semantic_validation
+    - content_generation
+    - editorial_scoring
+    - human_review
+    - schema_generation
+    - internal_linking
+    - publishing
+    - analytics_feedback_loop
+
+  automation_rules:
+    require:
+      - citations
+      - semantic_uniqueness
+      - internal_links
+      - FAQ_generation
+      - schema_markup
+      - author_profiles
+
+    reject:
+      - low_information_gain
+      - duplicate_semantics
+      - excessive_AI_patterns
+      - low_readability
+      - topic_misalignment
+
+quality_intelligence_engine:
+
+  purpose: >
+    Prevent commodity AI publishing and improve authority density.
+
+  scoring_models:
+
+    insight_score:
+      measures:
+        - strategic_depth
+        - consequence_analysis
+        - implementation_specificity
+
+    originality_score:
+      measures:
+        - unique_framing
+        - differentiated_synthesis
+        - uncommon_angles
+
+    authority_alignment_score:
+      measures:
+        - topical_relevance
+        - semantic_reinforcement
+        - cluster_fit
+
+    monetization_intent_score:
+      measures:
+        - affiliate_potential
+        - sponsor_relevance
+        - buyer_intent
+
+    genericness_score:
+      detects:
+        - repetitive_patterns
+        - template_similarity
+        - shallow_explanations
+
+  publish_thresholds:
+    minimum_quality_score: 75
+    minimum_originality_score: 70
+    maximum_genericness_score: 30
+
+knowledge_graph_engine:
+
+  purpose: >
+    Build reusable semantic infrastructure and authority graphs.
+
+  entities:
+    - companies
+    - products
+    - technologies
+    - frameworks
+    - industries
+    - tools
+    - workflows
+    - policies
+    - locations
+
+  relationships:
+    - parent_child
+    - competitor
+    - dependency
+    - implementation_relation
+    - semantic_similarity
+
+  capabilities:
+    - semantic_linking
+    - related_content_generation
+    - authority_gap_detection
+    - topic_recommendations
+    - entity_graph_visualization
+
+internal_linking_engine:
+
+  capabilities:
+    - contextual_linking
+    - pillar_page_prioritization
+    - orphan_detection
+    - semantic_relevance_scoring
+    - authority_distribution_analysis
+
+research_intelligence_layer:
+
+  outputs:
+    - benchmark_reports
+    - adoption_reports
+    - transformation_analysis
+    - ecosystem_mapping
+    - state_of_industry_reports
+
+  examples:
+    - state_of_AI_adoption_in_India
+    - Kubernetes_cost_benchmarking
+    - AI_agent_tooling_landscape
+    - EV_infrastructure_growth_analysis
+
+tool_platform:
+
+  strategy: >
+    Build utility-driven authority and backlink acquisition assets.
+
+  ai_tools:
+    - prompt_optimizer
+    - token_cost_calculator
+    - rag_chunking_visualizer
+    - llm_stack_comparison_tool
+
+  devops_tools:
+    - kubernetes_cost_estimator
+    - dockerfile_analyzer
+    - YAML_validator
+    - cicd_maturity_assessment
+
+  enterprise_tools:
+    - automation_ROI_calculator
+    - SaaS_stack_evaluator
+    - workflow_complexity_analyzer
+
+future_tools:
+  mental_health:
+    - burnout_assessment
+    - anxiety_score
+    - CBT_worksheet_generator
+
+EEAT_system:
+
+  organization_signals:
+    required_pages:
+      - about_us
+      - editorial_policy
+      - fact_checking_policy
+      - corrections_policy
+      - privacy_policy
+      - terms_conditions
+      - contact_us
+
+  author_system:
+    requirements:
+      - real_identity
+      - expertise_tags
+      - linkedin_profiles
+      - github_profiles
+      - contribution_history
+
+  review_layer:
+    expert_review_required_for:
+      - health_content
+      - financial_content
+      - enterprise_strategy_content
+
+search_intelligence_engine:
+
+  integrations:
+    - Google_Search_Console
+    - Google_Analytics
+    - Ahrefs_optional
+    - Semrush_optional
+
+  tracking:
+    - rankings
+    - CTR
+    - impressions
+    - cannibalization
+    - query_clusters
+    - engagement_metrics
+    - newsletter_conversion
+
+  automated_actions:
+
+    underperforming_pages:
+      - rewrite
+      - merge
+      - improve_internal_links
+      - improve_search_intent_match
+
+    winning_pages:
+      - expand_content
+      - create_supporting_articles
+      - build_tools
+      - improve_conversion_paths
+
+seo_architecture:
+
+  schema:
+    - Organization
+    - Person
+    - Article
+    - FAQ
+    - Breadcrumb
+    - WebSite
+
+  sitemap_structure:
+    - ai_sitemap
+    - devops_sitemap
+    - enterprise_sitemap
+    - research_sitemap
+    - tools_sitemap
+
+  performance_targets:
+    LCP: "<2.5s"
+    INP: "<200ms"
+    CLS: "<0.1"
+
+  indexing_controls:
+    noindex:
+      - thin_pages
+      - empty_archives
+      - duplicate_taxonomies
+      - low_quality_content
+
+homepage_strategy:
+
+  sections:
+    - featured_analysis
+    - AI_infrastructure
+    - enterprise_transformation
+    - devops_intelligence
+    - smart_mobility
+    - research_reports
+    - tools_and_calculators
+    - newsletter_capture
+
+distribution_system:
+
+  primary_channels:
+    - LinkedIn
+    - newsletter
+    - SEO
+
+  secondary_channels:
+    - X
+    - GitHub
+    - YouTube_future
+
+  audience_strategy:
+    goal: >
+      Convert search traffic into owned audience assets.
+
+newsletter_system:
+
+  newsletters:
+    - weekly_intelligence_brief
+    - AI_infrastructure_brief
+    - DevOps_operator_brief
+    - enterprise_transformation_brief
+
+  goals:
+    - retention
+    - repeat_visits
+    - audience_ownership
+    - sponsorship_inventory
+
+technical_architecture:
+
+  frontend:
+    - Next.js
+    - React
+    - TailwindCSS
+    - shadcn_ui
+
+  backend:
+    - Node.js
+    - Express
+    - GraphQL_optional
+
+  databases:
+    - PostgreSQL
+    - Redis
+    - Elasticsearch_optional
+    - Vector_DB_future
+
+  infrastructure:
+    - Docker
+    - CDN
+    - Object_Storage
+
+  AI_stack:
+    - OpenAI
+    - Anthropic
+    - local_embedding_models
+
+  future:
+    - semantic_embeddings
+    - vector_search
+    - recommendation_engine
+    - intelligence_APIs
+
+analytics_and_authority_monitoring:
+
+  KPIs:
+
+    traffic:
+      - organic_sessions
+      - branded_search_growth
+      - returning_visitors
+
+    authority:
+      - backlinks
+      - referring_domains
+      - topical_coverage
+      - query_footprint
+
+    engagement:
+      - session_depth
+      - scroll_depth
+      - repeat_visits
+      - newsletter_signup_rate
+
+    monetization:
+      - RPM
+      - affiliate_CTR
+      - sponsorship_revenue
+      - report_sales
+
+monetization_strategy:
+
+  phase_1:
+    - AdSense
+    - affiliate_marketing
+
+  phase_2:
+    - sponsorships
+    - premium_newsletters
+    - downloadable_assets
+
+  phase_3:
+    - premium_reports
+    - intelligence_dashboards
+    - enterprise_briefings
+
+  phase_4:
+    - SaaS_products
+    - intelligence_APIs
+    - proprietary_datasets
+
+anti_goals:
+  - generic_world_news
+  - celebrity_content
+  - crypto_spam
+  - low_quality_AI_bulk_pages
+  - shallow_SEO_rewrites
+  - premature_microservices
+  - vanity_traffic
+
+roadmap:
+
+  phase_1_foundation:
+    duration: weeks_1_to_4
+
+    deliverables:
+      - site_audit
+      - remove_thin_content
+      - homepage_redesign
+      - EEAT_pages
+      - category_reduction
+      - topic_cluster_architecture
+
+  phase_2_authority:
+    duration: weeks_5_to_10
+
+    deliverables:
+      - pillar_pages
+      - internal_linking_engine
+      - editorial_scoring
+      - schema_system
+      - author_profiles
+
+  phase_3_intelligence:
+    duration: months_3_to_5
+
+    deliverables:
+      - knowledge_graph_foundation
+      - analytics_feedback_loops
+      - Search_Console_integration
+      - semantic_recommendations
+
+  phase_4_utility:
+    duration: months_5_to_8
+
+    deliverables:
+      - AI_tools
+      - DevOps_tools
+      - comparison_engines
+      - benchmark_reports
+
+  phase_5_platform:
+    duration: months_9_to_18
+
+    deliverables:
+      - premium_research
+      - intelligence_dashboards
+      - proprietary_datasets
+      - APIs
+      - enterprise_products
+
+long_term_moat:
+
+  pillars:
+    - structured_intelligence
+    - semantic_authority_graphs
+    - proprietary_workflows
+    - audience_ownership
+    - operational_insights
+    - reusable_datasets
+    - utility_platforms
+
+  thesis: >
+    The long-term moat is not AI-generated content.
+    The moat is authority infrastructure, semantic systems,
+    proprietary intelligence, utility tooling, and audience trust.
+```

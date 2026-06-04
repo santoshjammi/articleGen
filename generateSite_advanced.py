@@ -106,7 +106,7 @@ def enhance_existing_articles():
         
         # Run the enhancement using the super_article_manager
         result = subprocess.run([
-            'python', 'super_article_manager.py', 'enhance', '--all'
+            sys.executable, 'super_article_manager.py', 'enhance', '--all'
         ], capture_output=True, text=True)
         
         if result.returncode == 0:
@@ -542,6 +542,10 @@ def generate_header_html(unique_categories, current_page_type="home"):
     
     home_link = "index.html" if current_page_type == "home" else "../index.html"
     logo_path = "logo-header.svg" if current_page_type == "home" else "../logo-header.svg"
+    pfx = "" if current_page_type == "home" else "../"
+    about_link = f"{pfx}about/"
+    editorial_link = f"{pfx}editorial-policy/"
+    contact_link = f"{pfx}contact/"
     
     return f'''
     <header class="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-800 text-white shadow-xl sticky top-0 z-50">
@@ -571,8 +575,9 @@ def generate_header_html(unique_categories, current_page_type="home"):
                             </span>
                             <div class="dropdown-content">
                                 {dropdown_categories}
-                                <a href="about-us.html" class="border-t border-blue-600">About Us</a>
-                                <a href="contact.html">Contact</a>
+                                <a href="{about_link}" class="border-t border-blue-600">About Us</a>
+                                <a href="{editorial_link}">Editorial Policy</a>
+                                <a href="{contact_link}">Contact</a>
                             </div>
                         </li>
                     </ul>
@@ -593,8 +598,9 @@ def generate_header_html(unique_categories, current_page_type="home"):
             <div class="px-4 py-2 space-y-2">
                 <a href="{home_link}" class="block py-2 hover:text-blue-200">Home</a>
                 {mobile_category_links}
-                <a href="about-us.html" class="block py-2 hover:text-blue-200">About Us</a>
-                <a href="contact.html" class="block py-2 hover:text-blue-200">Contact</a>
+                <a href="{about_link}" class="block py-2 hover:text-blue-200">About Us</a>
+                <a href="{editorial_link}" class="block py-2 hover:text-blue-200">Editorial Policy</a>
+                <a href="{contact_link}" class="block py-2 hover:text-blue-200">Contact</a>
             </div>
         </div>
     </header>
@@ -609,6 +615,14 @@ def generate_footer_html(current_page_type="home"):
     """Generate advanced footer with social links and ads"""
     logo_path = "logo-header.svg" if current_page_type == "home" else "../logo-header.svg"
     rss_link = "rss.xml" if current_page_type == "home" else "../rss.xml"
+    pfx = "" if current_page_type == "home" else "../"
+    about_link = f"{pfx}about/"
+    editorial_link = f"{pfx}editorial-policy/"
+    fact_check_link = f"{pfx}fact-checking-policy/"
+    privacy_link = f"{pfx}privacy-policy/"
+    terms_link = f"{pfx}terms/"
+    contact_link = f"{pfx}contact/"
+    cats_prefix = f"{pfx}categories/"
     
     return f'''
     <!-- Footer Ad -->
@@ -629,23 +643,25 @@ def generate_footer_html(current_page_type="home"):
                 
                 <!-- Categories -->
                 <div class="text-center md:text-left">
-                    <h3 class="text-lg font-semibold mb-4 text-blue-400">Categories</h3>
+                    <h3 class="text-lg font-semibold mb-4 text-blue-400">Intelligence Pillars</h3>
                     <div class="space-y-2 text-sm">
-                        <a href="categories/news.html" class="block hover:text-blue-400 transition-colors text-gray-400">News</a>
-                        <a href="categories/business.html" class="block hover:text-blue-400 transition-colors text-gray-400">Business</a>
-                        <a href="categories/technology.html" class="block hover:text-blue-400 transition-colors text-gray-400">Technology</a>
-                        <a href="categories/sports.html" class="block hover:text-blue-400 transition-colors text-gray-400">Sports</a>
+                        <a href="{cats_prefix}ai-infrastructure.html" class="block hover:text-blue-400 transition-colors text-gray-400">AI Infrastructure</a>
+                        <a href="{cats_prefix}enterprise-transformation.html" class="block hover:text-blue-400 transition-colors text-gray-400">Enterprise Transformation</a>
+                        <a href="{cats_prefix}smart-mobility.html" class="block hover:text-blue-400 transition-colors text-gray-400">Smart Mobility</a>
+                        <a href="{cats_prefix}india-digital-transformation.html" class="block hover:text-blue-400 transition-colors text-gray-400">India Digital</a>
                     </div>
                 </div>
-                
+
                 <!-- Quick Links -->
                 <div class="text-center md:text-left">
                     <h3 class="text-lg font-semibold mb-4 text-blue-400">Quick Links</h3>
                     <div class="space-y-2 text-sm">
-                        <a href="about-us.html" class="block hover:text-blue-400 transition-colors text-gray-400">About Us</a>
-                        <a href="contact.html" class="block hover:text-blue-400 transition-colors text-gray-400">Contact</a>
-                        <a href="privacy-policy.html" class="block hover:text-blue-400 transition-colors text-gray-400">Privacy Policy</a>
-                        <a href="disclaimer.html" class="block hover:text-blue-400 transition-colors text-gray-400">Disclaimer</a>
+                        <a href="{about_link}" class="block hover:text-blue-400 transition-colors text-gray-400">About Us</a>
+                        <a href="{editorial_link}" class="block hover:text-blue-400 transition-colors text-gray-400">Editorial Policy</a>
+                        <a href="{fact_check_link}" class="block hover:text-blue-400 transition-colors text-gray-400">Fact-Checking</a>
+                        <a href="{privacy_link}" class="block hover:text-blue-400 transition-colors text-gray-400">Privacy Policy</a>
+                        <a href="{terms_link}" class="block hover:text-blue-400 transition-colors text-gray-400">Terms</a>
+                        <a href="{contact_link}" class="block hover:text-blue-400 transition-colors text-gray-400">Contact</a>
                     </div>
                 </div>
                 
@@ -1592,302 +1608,37 @@ def generate_static_pages(unique_categories):
     print("✅ Static pages generated")
 
 def generate_about_page(unique_categories):
-    """Generate About Us page"""
-    about_html = f'''
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <title>About Us | Country's News</title>
-        <meta name="description" content="Learn about Country's News - your trusted source for verified journalism, expert analysis, and fact-checked content.">
-        
-        {get_base_html_head()}
-    </head>
-    <body>
-        {generate_header_html(unique_categories, "home")}
-        
-        <main class="min-h-screen py-12">
-            <div class="container mx-auto px-4 max-w-4xl">
-                <h1 class="text-4xl font-bold text-gray-900 mb-8 text-center">About Country's News</h1>
-                
-                <div class="prose prose-lg max-w-none">
-                    <p class="text-xl text-gray-600 mb-8 text-center">
-                        Your trusted source for verified journalism, expert analysis, and comprehensive news coverage.
-                    </p>
-                    
-                    <div class="grid md:grid-cols-3 gap-8 mb-12">
-                        <div class="text-center">
-                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                                </svg>
-                            </div>
-                            <h3 class="text-xl font-bold mb-2">Verified Content</h3>
-                            <p class="text-gray-600">All our articles are fact-checked by expert journalists.</p>
-                        </div>
-                        
-                        <div class="text-center">
-                            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <svg class="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                                </svg>
-                            </div>
-                            <h3 class="text-xl font-bold mb-2">Expert Authors</h3>
-                            <p class="text-gray-600">Our team consists of experienced journalists and industry experts.</p>
-                        </div>
-                        
-                        <div class="text-center">
-                            <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <svg class="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                                </svg>
-                            </div>
-                            <h3 class="text-xl font-bold mb-2">Trusted Sources</h3>
-                            <p class="text-gray-600">We maintain the highest standards of journalistic integrity.</p>
-                        </div>
-                    </div>
-                    
-                    <h2>Our Mission</h2>
-                    <p>
-                        At Country's News, we are committed to delivering accurate, timely, and comprehensive news coverage 
-                        that helps our readers stay informed about the world around them. Our mission is to provide 
-                        verified journalism that meets the highest standards of accuracy, expertise, authoritativeness, 
-                        and trustworthiness.
-                    </p>
-                    
-                    <h2>Our Team</h2>
-                    <p>
-                        Our editorial team comprises seasoned journalists, subject matter experts, and fact-checkers 
-                        who work tirelessly to ensure every story meets our rigorous standards. We believe in 
-                        transparent reporting and maintaining the trust our readers place in us.
-                    </p>
-                </div>
-                
-                <!-- Ad -->
-                <div class="ad-container my-12">
-                    <div data-ad-slot="about-banner" aria-hidden="true"></div>
-                </div>
-            </div>
-        </main>
-        
-        {generate_footer_html("home")}
-    </body>
-    </html>
-    '''
-    
+    """Write a redirect stub for the legacy about-us.html URL."""
+    redirect_html = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>About Us | Country's News</title>
+<meta http-equiv="refresh" content="0; url=/about/">
+<link rel="canonical" href="https://countrysnews.com/about/">
+</head>
+<body>
+<p>Redirecting to <a href="/about/">About Us</a>…</p>
+</body>
+</html>'''
     with open(os.path.join(OUTPUT_DIR, 'about-us.html'), 'w', encoding='utf-8') as f:
-        f.write(about_html)
-
+        f.write(redirect_html)
 def generate_contact_page(unique_categories):
-    """Generate Contact page with form"""
-    contact_html = f'''
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <title>Contact Us | Country's News</title>
-        <meta name="description" content="Get in touch with Country's News. We value your feedback and are here to help.">
-        
-        {get_base_html_head()}
-    </head>
-    <body>
-        {generate_header_html(unique_categories, "home")}
-        
-        <main class="min-h-screen py-12">
-            <div class="container mx-auto px-4 max-w-4xl">
-                <h1 class="text-4xl font-bold text-gray-900 mb-8 text-center">Contact Us</h1>
-                
-                <div class="grid md:grid-cols-2 gap-12">
-                    <!-- Contact Form -->
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-900 mb-6">Send us a message</h2>
-                        <form id="contactForm" class="space-y-6" method="post" action="#" novalidate>
-                            <div>
-                                <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">Name</label>
-                                <input type="text" name="name" id="name" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            </div>
-                            <div>
-                                <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
-                                <input type="email" name="email" id="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            </div>
-                            <div>
-                                <label for="subject" class="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
-                                <input type="text" name="subject" id="subject" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            </div>
-                            <div>
-                                <label for="message" class="block text-sm font-semibold text-gray-700 mb-2">Message</label>
-                                <textarea rows="6" name="message" id="message" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
-                            </div>
-                            <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-semibold flex items-center justify-center">
-                                <svg id="submitSpinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <span id="submitBtnText">Send Message</span>
-                            </button>
-                        </form>
-                    </div>
-                    
-                    <!-- Contact Info -->
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-900 mb-6">Get in touch</h2>
-                        <div class="space-y-6">
-                            <div class="flex items-start space-x-4">
-                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
-                                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 class="text-lg font-semibold text-gray-900">Email</h3>
-                                    <p class="text-gray-600">contact@countrysnews.com</p>
-                                </div>
-                            </div>
-                            
-                            <div class="flex items-start space-x-4">
-                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 class="text-lg font-semibold text-gray-900">Phone</h3>
-                                    <p class="text-gray-600">+91 (011) 1234-5678</p>
-                                </div>
-                            </div>
-                            
-                            <div class="flex items-start space-x-4">
-                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <svg class="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 class="text-lg font-semibold text-gray-900">Address</h3>
-                                    <p class="text-gray-600">New Delhi, India<br>PIN: 110001</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Ad -->
-                        <div class="ad-container sidebar mt-8">
-                            <div data-ad-slot="contact-sidebar" aria-hidden="true"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-        
-        {generate_footer_html("home")}
-    
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {{
-        const contactForm = document.getElementById('contactForm');
-        const submitBtn = document.getElementById('submitBtn');
-        const submitBtnText = document.getElementById('submitBtnText');
-        const submitSpinner = document.getElementById('submitSpinner');
-        
-        if (contactForm) {{
-            contactForm.addEventListener('submit', function(e) {{
-                e.preventDefault();
-                
-                // Get form data
-                const formData = new FormData(contactForm);
-                const data = {{
-                    name: formData.get('name'),
-                    email: formData.get('email'),
-                    subject: formData.get('subject'),
-                    message: formData.get('message'),
-                    timestamp: new Date().toISOString()
-                }};
-                
-                // Validate form
-                if (!data.name || !data.email || !data.subject || !data.message) {{
-                    showMessage('Please fill in all fields.', 'error');
-                    return;
-                }}
-                
-                if (!isValidEmail(data.email)) {{
-                    showMessage('Please enter a valid email address.', 'error');
-                    return;
-                }}
-                
-                // Show loading state
-                submitBtn.disabled = true;
-                submitSpinner.classList.remove('hidden');
-                submitBtnText.textContent = 'Sending...';
-                
-                // Simulate form submission (replace with actual backend integration)
-                setTimeout(() => {{
-                    // Reset button state
-                    submitBtn.disabled = false;
-                    submitSpinner.classList.add('hidden');
-                    submitBtnText.textContent = 'Send Message';
-                    
-                    // Show success message
-                    showMessage('Thank you for your message! We\\'ll get back to you soon.', 'success');
-                    
-                    // Reset form
-                    contactForm.reset();
-                    
-                    // For now, create a mailto link as fallback
-                    const subject = encodeURIComponent(data.subject);
-                    const body = encodeURIComponent(`Name: ${{data.name}}\\nEmail: ${{data.email}}\\n\\nMessage:\\n${{data.message}}`);
-                    const mailtoLink = `mailto:contact@countrysnews.com?subject=${{subject}}&body=${{body}}`;
-                    
-                    // Open email client after a short delay
-                    setTimeout(() => {{
-                        window.location.href = mailtoLink;
-                    }}, 2000);
-                    
-                }}, 1500);
-            }});
-        }}
-    }});
-    
-    function isValidEmail(email) {{
-        const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
-        return emailRegex.test(email);
-    }}
-    
-    function showMessage(message, type) {{
-        // Remove existing messages
-        const existingMessages = document.querySelectorAll('.form-message');
-        existingMessages.forEach(msg => msg.remove());
-        
-        // Create message element
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `form-message p-4 rounded-lg mb-4 ${{
-            type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 
-            'bg-red-100 text-red-800 border border-red-200'
-        }}`;
-        messageDiv.innerHTML = `
-            <div class="flex items-center">
-                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    ${{type === 'success' ? 
-                        '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>' :
-                        '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>'
-                    }}
-                </svg>
-                ${{message}}
-            </div>
-        `;
-        
-        // Insert message before the form
-        const form = document.getElementById('contactForm');
-        form.parentNode.insertBefore(messageDiv, form);
-        
-        // Auto-remove after 5 seconds
-        setTimeout(() => {{
-            messageDiv.remove();
-        }}, 5000);
-    }}
-    </script>
-    </body>
-    </html>
-    '''
-    
+    """Write a redirect stub for the legacy contact.html URL."""
+    redirect_html = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Contact | Country's News</title>
+<meta http-equiv="refresh" content="0; url=/contact/">
+<link rel="canonical" href="https://countrysnews.com/contact/">
+</head>
+<body>
+<p>Redirecting to <a href="/contact/">Contact</a>…</p>
+</body>
+</html>'''
     with open(os.path.join(OUTPUT_DIR, 'contact.html'), 'w', encoding='utf-8') as f:
-        f.write(contact_html)
+        f.write(redirect_html)
 
 def generate_privacy_page(unique_categories):
     """Generate Privacy Policy page"""
@@ -2007,15 +1758,15 @@ def generate_sitemap(articles_data):
         # Static Pages
         f.write('    <!-- Static Pages -->\n')
         f.write('    <url>\n')
-        f.write('        <loc>https://countrysnews.com/about-us.html</loc>\n')
-        about_path = os.path.join(OUTPUT_DIR, 'about-us.html')
+        f.write('        <loc>https://countrysnews.com/about/</loc>\n')
+        about_path = os.path.join(OUTPUT_DIR, 'about', 'index.html')
         if os.path.exists(about_path):
             about_mtime = date.fromtimestamp(os.path.getmtime(about_path)).isoformat()
             f.write(f'        <lastmod>{about_mtime}</lastmod>\n')
         f.write('    </url>\n')
         f.write('    <url>\n')
-        f.write('        <loc>https://countrysnews.com/contact.html</loc>\n')
-        contact_path = os.path.join(OUTPUT_DIR, 'contact.html')
+        f.write('        <loc>https://countrysnews.com/contact/</loc>\n')
+        contact_path = os.path.join(OUTPUT_DIR, 'contact', 'index.html')
         if os.path.exists(contact_path):
             contact_mtime = date.fromtimestamp(os.path.getmtime(contact_path)).isoformat()
             f.write(f'        <lastmod>{contact_mtime}</lastmod>\n')
@@ -2642,22 +2393,26 @@ def generate_single_advanced_article(article, unique_categories, related_list):
         f.write(article_html)
 
 def generate_author_profile(article):
-    """Generate author profile section"""
+    """Generate author profile section using named persona fields."""
     author_name = article.get('author', 'Editorial Team')
-    author_profile = article.get('authorProfile', {})
-    
+    author_title = article.get('authorTitle', 'Technology Analyst')
+    author_bio = article.get('authorBio', (
+        f"{author_name} is an experienced technology analyst at Country's News, "
+        "specialising in AI infrastructure, enterprise transformation, and digital strategy."
+    ))
+
     return f'''
     <div class="author-profile">
         <div class="flex items-start space-x-4">
-            <img src="../images/author-placeholder.svg" 
-                 alt="{author_name}" 
-                 class="w-16 h-16 rounded-full bg-blue-100 p-2"
-                 onerror="this.style.display='none'">
+            <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                </svg>
+            </div>
             <div class="flex-1">
-                <h3 class="text-xl font-bold text-gray-900 mb-2">About {author_name}</h3>
-                <p class="text-gray-600 text-sm mb-3">
-                    {author_profile.get('bio', f'{author_name} is an experienced journalist and expert analyst at Country\'s News, specializing in comprehensive news coverage with a focus on accuracy and reliability.')}
-                </p>
+                <h3 class="text-xl font-bold text-gray-900 mb-1">About {author_name}</h3>
+                <p class="text-sm text-blue-600 font-medium mb-2">{author_title} · Country&#39;s News Intelligence</p>
+                <p class="text-gray-600 text-sm">{author_bio}</p>
             </div>
         </div>
     </div>
@@ -3122,7 +2877,7 @@ def generate_differential_site(articles_data, unique_categories, changes):
     generate_rss_feed(articles_data)
     
     # Generate static pages (these rarely change)
-    if not os.path.exists(os.path.join(OUTPUT_DIR, 'about-us.html')):
+    if not os.path.exists(os.path.join(OUTPUT_DIR, 'about', 'index.html')):
         generate_static_pages(unique_categories)
     
     # Process changed and new articles only

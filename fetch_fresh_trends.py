@@ -20,7 +20,7 @@ def fetch_fresh_trends():
         # Run trends.py to fetch fresh data from internet
         print("\n📡 Connecting to Google Trends API...")
         result = subprocess.run(
-            ["python", "trends.py"], 
+            [sys.executable, "trends.py"], 
             check=True, 
             capture_output=False,  # Show output in real-time
             text=True

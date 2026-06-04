@@ -9,8 +9,8 @@
 #   python3 super_article_manager.py generate keywords "keyword1" "keyword2" --region India
 #
 # Examples (uncomment to activate):
-# artificial intelligence in healthcare
-# electric vehicles india 2025
+artificial intelligence in healthcare
+electric vehicles india 2026
 # cricket ipl 2025
 # real estate market india
 # python programming tutorial
@@ -50,34 +50,22 @@ ai agent
 
 # Auto-fetched AI keywords — 2026-05-09 12:45 UTC
 ai chatbot
-s degree in artificial intelligence
-musk says mark zuckerberg's understanding of ai
-ai model
+degree in artificial intelligence
 traditional machine learning
 best ai tools
 generative ai tools
 ai in 2025
 ai in education
-ai stock
 
 # Auto-fetched AI keywords — 2026-05-10 13:15 UTC
-degree in artificial intelligence
-understanding of ai
-marcus on ai
-says mark zuckerberg's understanding of ai
 accelerate the reshoring of artificial intelligence
-hawaiʻi state legislature passes artificial intelligence
 top 100 gen ai consumer apps
-buy this sizzling artificial intelligence
 gemma 4
-understanding of ai is limited
 
 # Auto-fetched AI keywords — 2026-05-11 12:34 UTC
 neural network
 evaluating large language models
 foundation model
-first yen bond sale to fund ai
-yen bond sale to fund ai goals
 best artificial intelligence
 ai platform
 generative ai models
@@ -95,3 +83,190 @@ llm agent
 graph neural networks
 distributional reinforcement learning
 efficient llm
+
+Battery evolution Pre-AI
+Effects on Battery evolution Post AI
+Chinese players on Battery
+Chinese LLMs and their contribution to AI
+Chinese LLMs boon or bane
+
+
+# Auto-fetched AI keywords — 2026-05-13 12:36 UTC
+llm reasoning
+stirs concerns on artificial intelligence and pensions
+aftra deal stirs concerns on artificial intelligence
+key market segments driving the artificial intelligence
+agent reinforcement learning
+llm serving
+industry cannot fight rise of artificial intelligence
+air force base shaping how the air
+shaping how the air force integrates artificial
+force base shaping how the air force
+
+# Auto-fetched AI keywords — 2026-05-14 12:35 UTC
+advancement of artificial intelligence
+generative modeling
+best ai chatbots
+mark zuckerberg's understanding of ai
+community to discuss artificial intelligence
+ai coding
+llm training
+llm fine
+top 100 gen ai consumer
+100 gen ai consumer apps
+
+# Auto-fetched AI keywords — 2026-05-15 12:34 UTC
+democrats introduce bills to regulate artificial intelligence
+2 artificial intelligence
+multi agent
+generative models
+artificial intelligence data center proposed for former
+jim cramer says buy 2 artificial intelligence
+aquinas college adds new artificial intelligence literacy
+college adds new artificial intelligence literacy major
+union high school is embracing artificial intelligence
+llm reinforcement learning
+
+# Auto-fetched AI keywords — 2026-05-16 12:31 UTC
+artificial intelligence study group as vatican prepares
+creates artificial intelligence study group as vatican
+pope creates artificial intelligence study group
+vatican has said a lot about artificial
+said a lot about artificial intelligence
+introduce bills to regulate artificial intelligence
+million in this artificial intelligence stock today
+artificial intelligence stock today could be worth
+1 million in this artificial intelligence stock
+growth areas in the artificial intelligence
+
+# Auto-fetched AI keywords — 2026-05-17 12:32 UTC
+artificial intelligence study group as vatican
+pope creates artificial intelligence study
+creates artificial intelligence study group
+commission on artificial intelligence
+within the federal reserve over artificial intelligence
+1 artificial intelligence stock for the rest
+only buy 1 artificial intelligence stock
+diplomacy in the age of artificial intelligence
+amd a top artificial intelligence
+vatican commission on artificial intelligence
+
+# Auto-fetched AI keywords — 2026-05-21 12:34 UTC
+workshop on natural language and interactive systems
+apple workshop on natural language and interactive
+barnes proposes ban on ai
+natural language and interactive systems 2025
+artificial intelligence ai
+llm fine tuning
+judge on amazon sagemaker ai
+zuckerberg's understanding of ai
+reinforcement learning for long
+horizon interactive llm agents
+
+# Auto-fetched AI keywords — 2026-05-22 12:35 UTC
+ai executive order
+artificial intelligence in insurance and medical billing
+senators consider new restrictions on artificial intelligence
+creation of interdicasterial commission on artificial intelligence
+amazon bedrock agentcore
+multimodal large language
+restrictions on artificial intelligence in insurance
+workshop on natural language and interactive
+trump delays ai executive order
+trump postpones ai executive order
+
+# Auto-fetched AI keywords — 2026-05-24 12:55 UTC
+impact of artificial intelligence
+weigh impact of artificial intelligence on entry
+schools weigh impact of artificial intelligence
+become the biggest winner in ai inference
+portfolio is parked in 3 artificial intelligence
+artificial intelligence could potentially eliminate thousands
+bs artificial intelligence program
+1 artificial intelligence
+model achieves top ranking on llm leaderboard
+7b model achieves top ranking on llm
+
+# Auto-fetched AI keywords — 2026-05-25 12:47 UTC
+calls for robust regulation of ai
+person in the time of artificial intelligence
+regulation of artificial intelligence in sweeping manifesto
+demands regulation of artificial intelligence in sweeping
+artificial intelligence in sweeping manifesto on future
+regulation of ai in manifesto that ponders
+pope calls for robust regulation of ai
+ai in manifesto that ponders the future
+training data
+pope demands regulation of artificial intelligence
+
+# Auto-fetched AI keywords — 2026-05-26 12:30 UTC
+pope leo warns of ai fueling warfare
+ai fueling warfare in first major theological
+warns of ai fueling warfare in first
+diffusion model
+diffusion language models
+informed neural
+agent systems
+warning about artificial intelligence
+letter on artificial intelligence
+ai in the enterprise
+
+# Auto-fetched AI keywords — 2026-05-28 14:12 UTC
+ai adoption
+accelerating llm
+asked chatgpt
+model training
+latent diffusion
+state of artificial intelligence
+age of artificial intelligence
+multimodal large language model
+ai tools in 2025
+distillation for llm reasoning
+
+# Auto-fetched AI keywords — 2026-05-29 12:34 UTC
+machine learning r
+variational inference
+invested in these 2 top artificial intelligence
+evaluating deep agents using langsmith on aws
+2 dirt cheap artificial intelligence
+apple workshop on natural language
+natural language and interactive systems
+computer use agents
+diffusion language
+enhancing llm
+
+# Auto-fetched AI keywords — 2026-05-30 12:36 UTC
+priest advising tech companies on artificial intelligence
+advising tech companies on artificial intelligence ethics
+deep agents using langsmith on aws
+ai stock is down 24
+evaluating deep agents using langsmith
+encyclical on artificial intelligence
+workshop on natural language
+natural language and interactive
+gen ai consumer apps
+100 gen ai consumer
+
+# Auto-fetched AI keywords — 2026-06-01 12:31 UTC
+these 2 artificial intelligence
+8 billion into these 2 artificial intelligence
+inference specialist is going to soar after
+heard these ai terms and nodded along
+ve heard these ai terms and nodded
+claude ai in a single month
+bayesian inference
+artificial intelligence is reshaping
+reinforcement learning for llm
+ai in software development
+
+# Auto-fetched AI keywords — 2026-06-02 12:35 UTC
+ai model
+agent reinforcement
+multimodal large
+masked diffusion
+safety alignment
+multimodal llms
+agent system
+musk says mark zuckerberg's understanding of ai
+loaded up on this sizzling artificial intelligence
+detection using deep learning and large language

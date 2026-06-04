@@ -1,0 +1,448 @@
+```yaml
+project:
+  name: CountrysNews Authority Engine
+  version: 1.0
+  owner: Sai Ameya Technologies LLP
+  primary_domain: countrysnews.com
+
+vision:
+  statement: >
+    Build a scalable AI-assisted authority publishing ecosystem focused on
+    AI Engineering, DevOps, Technical Intelligence, and future specialized
+    knowledge domains such as Mental Health Systems.
+
+  objectives:
+    - Build long-term topical authority
+    - Achieve AdSense and premium ad-network eligibility
+    - Create defensible SEO moat
+    - Generate sustainable organic traffic
+    - Develop reusable knowledge graphs
+    - Enable future SaaS and tool monetization
+    - Reduce dependency on commodity AI content
+
+business_goals:
+  short_term:
+    - Improve trust and EEAT signals
+    - Recover/achieve AdSense approval
+    - Increase indexed high-quality pages
+    - Improve topical clustering
+    - Increase branded search traffic
+
+  medium_term:
+    - Build high-authority technical content ecosystem
+    - Launch reusable tools and calculators
+    - Build newsletter audience
+    - Acquire backlinks organically
+
+  long_term:
+    - Become technical intelligence platform
+    - Launch premium research reports
+    - Launch SaaS products
+    - Build domain authority across multiple verticals
+
+core_problem:
+  description: >
+    Current automated publishing systems are vulnerable to
+    AI-content commoditization, weak trust signals,
+    poor topical authority, and insufficient editorial quality controls.
+
+success_metrics:
+  seo:
+    - organic_traffic_growth: "20% MoM"
+    - topical_authority_growth: true
+    - increase_indexed_quality_pages: true
+    - decrease_thin_content_ratio: true
+    - increase_avg_session_duration: true
+    - reduce_bounce_rate: true
+
+  business:
+    - adsense_approval: true
+    - newsletter_subscribers_growth: true
+    - branded_search_growth: true
+    - backlink_growth: true
+
+  content_quality:
+    - originality_score_above: 80
+    - semantic_uniqueness_above: 75
+    - human_review_ratio: 20
+    - internal_link_coverage: 90
+
+system_architecture:
+
+  modules:
+
+    - name: Topic Intelligence Engine
+      purpose: >
+        Discover, cluster, prioritize, and maintain topical authority maps.
+
+      features:
+        - keyword clustering
+        - semantic topic graph generation
+        - entity extraction
+        - search intent classification
+        - topical gap analysis
+        - competitor topic analysis
+        - SERP monitoring
+
+      outputs:
+        - pillar_topics
+        - support_topics
+        - FAQ_clusters
+        - content_opportunities
+
+    - name: Editorial Planning Engine
+      purpose: >
+        Convert topic graphs into editorial pipelines.
+
+      features:
+        - content calendar generation
+        - pillar/support hierarchy
+        - freshness tracking
+        - content decay detection
+        - update scheduling
+        - editorial workflow states
+
+      workflow_states:
+        - planned
+        - drafting
+        - reviewing
+        - approved
+        - published
+        - updating
+        - archived
+
+    - name: AI Content Generation Engine
+      purpose: >
+        Generate structured draft content while minimizing generic output.
+
+      generation_rules:
+        - enforce_semantic_uniqueness
+        - avoid_generic_openings
+        - inject_domain_specific_examples
+        - include_actionable_sections
+        - include_internal_link_targets
+        - generate_schema_markup
+        - generate_FAQs
+
+      anti_patterns:
+        - repetitive_phrases
+        - generic_conclusions
+        - unsupported_claims
+        - shallow_summaries
+        - duplicate_structures
+
+    - name: Quality Intelligence Engine
+      purpose: >
+        Prevent low-quality publication and improve EEAT.
+
+      validation_checks:
+        - originality_score
+        - semantic_overlap
+        - readability
+        - factual_consistency
+        - citation_presence
+        - internal_link_density
+        - topical_alignment
+        - AI_pattern_detection
+        - trust_signal_detection
+
+      scoring:
+        min_publish_score: 75
+
+    - name: EEAT Authority Engine
+      purpose: >
+        Enhance expertise, trustworthiness, and author authority.
+
+      features:
+        - author_profile_management
+        - expert_review_tracking
+        - editorial_policy_management
+        - source_references
+        - author_schema_generation
+        - organization_schema_generation
+
+      required_pages:
+        - about_us
+        - editorial_policy
+        - fact_check_policy
+        - privacy_policy
+        - terms_and_conditions
+        - contact_us
+        - corrections_policy
+
+    - name: Internal Linking Intelligence
+      purpose: >
+        Build topical authority flow across the website.
+
+      features:
+        - automatic_contextual_linking
+        - pillar_page_prioritization
+        - orphan_page_detection
+        - semantic_relationship_mapping
+        - authority_distribution_analysis
+
+    - name: Knowledge Graph Engine
+      purpose: >
+        Build reusable domain intelligence and semantic structures.
+
+      entities:
+        - technologies
+        - tools
+        - companies
+        - frameworks
+        - concepts
+        - methodologies
+
+      relationships:
+        - parent_child
+        - related_topics
+        - implementation_dependencies
+        - competitive_relationships
+
+    - name: Research and Data Engine
+      purpose: >
+        Generate original research assets to acquire backlinks and citations.
+
+      outputs:
+        - industry_reports
+        - benchmark_reports
+        - trend_analysis
+        - survey_reports
+        - implementation_case_studies
+
+    - name: Tool Generation Platform
+      purpose: >
+        Build utility tools that strengthen SEO and authority.
+
+      initial_tools:
+        devops:
+          - dockerfile_analyzer
+          - kubernetes_cost_estimator
+          - cicd_maturity_assessment
+          - yaml_validator
+
+        ai:
+          - prompt_optimizer
+          - token_cost_calculator
+          - rag_chunking_visualizer
+          - llm_comparison_tool
+
+        mental_health_future:
+          - burnout_assessment
+          - anxiety_score
+          - cbt_worksheet_generator
+
+    - name: SEO Intelligence Engine
+      purpose: >
+        Continuously optimize technical and on-page SEO.
+
+      features:
+        - sitemap_management
+        - schema_generation
+        - canonical_management
+        - indexability_analysis
+        - page_speed_monitoring
+        - broken_link_detection
+        - crawl_budget_analysis
+
+    - name: Analytics and Authority Monitoring
+      purpose: >
+        Monitor quality, rankings, and authority growth.
+
+      metrics:
+        - organic_traffic
+        - keyword_rankings
+        - backlinks
+        - referring_domains
+        - topical_authority_scores
+        - branded_searches
+        - CTR
+        - engagement_metrics
+
+content_strategy:
+
+  primary_verticals:
+    - AI Engineering
+    - DevOps
+    - Platform Engineering
+    - Technical Intelligence
+
+  future_verticals:
+    - Mental Health Systems
+    - Assessments
+    - Knowledge Cheat Sheets
+
+  content_types:
+    - pillar_guides
+    - implementation_guides
+    - comparisons
+    - tutorials
+    - benchmarks
+    - research_reports
+    - tools
+    - cheat_sheets
+    - glossaries
+    - FAQs
+
+  publishing_rules:
+    - prioritize_depth_over_volume
+    - avoid_generic_news_rewrites
+    - require_actionable_content
+    - require_internal_links
+    - require_schema
+    - require_author_profiles
+
+topic_cluster_example:
+
+  devops:
+    pillars:
+      - kubernetes
+      - docker
+      - cicd
+      - observability
+      - platform_engineering
+
+    support_topics:
+      kubernetes:
+        - kubernetes_networking
+        - kubernetes_security
+        - kubernetes_scaling
+        - kubernetes_storage
+        - kubernetes_cost_optimization
+
+authority_strategy:
+
+  phases:
+
+    - phase: Foundation
+      goals:
+        - remove_thin_content
+        - improve_site_structure
+        - establish_EEAT
+        - create_pillar_pages
+
+    - phase: Authority
+      goals:
+        - publish_research_reports
+        - launch_tools
+        - improve_internal_linking
+        - acquire_backlinks
+
+    - phase: Expansion
+      goals:
+        - launch_subdomains
+        - grow_newsletter
+        - expand_knowledge_graph
+        - launch_SaaS_tools
+
+technical_requirements:
+
+  frontend:
+    - Next.js
+    - React
+    - TailwindCSS
+    - shadcn/ui
+
+  backend:
+    - Node.js
+    - Express
+    - GraphQL_optional
+
+  databases:
+    - PostgreSQL
+    - Redis
+    - Elasticsearch_optional
+
+  AI_stack:
+    - OpenAI
+    - Anthropic
+    - local_embedding_models
+
+  infrastructure:
+    - Docker
+    - Kubernetes_future
+    - CDN
+    - object_storage
+
+seo_requirements:
+
+  mandatory_schema:
+    - Organization
+    - Person
+    - Article
+    - FAQ
+    - Breadcrumb
+    - WebSite
+
+  performance_targets:
+    - LCP_under_2_5s
+    - INP_under_200ms
+    - CLS_under_0_1
+
+  index_control:
+    noindex:
+      - thin_pages
+      - empty_archives
+      - duplicate_tags
+      - low_quality_content
+
+monetization:
+
+  phase_1:
+    - AdSense
+    - affiliate_links
+
+  phase_2:
+    - premium_newsletter
+    - sponsorships
+    - downloadable_assets
+
+  phase_3:
+    - SaaS_tools
+    - premium_reports
+    - assessments
+    - enterprise_research
+
+roadmap:
+
+  sprint_1:
+    - site_audit
+    - remove_thin_content
+    - establish_EEAT_pages
+    - improve_navigation
+
+  sprint_2:
+    - build_topic_engine
+    - implement_internal_linking
+    - create_pillar_pages
+
+  sprint_3:
+    - build_quality_engine
+    - build_author_profiles
+    - implement_schema_system
+
+  sprint_4:
+    - launch_devops_tools
+    - launch_AI_tools
+    - start_research_reports
+
+  sprint_5:
+    - launch_newsletter
+    - authority_monitoring_dashboard
+    - backlink_acquisition_strategy
+
+future_expansion:
+
+  subdomains:
+    - ai.countrysnews.com
+    - devops.countrysnews.com
+    - mentalhealth.countrysnews.com
+    - cheatsheets.countrysnews.com
+
+  future_capabilities:
+    - agentic_editorial_workflows
+    - autonomous_content_updating
+    - AI_fact_validation
+    - personalized_content_delivery
+    - enterprise_research_products
+```

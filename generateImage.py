@@ -21,6 +21,22 @@ def _get_gemini_client():
     return _gemini_client
 
 
+_IMAGE_SIZE_PRESETS = {
+    "main":        (1200, 630,  82),   # OG/hero image
+    "thumb":       (600,  315,  75),   # thumbnail
+    "inline":      (800,  450,  80),   # inline body image
+    "infographic": (800,  600,  80),   # infographic
+}
+
+def _get_image_preset(filename: str):
+    """Return (width, height, quality) based on filename convention."""
+    base = os.path.splitext(os.path.basename(filename))[0]
+    for key, preset in _IMAGE_SIZE_PRESETS.items():
+        if base == key or base.startswith(f"{key}_"):
+            return preset
+    return (1024, 576, 82)  # safe default (16:9)
+
+
 def _save_pil_image(image, filename):
     if image.mode in ('RGBA', 'LA', 'P'):
         background = Image.new('RGB', image.size, (255, 255, 255))
@@ -30,8 +46,13 @@ def _save_pil_image(image, filename):
         image = background
     elif image.mode != 'RGB':
         image = image.convert('RGB')
-    image.save(filename, 'WEBP', quality=85, optimize=True, method=6)
-    print(f"Saved WebP image: {filename} (optimized for web)")
+
+    target_w, target_h, quality = _get_image_preset(filename)
+    if image.width > target_w or image.height > target_h:
+        image.thumbnail((target_w, target_h), Image.LANCZOS)
+
+    image.save(filename, 'WEBP', quality=quality, optimize=True, method=6)
+    print(f"Saved WebP image: {filename} ({image.width}×{image.height} q={quality})")
 
 
 def _generate_via_pollinations(prompt, filename):
@@ -41,9 +62,10 @@ def _generate_via_pollinations(prompt, filename):
     """
     import urllib.parse, time
     encoded = urllib.parse.quote(prompt[:300])
+    w, h, _ = _get_image_preset(filename)
     url = (
         f"https://image.pollinations.ai/prompt/{encoded}"
-        "?width=1024&height=1024&model=flux&nologo=true&enhance=true"
+        f"?width={w}&height={h}&model=flux&nologo=true&enhance=true"
     )
     for attempt in range(2):
         if attempt > 0:
@@ -60,6 +82,7 @@ def _generate_via_pollinations(prompt, filename):
 
 
 def _generate_via_openrouter(prompt, filename):
+    w, h, _ = _get_image_preset(filename)
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
@@ -68,7 +91,7 @@ def _generate_via_openrouter(prompt, filename):
         "model": IMAGE_MODEL,
         "prompt": prompt,
         "n": 1,
-        "size": "1024x1024",
+        "size": f"{w}x{h}",
     }
     resp = requests.post(
         "https://openrouter.ai/api/v1/images/generations",
